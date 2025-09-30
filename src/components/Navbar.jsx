@@ -2,13 +2,14 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Moon, Sun, User, LogOut, Home, Users, Eye } from 'lucide-react'
+import { Moon, Sun, User, LogOut, Home, Users, Eye, Menu, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth()
   const navigate = useNavigate()
   const [theme, setTheme] = useState('light')
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   // Load theme from localStorage
   useEffect(() => {
@@ -16,6 +17,23 @@ const Navbar = () => {
     setTheme(savedTheme)
     document.documentElement.classList.toggle('dark', savedTheme === 'dark')
   }, [])
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMobileMenuOpen && !event.target.closest('nav')) {
+        setIsMobileMenuOpen(false)
+      }
+    }
+
+    if (isMobileMenuOpen) {
+      document.addEventListener('click', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside)
+    }
+  }, [isMobileMenuOpen])
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light'
@@ -27,6 +45,10 @@ const Navbar = () => {
   const handleLogout = () => {
     logout()
     navigate('/login')
+  }
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen)
   }
 
   const getRoleIcon = (role) => {
@@ -79,10 +101,10 @@ const Navbar = () => {
                 {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
               </Button>
               <Link to="/login">
-                <Button variant="outline">Login</Button>
+                <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300" variant="outline">Login</Button>
               </Link>
               <Link to="/signup">
-                <Button>Sign Up</Button>
+                <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300">Sign Up</Button>
               </Link>
             </div>
           </div>
@@ -110,6 +132,16 @@ const Navbar = () => {
           </div>
           
           <div className="flex items-center space-x-4">
+            {/* Mobile menu button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMobileMenu}
+              className="md:hidden hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </Button>
+            
             <Button
               variant="ghost"
               size="icon"
@@ -137,9 +169,16 @@ const Navbar = () => {
                     <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                   </div>
                 )}
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {user?.name}
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {user?.name}
+                  </span>
+                  {user?.age && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      Age: {user.age}
+                    </span>
+                  )}
+                </div>
               </div>
               
               <Button
@@ -154,6 +193,28 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+      
+      {/* Mobile menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+          <div className="px-4 py-2 space-y-1">
+            <Link 
+              to="/profile" 
+              className="block px-3 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Profile
+            </Link>
+            <Link 
+              to="/feed" 
+              className="block px-3 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Feed
+            </Link>
+          </div>
+        </div>
+      )}
     </nav>
   )
 }

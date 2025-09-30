@@ -155,21 +155,21 @@ export default function Feed() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Sports Feed</h1>
-          <p className="text-gray-600 dark:text-gray-400">Stay updated with the latest from the sports community</p>
+      <div className="w-full max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:text-3xl">Sports Feed</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 sm:text-base">Stay updated with the latest from the sports community</p>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {feedData.map((post) => (
             <Card key={post.id} className="bg-white dark:bg-gray-800 shadow-sm border-0 hover:shadow-md transition-shadow duration-200">
-              <CardHeader className="pb-4">
+              <CardHeader className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-3 flex-1 min-w-0">
                     {imageErrors.has(`avatar-${post.id}`) ? (
-                      <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                        <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                        <span className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium">
                           {post.author.name.charAt(0)}
                         </span>
                       </div>
@@ -177,13 +177,13 @@ export default function Feed() {
                       <img
                         src={post.author.avatar}
                         alt={post.author.name}
-                        className="w-10 h-10 rounded-full object-cover"
+                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover flex-shrink-0"
                         onError={() => handleImageError(`avatar-${post.id}`)}
                       />
                     )}
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2 flex-wrap">
+                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate">
                           {post.author.name}
                         </h3>
                         {post.author.verified && (
@@ -193,7 +193,7 @@ export default function Feed() {
                           {post.author.role}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {post.timestamp}
                       </p>
                     </div>
@@ -204,26 +204,26 @@ export default function Feed() {
                 </div>
               </CardHeader>
               
-              <CardContent className="pt-0">
+              <CardContent className="pt-0 px-4 sm:px-6">
                 <div className="space-y-4">
-                  <p className="text-gray-900 dark:text-white leading-relaxed">
+                  <p className="text-sm text-gray-900 dark:text-white leading-relaxed sm:text-base">
                     {post.content.text}
                   </p>
                   
                   {post.content.image && (
                     <div className="rounded-lg overflow-hidden">
                       {imageErrors.has(`content-${post.id}`) ? (
-                        <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded-lg">
+                        <div className="w-full h-32 sm:h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded-lg">
                           <div className="text-center">
                             <div className="text-gray-500 dark:text-gray-400 text-sm mb-2">📷</div>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm">Image not available</p>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">Image not available</p>
                           </div>
                         </div>
                       ) : (
                         <img
                           src={post.content.image}
                           alt="Post content"
-                          className="w-full h-auto object-cover"
+                          className="w-full h-auto object-cover max-h-64 sm:max-h-80"
                           onError={() => handleImageError(`content-${post.id}`)}
                         />
                       )}
@@ -231,12 +231,12 @@ export default function Feed() {
                   )}
                   
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center space-x-6">
+                    <div className="flex items-center space-x-4">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleLike(post.id)}
-                        className={`flex items-center space-x-2 ${
+                        className={`flex items-center space-x-2 px-3 py-2 ${
                           likedPosts.has(post.id) 
                             ? 'text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300' 
                             : 'text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400'
@@ -247,25 +247,25 @@ export default function Feed() {
                             likedPosts.has(post.id) ? 'fill-current' : ''
                           }`} 
                         />
-                        <span>{post.stats.likes}</span>
+                        <span className="text-sm">{post.stats.likes}</span>
                       </Button>
                       
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
+                        className="flex items-center space-x-2 px-3 py-2 text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
                       >
                         <MessageCircle className="w-4 h-4" />
-                        <span>{post.stats.comments}</span>
+                        <span className="text-sm">{post.stats.comments}</span>
                       </Button>
                       
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="flex items-center space-x-2 text-gray-500 hover:text-green-500 dark:text-gray-400 dark:hover:text-green-400"
+                        className="flex items-center space-x-2 px-3 py-2 text-gray-500 hover:text-green-500 dark:text-gray-400 dark:hover:text-green-400"
                       >
                         <Share className="w-4 h-4" />
-                        <span>{post.stats.shares}</span>
+                        <span className="text-sm">{post.stats.shares}</span>
                       </Button>
                     </div>
                   </div>
@@ -275,8 +275,8 @@ export default function Feed() {
           ))}
         </div>
         
-        <div className="mt-8 text-center">
-          <Button variant="outline" className="px-8">
+        <div className="mt-6 text-center">
+          <Button variant="outline" className="px-6 py-2 text-sm">
             Load More Posts
           </Button>
         </div>
