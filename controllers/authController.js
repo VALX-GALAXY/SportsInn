@@ -1,41 +1,69 @@
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const users = require("../models/userModel");
+const {
+  signupService,
+  loginService,
+  refreshService,
+  logoutService,
+  updateProfileService,
+} = require("../services/authService");
 
-const SECRET = "secret123";
+// POST /api/auth/signup
+async function signup(req, res) {
+  try {
+    const { user, error } = await signupService(req.body);
+    if (error) return res.status(400).json({ success: false, message: error });
+    return res.status(201).json({ success: true, data: user, message: "User registered successfully" });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+}
 
-exports.signup = async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password)
-    return res.status(400).json({ success:false, message:"Email & password required" });
+// POST /api/auth/login
+async function login(req, res) {
+  try {
+    const { data, error } = await loginService(req.body);
+    if (error) return res.status(400).json({ success: false, message: error });
+    return res.json({ success: true, data, message: "Login successful" });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+}
 
-  const exists = users.find(u => u.email === email);
-  if (exists) return res.status(400).json({ success:false, message:"User exists" });
+// POST /api/auth/refresh
+async function refreshToken(req, res) {
+  try {
+    const { refreshToken: token } = req.body;
+    const { accessToken, error } = await refreshService(token);
+    if (error) return res.status(401).json({ success: false, message: error });
+    return res.json({ success: true, data: { accessToken }, message: "Token refreshed" });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+}
 
-  const hash = await bcrypt.hash(password, 10);
-  const user = { email, password: hash, bio:"", profilePic:"" };
-  users.push(user);
-  res.json({ success:true, data:{ email }, message:"User created" });
-};
+// POST /api/auth/logout
+async function logout(req, res) {
+  try {
+    const { refreshToken: token } = req.body;
+    if (!token) return res.status(400).json({ success: false, message: "Refresh token required" });
+    const removed = await logoutService(token);
+    if (!removed) return res.status(400).json({ success: false, message: "Invalid refresh token" });
+    return res.json({ success: true, data: null, message: "Logged out" });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+}
 
-exports.login = async (req, res) => {
-  const { email, password } = req.body;
-  const user = users.find(u => u.email === email);
-  if (!user) return res.status(400).json({ success:false, message:"Invalid credentials" });
+// PUT /api/auth/profile
+async function updateProfile(req, res) {
+  try {
+    const userId = req.user.userId;
+    const payload = req.body;
+    const { updated, error } = await updateProfileService(userId, payload);
+    if (error) return res.status(400).json({ success: false, message: error });
+    return res.json({ success: true, data: updated, message: "Profile updated" });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+}
 
-  const match = await bcrypt.compare(password, user.password);
-  if (!match) return res.status(400).json({ success:false, message:"Invalid credentials" });
-
-  const token = jwt.sign({ email }, SECRET, { expiresIn: "1h" });
-  res.json({ success:true, data:{ token }, message:"Login successful" });
-};
-
-exports.updateProfile = (req, res) => {
-  const { bio, profilePic } = req.body;
-  const user = users.find(u => u.email === req.user.email);
-  if (!user) return res.status(404).json({ success:false, message:"User not found" });
-
-  if (bio) user.bio = bio;
-  if (profilePic) user.profilePic = profilePic;
-  res.json({ success:true, data:{ email:user.email, bio:user.bio, profilePic:user.profilePic }, message:"Profile updated" });
-};
+module.exports = { signup, login, refreshToken, logout, updateProfile };
