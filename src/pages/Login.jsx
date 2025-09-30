@@ -4,9 +4,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAuth } from '@/contexts/AuthContext'
+import GoogleButton from '@/components/GoogleButton'
 
 export default function Login() {
   const navigate = useNavigate()
+  const { login, getUserByEmail } = useAuth()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -49,7 +52,39 @@ export default function Login() {
     e.preventDefault()
     if (validateForm()) {
       console.log('Login form data:', formData)
-      //Api Call
+      
+      // Check if user already exists
+      const existingUser = getUserByEmail(formData.email)
+      if (existingUser) {
+        // User exists, use existing data
+        const mockToken = 'mock_jwt_token_' + Date.now()
+        login(existingUser, mockToken)
+        navigate('/profile')
+        return
+      }
+      
+      // Create new user if doesn't exist
+      const emailPrefix = formData.email.split('@')[0]
+      const displayName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1)
+      
+      const mockUser = {
+        id: 'user_' + Date.now(),
+        name: displayName, // Use capitalized email prefix as name
+        email: formData.email,
+        role: 'Player', // Default role for new login
+        profilePicture: null,
+        provider: 'email',
+        bio: '',
+        age: '',
+        playerRole: '',
+        location: '',
+        contactInfo: '',
+        organization: '',
+        yearsOfExperience: ''
+      }
+      const mockToken = 'mock_jwt_token_' + Date.now()
+      
+      login(mockUser, mockToken)
       navigate('/profile')
     }
   }
@@ -70,12 +105,12 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+        <Card className="shadow-xl border-0 bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Sign in</CardTitle>
-            <CardDescription className="text-center text-gray-600">
+            <CardTitle className="text-2xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">Sign in</CardTitle>
+            <CardDescription className="text-center text-gray-600 dark:text-gray-300">
               Enter your email and password to sign in
             </CardDescription>
           </CardHeader>
@@ -110,21 +145,21 @@ export default function Login() {
                 />
                 {formData.password && (
                   <div className="space-y-1">
-                    <div className="text-xs text-gray-600">Password requirements:</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-300">Password requirements:</div>
                     <div className="space-y-1">
-                      <div className={`text-xs flex items-center ${formData.password.length >= 8 ? 'text-green-600' : 'text-gray-400'}`}>
+                      <div className={`text-xs flex items-center ${formData.password.length >= 8 ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                         <span className="mr-1">{formData.password.length >= 8 ? '✓' : '○'}</span>
                         At least 8 characters
                       </div>
-                      <div className={`text-xs flex items-center ${/[a-zA-Z]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
+                      <div className={`text-xs flex items-center ${/[a-zA-Z]/.test(formData.password) ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                         <span className="mr-1">{/[a-zA-Z]/.test(formData.password) ? '✓' : '○'}</span>
                         At least one letter
                       </div>
-                      <div className={`text-xs flex items-center ${/\d/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
+                      <div className={`text-xs flex items-center ${/\d/.test(formData.password) ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                         <span className="mr-1">{/\d/.test(formData.password) ? '✓' : '○'}</span>
                         At least one number
                       </div>
-                      <div className={`text-xs flex items-center ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
+                      <div className={`text-xs flex items-center ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                         <span className="mr-1">{/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? '✓' : '○'}</span>
                         At least one special character
                       </div>
@@ -141,10 +176,28 @@ export default function Login() {
               </Button>
             </form>
             
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <GoogleButton 
+                  className="w-full"
+                  onSuccess={() => navigate('/profile')}
+                />
+              </div>
+            </div>
+            
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
                 Don't have an account?{' '}
-                <Link to="/signup" className="text-blue-600 hover:text-purple-600 font-medium transition-colors duration-200">
+                <Link to="/signup" className="text-blue-600 hover:text-purple-600 dark:text-blue-400 dark:hover:text-purple-400 font-medium transition-colors duration-200">
                   Sign up
                 </Link>
               </p>
