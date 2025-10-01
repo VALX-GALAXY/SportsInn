@@ -1,7 +1,49 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Heart, MessageCircle, Share, MoreHorizontal } from 'lucide-react'
+import { Heart, MessageCircle, Share, MoreHorizontal, Loader2 } from 'lucide-react'
+
+
+// Mock feed service for now
+const feedService = {
+  getFeed: async () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          posts: [
+            {
+              id: 1,
+              author: {
+                name: 'Suraj kumar',
+                role: 'Player',
+                avatar: 'https://i.pravatar.cc/150?img=66',
+                verified: true
+              },
+              content: {
+                text: 'Just finished an amazing training session! The new techniques we learned today are going to take my game to the next level.',
+                image: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=500&h=300&fit=crop&auto=format'
+              },
+              stats: {
+                likes: 42,
+                comments: 8,
+                shares: 3
+              },
+              timestamp: '2 hours ago'
+            }
+          ]
+        })
+      }, 1000)
+    })
+  },
+  toggleLike: async (postId) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ likes: Math.floor(Math.random() * 100) })
+      }, 500)
+    })
+  }
+}
+import { useToast } from '@/components/ui/simple-toast'
 
 // Dummy feed data with reliable image sources
 const dummyFeedData = [
@@ -104,34 +146,83 @@ const dummyFeedData = [
 
 export default function Feed() {
   const [likedPosts, setLikedPosts] = useState(new Set())
-  const [feedData, setFeedData] = useState(dummyFeedData)
+  const [feedData, setFeedData] = useState([])
   const [imageErrors, setImageErrors] = useState(new Set())
+  const [isLoading, setIsLoading] = useState(true)
+  const [isLiking, setIsLiking] = useState(new Set())
+  const { toast } = useToast()
 
-  const handleLike = (postId) => {
-    setLikedPosts(prev => {
-      const newLikedPosts = new Set(prev)
-      if (newLikedPosts.has(postId)) {
-        newLikedPosts.delete(postId)
-      } else {
-        newLikedPosts.add(postId)
-      }
-      return newLikedPosts
-    })
+  // Fetch feed data on component mount
+  useEffect(() => {
+    fetchFeed()
+  }, [])
 
-    // Update the feed data
-    setFeedData(prev => prev.map(post => {
-      if (post.id === postId) {
-        const isLiked = likedPosts.has(postId)
-        return {
-          ...post,
-          stats: {
-            ...post.stats,
-            likes: isLiked ? post.stats.likes - 1 : post.stats.likes + 1
+  const fetchFeed = async () => {
+    try {
+      setIsLoading(true)
+      const response = await feedService.getFeed()
+      setFeedData(response.posts || [])
+    } catch (error) {
+      console.error('Error fetching feed:', error)
+      toast({
+        title: "Failed to load feed",
+        description: error.message || "Unable to fetch posts",
+        variant: "destructive"
+      })
+      // Fallback to dummy data if API fails
+      setFeedData(dummyFeedData)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleLike = async (postId) => {
+    if (isLiking.has(postId)) return // Prevent multiple clicks
+    
+    try {
+      setIsLiking(prev => new Set([...prev, postId]))
+      
+      const response = await feedService.toggleLike(postId)
+      
+      // Update local state optimistically
+      setLikedPosts(prev => {
+        const newLikedPosts = new Set(prev)
+        if (newLikedPosts.has(postId)) {
+          newLikedPosts.delete(postId)
+        } else {
+          newLikedPosts.add(postId)
+        }
+        return newLikedPosts
+      })
+
+      // Update the feed data with server response
+      setFeedData(prev => prev.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            stats: {
+              ...post.stats,
+              likes: response.likes
+            }
           }
         }
-      }
-      return post
-    }))
+        return post
+      }))
+      
+    } catch (error) {
+      console.error('Error liking post:', error)
+      toast({
+        title: "Failed to like post",
+        description: error.message || "Unable to like post",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLiking(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(postId)
+        return newSet
+      })
+    }
   }
 
   const handleImageError = (imageId) => {
@@ -161,8 +252,16 @@ export default function Feed() {
           <p className="text-sm text-gray-600 dark:text-gray-400 sm:text-base">Stay updated with the latest from the sports community</p>
         </div>
 
-        <div className="space-y-4">
-          {feedData.map((post) => (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex items-center space-x-2">
+              <Loader2 className="w-6 h-6 animate-spin" />
+              <span className="text-gray-600 dark:text-gray-400">Loading feed...</span>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {feedData.map((post) => (
             <Card key={post.id} className="bg-white dark:bg-gray-800 shadow-sm border-0 hover:shadow-md transition-shadow duration-200">
               <CardHeader className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
@@ -236,17 +335,22 @@ export default function Feed() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleLike(post.id)}
+                        disabled={isLiking.has(post.id)}
                         className={`flex items-center space-x-2 px-3 py-2 ${
                           likedPosts.has(post.id) 
                             ? 'text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300' 
                             : 'text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400'
                         }`}
                       >
-                        <Heart 
-                          className={`w-4 h-4 ${
-                            likedPosts.has(post.id) ? 'fill-current' : ''
-                          }`} 
-                        />
+                        {isLiking.has(post.id) ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Heart 
+                            className={`w-4 h-4 ${
+                              likedPosts.has(post.id) ? 'fill-current' : ''
+                            }`} 
+                          />
+                        )}
                         <span className="text-sm">{post.stats.likes}</span>
                       </Button>
                       
@@ -273,7 +377,8 @@ export default function Feed() {
               </CardContent>
             </Card>
           ))}
-        </div>
+          </div>
+        )}
         
         <div className="mt-6 text-center">
           <Button variant="outline" className="px-6 py-2 text-sm">

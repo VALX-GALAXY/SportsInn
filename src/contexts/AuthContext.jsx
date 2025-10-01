@@ -1,4 +1,54 @@
 import { createContext, useContext, useReducer, useEffect } from 'react'
+// import authService from '@/api/authService'
+import { useToast } from '@/components/ui/simple-toast'
+
+// Mock auth service for now
+const authService = {
+  login: async (credentials) => {
+    // Mock API call
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          user: {
+            id: 'user_123',
+            name: credentials.email.split('@')[0],
+            email: credentials.email,
+            role: 'Player'
+          },
+          token: 'mock_token_123',
+          refreshToken: 'mock_refresh_token_123'
+        })
+      }, 1000)
+    })
+  },
+  signup: async (signupData) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          user: {
+            id: 'user_123',
+            name: signupData.name,
+            email: signupData.email,
+            role: signupData.role
+          },
+          token: 'mock_token_123',
+          refreshToken: 'mock_refresh_token_123'
+        })
+      }, 1000)
+    })
+  },
+  logout: async () => {
+    return Promise.resolve()
+  },
+  updateProfile: async (userData) => {
+    return Promise.resolve(userData)
+  },
+  storeAuthData: (authData) => {
+    localStorage.setItem('token', authData.token)
+    localStorage.setItem('refreshToken', authData.refreshToken)
+    localStorage.setItem('user', JSON.stringify(authData.user))
+  }
+}
 
 const AuthContext = createContext()
 
@@ -46,6 +96,7 @@ const initialState = {
 
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState)
+  const { toast } = useToast()
 
   // Load user from localStorage on mount
   useEffect(() => {
@@ -72,66 +123,83 @@ export const AuthProvider = ({ children }) => {
     loadUser()
   }, [])
 
-  // Login function
-  const login = (userData, token) => {
+  // Login function with real API
+  const login = async (credentials) => {
     try {
-      // Check if user already exists in localStorage
-      const existingUser = localStorage.getItem('user')
-      if (existingUser) {
-        const parsedUser = JSON.parse(existingUser)
-        // If same email, use existing user data but update token
-        if (parsedUser.email === userData.email) {
-          const updatedUser = {
-            ...parsedUser,
-            token: token,
-            lastLogin: new Date().toISOString()
-          }
-          localStorage.setItem('user', JSON.stringify(updatedUser))
-          localStorage.setItem('token', token)
-          
-          dispatch({
-            type: 'LOGIN',
-            payload: { user: updatedUser, token }
-          })
-          return
-        }
-      }
+      dispatch({ type: 'SET_LOADING', payload: true })
       
-      // Store new user in localStorage
-      localStorage.setItem('user', JSON.stringify(userData))
-      localStorage.setItem('token', token)
+      const authData = await authService.login(credentials)
+      authService.storeAuthData(authData)
       
       dispatch({
         type: 'LOGIN',
-        payload: { user: userData, token }
+        payload: { user: authData.user, token: authData.token }
+      })
+      
+      toast({
+        title: "Login successful",
+        description: `Welcome back, ${authData.user.name}!`,
+        variant: "success"
+      })
+      
+      return authData
+    } catch (error) {
+      console.error('Login error:', error)
+      toast({
+        title: "Login failed",
+        description: error.message || "Invalid credentials",
+        variant: "destructive"
+      })
+      throw error
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
+    }
+  }
+
+  // Logout function with real API
+  const logout = async () => {
+    try {
+      await authService.logout()
+      dispatch({ type: 'LOGOUT' })
+      
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out",
+        variant: "default"
       })
     } catch (error) {
-      console.error('Error storing user data:', error)
-    }
-  }
-
-  // Logout function
-  const logout = () => {
-    try {
-      localStorage.removeItem('user')
-      localStorage.removeItem('token')
+      console.error('Error during logout:', error)
+      // Even if API logout fails, clear local state
       dispatch({ type: 'LOGOUT' })
-    } catch (error) {
-      console.error('Error clearing user data:', error)
     }
   }
 
-  // Update user function
-  const updateUser = (userData) => {
+  // Update user function with real API
+  const updateUser = async (userData) => {
     try {
-      const updatedUser = { ...state.user, ...userData }
+      const updatedUser = await authService.updateProfile(userData)
       localStorage.setItem('user', JSON.stringify(updatedUser))
+      
       dispatch({
         type: 'UPDATE_USER',
-        payload: userData
+        payload: updatedUser
       })
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully",
+        variant: "success"
+      })
+      
+      return updatedUser
     } catch (error) {
       console.error('Error updating user data:', error)
+      toast({
+        title: "Update failed",
+        description: error.message || "Failed to update profile",
+        variant: "destructive"
+      })
+      throw error
     }
   }
 
@@ -177,47 +245,61 @@ export const AuthProvider = ({ children }) => {
     return mockUser
   }
 
-  // Mock role-based signup
-  const signupWithRole = (formData, role) => {
-    const mockUser = {
-      id: 'user_' + Date.now(),
-      name: formData.name,
-      email: formData.email,
-      role: role,
-      profilePicture: null,
-      provider: 'email',
-      bio: '',
-      // Role-specific data
-      ...(role === 'Player' && {
-        age: formData.age,
-        playerRole: formData.playerRole
-      }),
-      ...(role === 'Academy' && {
-        location: formData.location,
-        contactInfo: formData.contactInfo
-      }),
-      ...(role === 'Club' && {
-        location: formData.location,
-        contactInfo: formData.contactInfo
-      }),
-      ...(role === 'Scout' && {
-        organization: formData.organization,
-        yearsOfExperience: formData.yearsOfExperience
+  // Real API signup with role
+  const signupWithRole = async (formData, role) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true })
+      
+      const signupData = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: role,
+        // Role-specific data
+        ...(role === 'Player' && {
+          age: formData.age,
+          playerRole: formData.playerRole
+        }),
+        ...(role === 'Academy' && {
+          location: formData.location,
+          contactInfo: formData.contactInfo
+        }),
+        ...(role === 'Club' && {
+          location: formData.location,
+          contactInfo: formData.contactInfo
+        }),
+        ...(role === 'Scout' && {
+          organization: formData.organization,
+          yearsOfExperience: formData.yearsOfExperience
+        })
+      }
+      
+      const authData = await authService.signup(signupData)
+      authService.storeAuthData(authData)
+      
+      dispatch({
+        type: 'LOGIN',
+        payload: { user: authData.user, token: authData.token }
       })
+      
+      toast({
+        title: "Account created successfully",
+        description: `Welcome to SportsHub, ${authData.user.name}!`,
+        variant: "success"
+      })
+      
+      return authData
+    } catch (error) {
+      console.error('Signup error:', error)
+      toast({
+        title: "Signup failed",
+        description: error.message || "Failed to create account",
+        variant: "destructive"
+      })
+      throw error
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
     }
-    
-    const mockToken = 'mock_jwt_token_' + Date.now()
-    
-    // Store user data in localStorage
-    localStorage.setItem('user', JSON.stringify(mockUser))
-    localStorage.setItem('token', mockToken)
-    
-    dispatch({
-      type: 'LOGIN',
-      payload: { user: mockUser, token: mockToken }
-    })
-    
-    return mockUser
   }
 
   const value = {

@@ -108,13 +108,16 @@ export default function Signup() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (validateForm()) {
-      console.log('Signup form data:', formData)
-      // Use the auth context to signup with role
-      signupWithRole(formData, formData.role)
-      navigate('/profile')
+      try {
+        await signupWithRole(formData, formData.role)
+        navigate('/profile')
+      } catch (error) {
+        // Error is already handled in AuthContext with toast
+        console.error('Signup failed:', error)
+      }
     }
   }
 

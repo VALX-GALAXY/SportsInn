@@ -48,44 +48,16 @@ export default function Login() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (validateForm()) {
-      console.log('Login form data:', formData)
-      
-      // Check if user already exists
-      const existingUser = getUserByEmail(formData.email)
-      if (existingUser) {
-        // User exists, use existing data
-        const mockToken = 'mock_jwt_token_' + Date.now()
-        login(existingUser, mockToken)
+      try {
+        await login(formData)
         navigate('/profile')
-        return
+      } catch (error) {
+        // Error is already handled in AuthContext with toast
+        console.error('Login failed:', error)
       }
-      
-      // Create new user if doesn't exist
-      const emailPrefix = formData.email.split('@')[0]
-      const displayName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1)
-      
-      const mockUser = {
-        id: 'user_' + Date.now(),
-        name: displayName, // Use capitalized email prefix as name
-        email: formData.email,
-        role: 'Player', // Default role for new login
-        profilePicture: null,
-        provider: 'email',
-        bio: '',
-        age: '',
-        playerRole: '',
-        location: '',
-        contactInfo: '',
-        organization: '',
-        yearsOfExperience: ''
-      }
-      const mockToken = 'mock_jwt_token_' + Date.now()
-      
-      login(mockUser, mockToken)
-      navigate('/profile')
     }
   }
 
