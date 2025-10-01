@@ -1,25 +1,20 @@
 const jwt = require("jsonwebtoken");
 
-// NOTE: in production use process.env values
-const ACCESS_SECRET = process.env.ACCESS_SECRET || "access_secret_example";
-const REFRESH_SECRET = process.env.REFRESH_SECRET || "refresh_secret_example";
+function generateTokens(user) {
+  const payload = { id: user._id, role: user.role };
 
-function generateAccessToken(payload) {
-  // short lived
-  return jwt.sign(payload, ACCESS_SECRET, { expiresIn: "15m" });
-}
+  const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "15m" });
+  const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
 
-function generateRefreshToken(payload) {
-  // longer lived
-  return jwt.sign(payload, REFRESH_SECRET, { expiresIn: "7d" });
-}
-
-function verifyAccessToken(token) {
-  return jwt.verify(token, ACCESS_SECRET);
+  return { accessToken, refreshToken };
 }
 
 function verifyRefreshToken(token) {
-  return jwt.verify(token, REFRESH_SECRET);
+  try {
+    return jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+  } catch {
+    return null;
+  }
 }
 
-module.exports = { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken };
+module.exports = { generateTokens, verifyRefreshToken };

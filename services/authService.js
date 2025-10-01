@@ -1,128 +1,62 @@
 const bcrypt = require("bcrypt");
-const {
-  users,
-  refreshTokens,
-  findUserByEmail,
-  addUser,
-  storeRefreshToken,
-  removeRefreshToken,
-  isRefreshTokenValid,
-} = require("../models/userModel");
-
+const User = require("../models/userModel");
+const { generateTokens, verifyRefreshToken } = require("../utils/jwtUtils");
 const { validateSignup } = require("../utils/validation");
-const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require("../utils/jwtUtils");
-const roleFields = require("../utils/roleFields");
 
-// Signup business logic
-async function signupService(body) {
+async function signup(body) {
   const error = validateSignup(body);
   if (error) return { error };
 
-  if (findUserByEmail(body.email)) return { error: "Email already exists" };
+  const existing = await User.findOne({ email: body.email });
+  if (existing) return { error: "Email already exists" };
 
-  const hashed = await bcrypt.hash(body.password, 10);
+  const passwordHash = await bcrypt.hash(body.password, 10);
+  const user = new User({ ...body, passwordHash });
+  await user.save();
 
-  const user = {
-    id: Date.now().toString(),
-    name: body.name,
-    email: body.email,
-    passwordHash: hashed,
-    role: body.role,
-    // role specific fields:
-    ...(body.role === "player" ? { age: body.age, playingRole: body.playingRole } : {}),
-    ...(body.role === "academy" ? { location: body.location, contactInfo: body.contactInfo } : {}),
-    ...(body.role === "scout" ? { organization: body.organization, experience: body.experience } : {}),
-  };
-
-  addUser(user);
-
-  return { user: { id: user.id, email: user.email, role: user.role, name: user.name } };
+  return { user: { id: user._id, email: user.email, role: user.role, name: user.name } };
 }
 
-// Login business logic
-async function loginService(body) {
+async function login(body) {
   const { email, password } = body;
-  if (!email || !password) return { error: "Email and password required" };
-
-  const user = findUserByEmail(email);
-  if (!user) return { error: "Invalid credentials" };
+  const user = await User.findOne({ email });
+  if (!user) return { error: "Invalid email or password" };
 
   const match = await bcrypt.compare(password, user.passwordHash);
-  if (!match) return { error: "Invalid credentials" };
+  if (!match) return { error: "Invalid email or password" };
 
-  // payload for tokens
-  const payload = { userId: user.id, email: user.email, role: user.role, name: user.name };
+  const { accessToken, refreshToken } = generateTokens(user);
+  user.refreshTokens.push(refreshToken);
+  await user.save();
 
-  const accessToken = generateAccessToken(payload);
-  const refreshToken = generateRefreshToken(payload);
-
-  // store refresh token (with simple expiry mock)
-  storeRefreshToken(user.id, refreshToken);
-
-  return {
-    data: {
-      user: { id: user.id, email: user.email, role: user.role, name: user.name },
-      accessToken,
-      refreshToken,
-    },
-  };
+  return { accessToken, refreshToken, user: { id: user._id, email: user.email, role: user.role, name: user.name } };
 }
 
-// Refresh token exchange
-async function refreshService(token) {
-  if (!token) return { error: "Refresh token required" };
-  let decoded;
-  try {
-    decoded = verifyRefreshToken(token);
-  } catch (err) {
-    return { error: "Invalid refresh token" };
-  }
+async function refresh(refreshToken) {
+  const payload = verifyRefreshToken(refreshToken);
+  if (!payload) return { error: "Invalid refresh token" };
 
-  // ensure stored
-  if (!isRefreshTokenValid(decoded.userId, token)) return { error: "Refresh token not recognized" };
+  const user = await User.findById(payload.id);
+  if (!user || !user.refreshTokens.includes(refreshToken)) return { error: "Invalid refresh token" };
 
-  const payload = { userId: decoded.userId, email: decoded.email, role: decoded.role, name: decoded.name };
-  const accessToken = generateAccessToken(payload);
+  const { accessToken, refreshToken: newRefresh } = generateTokens(user);
 
-  return { accessToken };
+  // replace old token
+  user.refreshTokens = user.refreshTokens.filter(rt => rt !== refreshToken);
+  user.refreshTokens.push(newRefresh);
+  await user.save();
+
+  return { accessToken, refreshToken: newRefresh };
 }
 
-// Logout logic
-async function logoutService(token) {
-  if (!token) return false;
-  const exists = isRefreshTokenValid(null, token) || refreshTokens.some(rt => rt.token === token);
-  // remove
-  removeRefreshToken(token);
-  return exists;
+async function logout(refreshToken) {
+  const user = await User.findOne({ refreshTokens: refreshToken });
+  if (!user) return { error: "Token not found" };
+
+  user.refreshTokens = user.refreshTokens.filter(rt => rt !== refreshToken);
+  await user.save();
+
+  return { success: true };
 }
 
-// Update profile by role-limited fields only
-async function updateProfileService(userId, payload) {
-  const user = users.find(u => u.id === userId);
-  if (!user) return { error: "User not found" };
-
-  // allowed fields per role for updates
-  const allowed = {
-    player: ["name", "age", "playingRole"],
-    academy: ["name", "location", "contactInfo"],
-    scout: ["name", "organization", "experience"],
-  };
-
-  const allowedFields = allowed[user.role] || ["name"];
-
-  let changed = false;
-  for (const key of Object.keys(payload)) {
-    if (allowedFields.includes(key)) {
-      user[key] = payload[key];
-      changed = true;
-    }
-  }
-
-  if (!changed) return { error: "No permitted fields to update or payload empty" };
-
-  // return updated object (omit passwordHash)
-  const { passwordHash, ...publicUser } = user;
-  return { updated: publicUser };
-}
-
-module.exports = { signupService, loginService, refreshService, logoutService, updateProfileService };
+module.exports = { signup, login, refresh, logout };

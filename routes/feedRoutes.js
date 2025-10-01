@@ -1,8 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { getFeed } = require("../controllers/feedController");
+const { createPost, getFeed, toggleLike, deletePost } = require("../controllers/feedController");
+const authMiddleware = require("../middlewares/authMiddleware");
 
-// Public feed
-router.get("/", getFeed);
+router.post("/", authMiddleware, createPost);
+router.get("/", authMiddleware, getFeed);
+router.put("/:id/like", authMiddleware, toggleLike);
+router.delete("/:id", authMiddleware, deletePost);
 
 module.exports = router;

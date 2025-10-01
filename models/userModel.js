@@ -1,36 +1,20 @@
-// In-memory store
-const users = [];
-const refreshTokens = []; // entries: { userId, token }
+const mongoose = require("mongoose");
 
-function findUserByEmail(email) {
-  return users.find(u => u.email === email);
-}
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, unique: true, required: true },
+  passwordHash: { type: String, required: true },
+  role: { type: String, enum: ["player", "academy", "scout"], required: true },
 
-function addUser(user) {
-  users.push(user);
-  return user;
-}
+  // Role-specific fields
+  age: Number,
+  playingRole: String,
+  location: String,
+  contactInfo: String,
+  organization: String,
+  experience: Number,
 
-function storeRefreshToken(userId, token) {
-  refreshTokens.push({ userId, token });
-}
+  refreshTokens: [String],
+}, { timestamps: true });
 
-function removeRefreshToken(token) {
-  const idx = refreshTokens.findIndex(rt => rt.token === token);
-  if (idx !== -1) refreshTokens.splice(idx, 1);
-}
-
-function isRefreshTokenValid(userId, token) {
-  if (userId) return refreshTokens.some(rt => rt.userId === userId && rt.token === token);
-  return refreshTokens.some(rt => rt.token === token);
-}
-
-module.exports = {
-  users,
-  refreshTokens,
-  findUserByEmail,
-  addUser,
-  storeRefreshToken,
-  removeRefreshToken,
-  isRefreshTokenValid,
-};
+module.exports = mongoose.model("User", userSchema);

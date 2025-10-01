@@ -1,10 +1,42 @@
-function getMockFeed() {
-  return [
-    { id: "p1", author: "Ashu", role: "player", caption: "Nice session today!", imageUrl: "", likes: 10 },
-    { id: "p2", author: "Valaxia Academy", role: "academy", caption: "Trials open next week", imageUrl: "", likes: 25 },
-    { id: "p3", author: "Ravi", role: "scout", caption: "Spotlight on upcoming talent", imageUrl: "", likes: 7 },
-    { id: "p4", author: "Priya", role: "player", caption: "Net practice wins again", imageUrl: "", likes: 3 },
-  ];
+const Post = require("../models/postModel");
+
+async function createPost(user, body) {
+  const post = new Post({
+    authorId: user._id,
+    role: user.role,
+    caption: body.caption,
+    imageUrl: body.imageUrl,
+    likes: []
+  });
+  await post.save();
+  return post;
 }
 
-module.exports = { getMockFeed };
+async function getFeed() {
+  return Post.find().populate("authorId", "name role").sort({ createdAt: -1 });
+}
+
+async function toggleLike(user, postId) {
+  const post = await Post.findById(postId);
+  if (!post) return { error: "Post not found" };
+
+  const index = post.likes.indexOf(user._id);
+  if (index >= 0) {
+    post.likes.splice(index, 1); // unlike
+  } else {
+    post.likes.push(user._id); // like
+  }
+  await post.save();
+  return post;
+}
+
+async function deletePost(user, postId) {
+  const post = await Post.findById(postId);
+  if (!post) return { error: "Post not found" };
+  if (String(post.authorId) !== String(user._id)) return { error: "Not allowed" };
+
+  await post.deleteOne();
+  return { success: true };
+}
+
+module.exports = { createPost, getFeed, toggleLike, deletePost };
