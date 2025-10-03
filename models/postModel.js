@@ -6,6 +6,13 @@ const postSchema = new mongoose.Schema({
   caption: String,
   imageUrl: String,
   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  comments: [
+  {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    text: String,
+    createdAt: { type: Date, default: Date.now }
+  }
+]
 }, { timestamps: true });
 
 module.exports = mongoose.model("Post", postSchema);

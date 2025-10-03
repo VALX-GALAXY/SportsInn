@@ -12,9 +12,11 @@ const userSchema = new mongoose.Schema({
   location: String,
   contactInfo: String,
   organization: String,
-  experience: Number,
+  experience: String,
 
   refreshTokens: [String],
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
 }, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);
