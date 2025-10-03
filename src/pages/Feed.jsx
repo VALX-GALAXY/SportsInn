@@ -1,219 +1,87 @@
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Heart, MessageCircle, Share, MoreHorizontal, Loader2 } from 'lucide-react'
+import { Card, CardContent, CardHeader } from '../components/ui/card'
+import { Button } from '../components/ui/button'
+import { Input } from '../components/ui/input'
+import { Heart, MessageCircle, Share, MoreHorizontal, Loader2, Plus, Users, Globe, Send, ChevronDown, ChevronUp } from 'lucide-react'
+import feedService from '../api/feedService'
+import { useToast } from '../components/ui/simple-toast'
+import { FeedSkeleton } from '../components/SkeletonLoaders'
 
-
-// Mock feed service for now
-const feedService = {
-  getFeed: async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          posts: [
-            {
-              id: 1,
-              author: {
-                name: 'Suraj kumar',
-                role: 'Player',
-                avatar: 'https://i.pravatar.cc/150?img=66',
-                verified: true
-              },
-              content: {
-                text: 'Just finished an amazing training session! The new techniques we learned today are going to take my game to the next level.',
-                image: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=500&h=300&fit=crop&auto=format'
-              },
-              stats: {
-                likes: 42,
-                comments: 8,
-                shares: 3
-              },
-              timestamp: '2 hours ago'
-            }
-          ]
-        })
-      }, 1000)
-    })
-  },
-  toggleLike: async (postId) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ likes: Math.floor(Math.random() * 100) })
-      }, 500)
-    })
-  }
-}
-import { useToast } from '@/components/ui/simple-toast'
-
-// Dummy feed data with reliable image sources
-const dummyFeedData = [
-  {
-    id: 1,
-    author: {
-      name: 'Suraj kumar',
-      role: 'Player',
-      avatar: 'https://i.pravatar.cc/150?img=66',
-      verified: true
-    },
-    content: {
-      text: 'Just finished an amazing training session! The new techniques we learned today are going to take my game to the next level. Can\'t wait to apply them in the next match! 🏏',
-      image: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=500&h=300&fit=crop&auto=format'
-    },
-    stats: {
-      likes: 42,
-      comments: 8,
-      shares: 3
-    },
-    timestamp: '2 hours ago'
-  },
-  {
-    id: 2,
-    author: {
-      name: 'Cricket Academy Mumbai',
-      role: 'Academy',
-      avatar: 'https://i.pravatar.cc/150?img=2',
-      verified: true
-    },
-    content: {
-      text: 'Registration is now open for our summer cricket camp! Join us for intensive training sessions with professional coaches. Limited spots available. Contact us for more details.',
-      image: "https://plus.unsplash.com/premium_photo-1683887033886-6c45d4b659f3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8YWNhZGVteXxlbnwwfHwwfHx8MA%3D%3D"
-    },
-    stats: {
-      likes: 28,
-      comments: 12,
-      shares: 15
-    },
-    timestamp: '4 hours ago'
-  },
-  {
-    id: 3,
-    author: {
-      name: 'Jay Kumar',
-      role: 'Scout',
-      avatar: 'https://i.pravatar.cc/150?img=3',
-      verified: false
-    },
-    content: {
-      text: 'Spotted some incredible talent at the local tournament today. The young players are showing great potential. Always exciting to discover the next generation of cricket stars!',
-      image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&h=300&fit=crop&auto=format'
-    },
-    stats: {
-      likes: 15,
-      comments: 5,
-      shares: 2
-    },
-    timestamp: '6 hours ago'
-  },
-  {
-    id: 4,
-    author: {
-      name: 'Delhi Cricket Club',
-      role: 'Club',
-      avatar: 'https://i.pravatar.cc/150?img=4',
-      verified: true
-    },
-    content: {
-      text: 'Congratulations to our U-19 team for winning the district championship! The boys played exceptionally well. Special mention to our captain for his outstanding leadership.',
-      image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=500&h=300&fit=crop&auto=format'
-    },
-    stats: {
-      likes: 67,
-      comments: 23,
-      shares: 18
-    },
-    timestamp: '1 day ago'
-  },
-  {
-    id: 5,
-    author: {
-      name: 'Aman Singh',
-      role: 'Player',
-      avatar: 'https://i.pravatar.cc/150?img=5',
-      verified: false
-    },
-    content: {
-      text: 'Working on my batting technique with the new coach. The focus on footwork and timing is really paying off. Practice makes perfect!',
-      image: "https://plus.unsplash.com/premium_photo-1685231505268-c8f27c4e8870?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8cGxheWVyfGVufDB8fDB8fHww"
-    },
-    stats: {
-      likes: 31,
-      comments: 7,
-      shares: 4
-    },
-    timestamp: '2 days ago'
-  }
-]
-
-export default function Feed() {
-  const [likedPosts, setLikedPosts] = useState(new Set())
-  const [feedData, setFeedData] = useState([])
-  const [imageErrors, setImageErrors] = useState(new Set())
+export default function FeedSimple() {
+  const [posts, setPosts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isCreating, setIsCreating] = useState(false)
   const [isLiking, setIsLiking] = useState(new Set())
+  const [likedPosts, setLikedPosts] = useState(new Set())
+  const [feedType, setFeedType] = useState('global') // 'global' or 'personalized'
+  const [expandedComments, setExpandedComments] = useState(new Set())
+  const [comments, setComments] = useState({})
+  const [newComment, setNewComment] = useState('')
+  const [isCommenting, setIsCommenting] = useState(new Set())
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [newPost, setNewPost] = useState({
+    caption: '',
+    image: null
+  })
   const { toast } = useToast()
 
-  // Fetch feed data on component mount
   useEffect(() => {
     fetchFeed()
-  }, [])
+  }, [feedType])
 
   const fetchFeed = async () => {
     try {
       setIsLoading(true)
-      const response = await feedService.getFeed()
-      setFeedData(response.posts || [])
+      const response = feedType === 'global' 
+        ? await feedService.getFeed()
+        : await feedService.getPersonalizedFeed()
+      
+      setPosts(response.posts || [])
+      
+      // Initialize liked posts
+      const liked = new Set()
+      response.posts?.forEach(post => {
+        if (post.liked) {
+          liked.add(post.id)
+        }
+      })
+      setLikedPosts(liked)
     } catch (error) {
       console.error('Error fetching feed:', error)
       toast({
-        title: "Failed to load feed",
-        description: error.message || "Unable to fetch posts",
+        title: "Error",
+        description: "Failed to load feed",
         variant: "destructive"
       })
-      // Fallback to dummy data if API fails
-      setFeedData(dummyFeedData)
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleLike = async (postId) => {
-    if (isLiking.has(postId)) return // Prevent multiple clicks
-    
     try {
       setIsLiking(prev => new Set([...prev, postId]))
       
-      const response = await feedService.toggleLike(postId)
+      const updatedPost = await feedService.likePost(postId)
       
-      // Update local state optimistically
+      setPosts(prev => prev.map(post => 
+        post.id === postId ? updatedPost : post
+      ))
+      
       setLikedPosts(prev => {
-        const newLikedPosts = new Set(prev)
-        if (newLikedPosts.has(postId)) {
-          newLikedPosts.delete(postId)
+        const newSet = new Set(prev)
+        if (updatedPost.liked) {
+          newSet.add(postId)
         } else {
-          newLikedPosts.add(postId)
+          newSet.delete(postId)
         }
-        return newLikedPosts
+        return newSet
       })
-
-      // Update the feed data with server response
-      setFeedData(prev => prev.map(post => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            stats: {
-              ...post.stats,
-              likes: response.likes
-            }
-          }
-        }
-        return post
-      }))
-      
     } catch (error) {
       console.error('Error liking post:', error)
       toast({
-        title: "Failed to like post",
-        description: error.message || "Unable to like post",
+        title: "Error",
+        description: "Failed to like post",
         variant: "destructive"
       })
     } finally {
@@ -225,112 +93,240 @@ export default function Feed() {
     }
   }
 
-  const handleImageError = (imageId) => {
-    setImageErrors(prev => new Set([...prev, imageId]))
+  const toggleComments = async (postId) => {
+    const isExpanded = expandedComments.has(postId)
+    
+    if (isExpanded) {
+      setExpandedComments(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(postId)
+        return newSet
+      })
+    } else {
+      setExpandedComments(prev => new Set([...prev, postId]))
+      
+      // Load comments if not already loaded
+      if (!comments[postId]) {
+        await loadComments(postId)
+      }
+    }
   }
 
-  const getRoleColor = (role) => {
-    switch (role) {
-      case 'Player':
-        return 'text-green-600 bg-green-50'
-      case 'Academy':
-        return 'text-blue-600 bg-blue-50'
-      case 'Club':
-        return 'text-purple-600 bg-purple-50'
-      case 'Scout':
-        return 'text-orange-600 bg-orange-50'
-      default:
-        return 'text-gray-600 bg-gray-50'
+  const loadComments = async (postId) => {
+    try {
+      const commentsData = await feedService.getComments(postId)
+      setComments(prev => ({
+        ...prev,
+        [postId]: commentsData
+      }))
+    } catch (error) {
+      console.error('Error loading comments:', error)
+      toast({
+        title: "Error",
+        description: "Failed to load comments",
+        variant: "destructive"
+      })
     }
+  }
+
+  const handleAddComment = async (postId) => {
+    if (!newComment.trim()) return
+
+    try {
+      setIsCommenting(prev => new Set([...prev, postId]))
+      
+      const commentData = {
+        text: newComment.trim()
+      }
+      
+      const newCommentData = await feedService.addComment(postId, commentData)
+      
+      setComments(prev => ({
+        ...prev,
+        [postId]: [...(prev[postId] || []), newCommentData]
+      }))
+      
+      setNewComment('')
+      
+      // Update post comment count
+      setPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, stats: { ...post.stats, comments: post.stats.comments + 1 } }
+          : post
+      ))
+    } catch (error) {
+      console.error('Error adding comment:', error)
+      toast({
+        title: "Error",
+        description: "Failed to add comment",
+        variant: "destructive"
+      })
+    } finally {
+      setIsCommenting(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(postId)
+        return newSet
+      })
+    }
+  }
+
+  const handleCreatePost = async () => {
+    if (!newPost.caption.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a caption",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      setIsCreating(true)
+      
+      const postData = {
+        caption: newPost.caption,
+        image: newPost.image
+      }
+      
+      const createdPost = await feedService.createPost(postData)
+      
+      setPosts(prev => [createdPost, ...prev])
+      setNewPost({ caption: '', image: null })
+      setShowCreateModal(false)
+      
+      toast({
+        title: "Success",
+        description: "Post created successfully",
+        variant: "default"
+      })
+    } catch (error) {
+      console.error('Error creating post:', error)
+      toast({
+        title: "Error",
+        description: "Failed to create post",
+        variant: "destructive"
+      })
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setNewPost(prev => ({
+          ...prev,
+          image: e.target.result
+        }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  if (isLoading) {
+    return <FeedSkeleton />
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="w-full max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:text-3xl">Sports Feed</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 sm:text-base">Stay updated with the latest from the sports community</p>
+      <div className="w-full max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:text-3xl">Sports Feed</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 sm:text-base">Stay updated with the latest from the sports community</p>
+          </div>
+          
+          {/* Feed Type Toggle */}
+          <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <Button
+              variant={feedType === 'global' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setFeedType('global')}
+              className={`flex items-center space-x-2 transition-all duration-200 ${
+                feedType === 'global' 
+                  ? 'bg-white dark:bg-gray-700 shadow-sm' 
+                  : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              <Globe className="w-4 h-4" />
+              <span>Global</span>
+            </Button>
+            <Button
+              variant={feedType === 'personalized' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setFeedType('personalized')}
+              className={`flex items-center space-x-2 transition-all duration-200 ${
+                feedType === 'personalized' 
+                  ? 'bg-white dark:bg-gray-700 shadow-sm' 
+                  : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>My Feed</span>
+            </Button>
+          </div>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="flex items-center space-x-2">
-              <Loader2 className="w-6 h-6 animate-spin" />
-              <span className="text-gray-600 dark:text-gray-400">Loading feed...</span>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {feedData.map((post) => (
-            <Card key={post.id} className="bg-white dark:bg-gray-800 shadow-sm border-0 hover:shadow-md transition-shadow duration-200">
+        {/* Create Post Button */}
+        <div className="mb-6">
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create New Post
+          </Button>
+        </div>
+
+        {/* Posts */}
+        <div className="space-y-4">
+          {posts.map((post) => (
+            <Card key={post.id} className="bg-white dark:bg-gray-800 shadow-sm border-0">
               <CardHeader className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3 flex-1 min-w-0">
-                    {imageErrors.has(`avatar-${post.id}`) ? (
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                        <span className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium">
-                          {post.author.name.charAt(0)}
-                        </span>
-                      </div>
-                    ) : (
-                      <img
-                        src={post.author.avatar}
-                        alt={post.author.name}
-                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover flex-shrink-0"
-                        onError={() => handleImageError(`avatar-${post.id}`)}
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 flex-wrap">
-                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate">
-                          {post.author.name}
-                        </h3>
-                        {post.author.verified && (
-                          <span className="text-blue-500 text-sm">✓</span>
-                        )}
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(post.author.role)}`}>
-                          {post.author.role}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {post.timestamp}
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        {post.author.name.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">
+                        {post.author.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {post.author.role} • {new Date(post.timestamp).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
+                  <Button variant="ghost" size="sm">
                     <MoreHorizontal className="w-4 h-4" />
                   </Button>
                 </div>
               </CardHeader>
               
-              <CardContent className="pt-0 px-4 sm:px-6">
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-900 dark:text-white leading-relaxed sm:text-base">
-                    {post.content.text}
-                  </p>
-                  
-                  {post.content.image && (
-                    <div className="rounded-lg overflow-hidden">
-                      {imageErrors.has(`content-${post.id}`) ? (
-                        <div className="w-full h-32 sm:h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded-lg">
-                          <div className="text-center">
-                            <div className="text-gray-500 dark:text-gray-400 text-sm mb-2">📷</div>
-                            <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">Image not available</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <img
-                          src={post.content.image}
-                          alt="Post content"
-                          className="w-full h-auto object-cover max-h-64 sm:max-h-80"
-                          onError={() => handleImageError(`content-${post.id}`)}
-                        />
-                      )}
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center space-x-4">
+              <CardContent className="p-4 sm:p-6 pt-0">
+                <p className="text-gray-900 dark:text-white mb-4">
+                  {post.caption}
+                </p>
+                
+                {post.image && (
+                  <div className="mb-4">
+                    <img
+                      src={post.image}
+                      alt="Post"
+                      className="w-full h-64 object-cover rounded-lg"
+                    />
+                  </div>
+                )}
+                
+                {/* Actions */}
+                <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="cursor-pointer">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -345,46 +341,178 @@ export default function Feed() {
                         {isLiking.has(post.id) ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
-                          <Heart 
-                            className={`w-4 h-4 ${
-                              likedPosts.has(post.id) ? 'fill-current' : ''
-                            }`} 
-                          />
+                          <Heart className={`w-4 h-4 ${likedPosts.has(post.id) ? 'fill-current' : ''}`} />
                         )}
                         <span className="text-sm">{post.stats.likes}</span>
                       </Button>
-                      
+                    </div>
+                    
+                    <div className="cursor-pointer">
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => toggleComments(post.id)}
                         className="flex items-center space-x-2 px-3 py-2 text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
                       >
                         <MessageCircle className="w-4 h-4" />
                         <span className="text-sm">{post.stats.comments}</span>
                       </Button>
-                      
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center space-x-2 px-3 py-2 text-gray-500 hover:text-green-500 dark:text-gray-400 dark:hover:text-green-400"
-                      >
-                        <Share className="w-4 h-4" />
-                        <span className="text-sm">{post.stats.shares}</span>
-                      </Button>
                     </div>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center space-x-2 px-3 py-2 text-gray-500 hover:text-green-500 dark:text-gray-400 dark:hover:text-green-400"
+                    >
+                      <Share className="w-4 h-4" />
+                      <span className="text-sm">{post.stats.shares}</span>
+                    </Button>
                   </div>
                 </div>
+                
+                {/* Comments Section */}
+                {expandedComments.has(post.id) && (
+                  <div className="border-t border-gray-100 dark:border-gray-700 pt-4 mt-4">
+                    {/* Comments List */}
+                    <div className="space-y-3 mb-4">
+                      {comments[post.id]?.slice(0, 3).map((comment, index) => (
+                        <div key={comment.id || index} className="flex items-start space-x-3">
+                          <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                              {comment.author?.name?.charAt(0) || 'U'}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                {comment.author?.name || 'User'}
+                              </span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {comment.timestamp || 'now'}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                              {comment.text}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* View All Comments */}
+                      {comments[post.id]?.length > 3 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                          View all {comments[post.id].length} comments
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {/* Add Comment Input */}
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">U</span>
+                      </div>
+                      <div className="flex-1 flex items-center space-x-2">
+                        <Input
+                          placeholder="Write a comment..."
+                          value={newComment}
+                          onChange={(e) => setNewComment(e.target.value)}
+                          className="flex-1"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault()
+                              handleAddComment(post.id)
+                            }
+                          }}
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => handleAddComment(post.id)}
+                          disabled={!newComment.trim() || isCommenting.has(post.id)}
+                          className="px-3"
+                        >
+                          {isCommenting.has(post.id) ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Send className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        {/* Create Post Modal */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Create New Post
+              </h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Caption
+                  </label>
+                  <textarea
+                    value={newPost.caption}
+                    onChange={(e) => setNewPost(prev => ({ ...prev, caption: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    rows={3}
+                    placeholder="What's on your mind?"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Image (Optional)
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  {newPost.image && (
+                    <img
+                      src={newPost.image}
+                      alt="Preview"
+                      className="w-full h-32 object-cover rounded-lg mt-2"
+                    />
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-end space-x-3 mt-6">
+                <Button
+                  onClick={() => setShowCreateModal(false)}
+                  variant="outline"
+                  disabled={isCreating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreatePost}
+                  disabled={isCreating || !newPost.caption.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {isCreating ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : null}
+                  {isCreating ? 'Creating...' : 'Create Post'}
+                </Button>
+              </div>
+            </div>
           </div>
         )}
-        
-        <div className="mt-6 text-center">
-          <Button variant="outline" className="px-6 py-2 text-sm">
-            Load More Posts
-          </Button>
-        </div>
       </div>
     </div>
   )

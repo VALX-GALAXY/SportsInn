@@ -7,6 +7,8 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Profile from './pages/Profile'
 import Feed from './pages/Feed'
+import Notifications from './pages/Notifications'
+import Search from './pages/Search'
 import './App.css'
 
 function App() {
@@ -39,6 +41,16 @@ function App() {
                 <Route path="/feed" element={
                   <ErrorBoundary>
                     <Feed />
+                  </ErrorBoundary>
+                } />
+                <Route path="/notifications" element={
+                  <ErrorBoundary>
+                    <Notifications />
+                  </ErrorBoundary>
+                } />
+                <Route path="/search" element={
+                  <ErrorBoundary>
+                    <Search />
                   </ErrorBoundary>
                 } />
               </Routes>

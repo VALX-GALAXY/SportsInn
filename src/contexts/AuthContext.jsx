@@ -1,54 +1,6 @@
 import { createContext, useContext, useReducer, useEffect } from 'react'
-// import authService from '@/api/authService'
-import { useToast } from '@/components/ui/simple-toast'
-
-// Mock auth service for now
-const authService = {
-  login: async (credentials) => {
-    // Mock API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          user: {
-            id: 'user_123',
-            name: credentials.email.split('@')[0],
-            email: credentials.email,
-            role: 'Player'
-          },
-          token: 'mock_token_123',
-          refreshToken: 'mock_refresh_token_123'
-        })
-      }, 1000)
-    })
-  },
-  signup: async (signupData) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          user: {
-            id: 'user_123',
-            name: signupData.name,
-            email: signupData.email,
-            role: signupData.role
-          },
-          token: 'mock_token_123',
-          refreshToken: 'mock_refresh_token_123'
-        })
-      }, 1000)
-    })
-  },
-  logout: async () => {
-    return Promise.resolve()
-  },
-  updateProfile: async (userData) => {
-    return Promise.resolve(userData)
-  },
-  storeAuthData: (authData) => {
-    localStorage.setItem('token', authData.token)
-    localStorage.setItem('refreshToken', authData.refreshToken)
-    localStorage.setItem('user', JSON.stringify(authData.user))
-  }
-}
+import authService from '../api/authService'
+import { useToast } from '../components/ui/simple-toast'
 
 const AuthContext = createContext()
 

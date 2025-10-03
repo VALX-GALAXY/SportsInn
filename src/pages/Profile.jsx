@@ -6,7 +6,9 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Home, Users, Eye, Edit, Save, X } from 'lucide-react'
+import { User, Home, Users, Eye, Edit, Save, X, UserPlus, UserMinus, Loader2 } from 'lucide-react'
+import { useToast } from '@/components/ui/simple-toast'
+import followService from '@/api/followService'
 
 export default function Profile() {
   const { user, updateUser, isAuthenticated } = useAuth()
@@ -27,6 +29,15 @@ export default function Profile() {
   const [imagePreview, setImagePreview] = useState(user?.profilePicture || null)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [editingSection, setEditingSection] = useState(null)
+  
+  // Follow functionality state
+  const [isFollowLoading, setIsFollowLoading] = useState(false)
+  const [followStats, setFollowStats] = useState({
+    followers: 0,
+    following: 0,
+    isFollowing: false
+  })
+  const { toast } = useToast()
 
   // Update form data when user data changes
   useEffect(() => {
@@ -45,6 +56,66 @@ export default function Profile() {
       setImagePreview(user.profilePicture || null)
     }
   }, [user])
+
+  // Load follow stats when user changes
+  useEffect(() => {
+    if (user) {
+      loadFollowStats()
+    }
+  }, [user])
+
+  const loadFollowStats = async () => {
+    try {
+      const stats = followService.getUserStats(user.id)
+      const isFollowing = followService.isFollowing(user.id, user.id) // This will be false for self
+      setFollowStats({
+        ...stats,
+        isFollowing
+      })
+    } catch (error) {
+      console.error('Error loading follow stats:', error)
+    }
+  }
+
+  const handleFollow = async () => {
+    try {
+      setIsFollowLoading(true)
+      
+      if (followStats.isFollowing) {
+        await followService.unfollowUser(user.id)
+        setFollowStats(prev => ({
+          ...prev,
+          followers: prev.followers - 1,
+          isFollowing: false
+        }))
+        toast({
+          title: "Unfollowed",
+          description: "You have unfollowed this user",
+          variant: "default"
+        })
+      } else {
+        await followService.followUser(user.id)
+        setFollowStats(prev => ({
+          ...prev,
+          followers: prev.followers + 1,
+          isFollowing: true
+        }))
+        toast({
+          title: "Following",
+          description: "You are now following this user",
+          variant: "default"
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      })
+    } finally {
+      setIsFollowLoading(false)
+    }
+  }
 
   // Redirect if not authenticated
   if (!isAuthenticated) {
@@ -518,6 +589,54 @@ export default function Profile() {
                 </p>
               </div>
             </div>
+            
+            {/* Follow/Unfollow Section */}
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {followStats.followers}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Followers</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {followStats.following}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Following</div>
+                  </div>
+                </div>
+                
+                <Button
+                  onClick={handleFollow}
+                  disabled={isFollowLoading}
+                  variant={followStats.isFollowing ? "outline" : "default"}
+                  className={`transition-all duration-200 ${
+                    followStats.isFollowing 
+                      ? 'border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900' 
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
+                  {isFollowLoading ? (
+                    <div className="flex items-center">
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      <span>Loading...</span>
+                    </div>
+                  ) : followStats.isFollowing ? (
+                    <div className="flex items-center">
+                      <UserMinus className="w-4 h-4 mr-2" />
+                      <span>Unfollow</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      <span>Follow</span>
+                    </div>
+                  )}
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -634,4 +753,3 @@ export default function Profile() {
     </div>
   )
 }
-

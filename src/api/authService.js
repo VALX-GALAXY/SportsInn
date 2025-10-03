@@ -1,80 +1,257 @@
-import axiosInstance from './axiosInstance'
-
+// Mock Auth Service - Frontend Only
 class AuthService {
-  // Login with email and password
+  // Mock users database with compression
+  getUsers() {
+    try {
+      const users = localStorage.getItem('sportshub_users')
+      return users ? JSON.parse(users) : []
+    } catch (error) {
+      console.error('Error parsing users data:', error)
+      // Clear corrupted data
+      localStorage.removeItem('sportshub_users')
+      return []
+    }
+  }
+
+  saveUsers(users) {
+    try {
+      // Limit users to prevent storage overflow
+      const limitedUsers = users.slice(-100) // Keep only last 100 users
+      localStorage.setItem('sportshub_users', JSON.stringify(limitedUsers))
+    } catch (error) {
+      console.error('Error saving users data:', error)
+      // If still too large, clear and start fresh
+      localStorage.removeItem('sportshub_users')
+      localStorage.setItem('sportshub_users', JSON.stringify(users.slice(-10)))
+    }
+  }
+
+  // Generate mock JWT token
+  generateToken(user) {
+    return `mock_jwt_${user.id}_${Date.now()}`
+  }
+
   async login(credentials) {
     try {
-      const response = await axiosInstance.post('/auth/login', credentials)
-      return response.data
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      const users = this.getUsers()
+      const user = users.find(u => 
+        u.email === credentials.email && u.password === credentials.password
+      )
+      
+      if (!user) {
+        throw new Error('Invalid email or password')
+      }
+
+      const token = this.generateToken(user)
+      const refreshToken = `mock_refresh_${user.id}_${Date.now()}`
+      
+      // Store auth data
+      localStorage.setItem('token', token)
+      localStorage.setItem('refreshToken', refreshToken)
+      localStorage.setItem('user', JSON.stringify(user))
+      
+      return {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar,
+          verified: user.verified
+        },
+        token,
+        refreshToken
+      }
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Login failed')
+      throw new Error(error.message || 'Login failed')
     }
   }
 
-  // Signup with role-based data
-  async signup(signupData) {
+  async signup(userData) {
     try {
-      const response = await axiosInstance.post('/auth/signup', signupData)
-      return response.data
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      const users = this.getUsers()
+      
+      // Check if user already exists
+      if (users.find(u => u.email === userData.email)) {
+        throw new Error('User already exists')
+      }
+
+      const newUser = {
+        id: `user_${Date.now()}`,
+        name: userData.name,
+        email: userData.email,
+        password: userData.password, // In real app, this would be hashed
+        role: userData.role,
+        avatar: null,
+        verified: false,
+        createdAt: new Date().toISOString()
+      }
+
+      users.push(newUser)
+      this.saveUsers(users)
+
+      const token = this.generateToken(newUser)
+      const refreshToken = `mock_refresh_${newUser.id}_${Date.now()}`
+      
+      // Store auth data
+      localStorage.setItem('token', token)
+      localStorage.setItem('refreshToken', refreshToken)
+      localStorage.setItem('user', JSON.stringify(newUser))
+      
+      return {
+        user: {
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
+          avatar: newUser.avatar,
+          verified: newUser.verified
+        },
+        token,
+        refreshToken
+      }
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Signup failed')
+      throw new Error(error.message || 'Signup failed')
     }
   }
 
-  // Google OAuth login
-  async googleLogin(googleToken) {
+  async googleLogin(googleData) {
     try {
-      const response = await axiosInstance.post('/auth/google', {
-        token: googleToken
-      })
-      return response.data
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      const users = this.getUsers()
+      let user = users.find(u => u.email === googleData.email)
+      
+      if (!user) {
+        // Create new user for Google login
+        user = {
+          id: `user_${Date.now()}`,
+          name: googleData.name,
+          email: googleData.email,
+          role: 'Player', // Default role
+          avatar: googleData.picture,
+          verified: true,
+          createdAt: new Date().toISOString()
+        }
+        users.push(user)
+        this.saveUsers(users)
+      }
+
+      const token = this.generateToken(user)
+      const refreshToken = `mock_refresh_${user.id}_${Date.now()}`
+      
+      // Store auth data
+      localStorage.setItem('token', token)
+      localStorage.setItem('refreshToken', refreshToken)
+      localStorage.setItem('user', JSON.stringify(user))
+      
+      return {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar,
+          verified: user.verified
+        },
+        token,
+        refreshToken
+      }
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Google login failed')
+      throw new Error(error.message || 'Google login failed')
     }
   }
 
-  // Refresh access token
-  async refreshToken(refreshToken) {
+  async refreshToken() {
     try {
-      const response = await axiosInstance.post('/auth/refresh', { refreshToken })
-      return response.data
+      const refreshToken = localStorage.getItem('refreshToken')
+      if (!refreshToken) {
+        throw new Error('No refresh token available')
+      }
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      const user = JSON.parse(localStorage.getItem('user'))
+      if (!user) {
+        throw new Error('No user data available')
+      }
+
+      const newToken = this.generateToken(user)
+      localStorage.setItem('token', newToken)
+      
+      return { token: newToken }
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Token refresh failed')
+      throw new Error(error.message || 'Token refresh failed')
     }
   }
 
-  // Logout
   async logout() {
     try {
-      await axiosInstance.post('/auth/logout')
-    } catch (error) {
-      // Even if logout fails on server, clear local storage
-      console.error('Logout error:', error)
-    } finally {
-      // Always clear local storage
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // Clear local storage
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
+      
+      return { message: 'Logged out successfully' }
+    } catch (error) {
+      throw new Error(error.message || 'Logout failed')
     }
   }
 
-  // Get current user profile
   async getCurrentUser() {
     try {
-      const response = await axiosInstance.get('/auth/me')
-      return response.data
+      const user = localStorage.getItem('user')
+      if (!user) {
+        throw new Error('No user data available')
+      }
+      
+      return JSON.parse(user)
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch user profile')
+      throw new Error(error.message || 'Failed to get user data')
     }
   }
 
-  // Update user profile
-  async updateProfile(profileData) {
+  async updateProfile(userData) {
     try {
-      const response = await axiosInstance.put('/auth/profile', profileData)
-      return response.data
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      const users = this.getUsers()
+      const currentUser = JSON.parse(localStorage.getItem('user'))
+      
+      const userIndex = users.findIndex(u => u.id === currentUser.id)
+      if (userIndex === -1) {
+        throw new Error('User not found')
+      }
+
+      // Update user data
+      users[userIndex] = {
+        ...users[userIndex],
+        ...userData,
+        id: currentUser.id, // Keep original ID
+        email: currentUser.email // Keep original email
+      }
+
+      this.saveUsers(users)
+      
+      // Update stored user data
+      const updatedUser = users[userIndex]
+      localStorage.setItem('user', JSON.stringify(updatedUser))
+      
+      return updatedUser
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to update profile')
+      throw new Error(error.message || 'Profile update failed')
     }
   }
 
@@ -98,6 +275,23 @@ class AuthService {
     localStorage.setItem('token', authData.token)
     localStorage.setItem('refreshToken', authData.refreshToken)
     localStorage.setItem('user', JSON.stringify(authData.user))
+  }
+
+  // Clear all app data (for debugging)
+  clearAllData() {
+    localStorage.removeItem('sportshub_users')
+    localStorage.removeItem('sportshub_feed')
+    localStorage.removeItem('sportshub_follows')
+    localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
+    localStorage.removeItem('user')
+    
+    // Clear all comment data
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sportshub_comments_')) {
+        localStorage.removeItem(key)
+      }
+    })
   }
 }
 

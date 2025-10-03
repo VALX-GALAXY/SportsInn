@@ -1,8 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Moon, Sun, User, LogOut, Home, Users, Eye, Menu, X } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
+import { Button } from '../components/ui/button'
+import { Card } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
+import { Moon, Sun, User, LogOut, Home, Users, Eye, Menu, X, Bell, Search } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 const Navbar = () => {
@@ -128,6 +129,15 @@ const Navbar = () => {
               <Link to="/feed" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
                 Feed
               </Link>
+              <Link to="/search" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+                <Search className="w-5 h-5" />
+              </Link>
+              <Link to="/notifications" className="relative text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+                <Bell className="w-5 h-5" />
+                <Badge variant="destructive" className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center text-xs">
+                  3
+                </Badge>
+              </Link>
             </div>
           </div>
           
@@ -211,6 +221,29 @@ const Navbar = () => {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Feed
+            </Link>
+            <Link 
+              to="/search" 
+              className="block px-3 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <div className="flex items-center space-x-2">
+                <Search className="w-4 h-4" />
+                <span>Search</span>
+              </div>
+            </Link>
+            <Link 
+              to="/notifications" 
+              className="relative block px-3 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <div className="flex items-center space-x-2">
+                <Bell className="w-4 h-4" />
+                <span>Notifications</span>
+                <Badge variant="destructive" className="w-5 h-5 flex items-center justify-center text-xs">
+                  3
+                </Badge>
+              </div>
             </Link>
           </div>
         </div>
