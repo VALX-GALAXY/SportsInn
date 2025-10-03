@@ -267,7 +267,7 @@ class FeedService {
         timestamp: new Date().toISOString()
       }
 
-      const comments = this.getComments(postId)
+      const comments = await this.getComments(postId)
       comments.push(newComment)
       localStorage.setItem(`sportshub_comments_${postId}`, JSON.stringify(comments))
 
