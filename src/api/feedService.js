@@ -1,14 +1,30 @@
+import uploadService from './uploadService'
+
 // Mock Feed Service - Frontend Only
 class FeedService {
   // Get mock feed data with compression
   getFeedData() {
     try {
       const feed = localStorage.getItem('sportshub_feed')
-      return feed ? JSON.parse(feed) : this.getDefaultFeedData()
+      
+      // If no feed data exists, return default data
+      if (!feed) {
+        return this.getDefaultFeedData()
+      }
+      
+      const parsedFeed = JSON.parse(feed)
+      
+      // Resolve media references
+      return parsedFeed.map(post => ({
+        ...post,
+        image: post.image ? this.getMedia(post.image) : null,
+        video: post.video ? this.getMedia(post.video) : null
+      }))
     } catch (error) {
       console.error('Error parsing feed data:', error)
       // Clear corrupted data and return default
       localStorage.removeItem('sportshub_feed')
+      this.clearAllMedia()
       return this.getDefaultFeedData()
     }
   }
@@ -17,13 +33,95 @@ class FeedService {
     try {
       // Limit feed to prevent storage overflow (keep last 50 posts)
       const limitedFeed = feed.slice(-50)
-      localStorage.setItem('sportshub_feed', JSON.stringify(limitedFeed))
+      
+      // Store media separately to avoid quota issues
+      const feedWithoutMedia = limitedFeed.map(post => {
+        const { image, video, ...postWithoutMedia } = post
+        return {
+          ...postWithoutMedia,
+          image: image ? this.storeMedia(image, 'image') : null,
+          video: video ? this.storeMedia(video, 'video') : null
+        }
+      })
+      
+      localStorage.setItem('sportshub_feed', JSON.stringify(feedWithoutMedia))
     } catch (error) {
       console.error('Error saving feed data:', error)
       // If still too large, clear and start fresh
       localStorage.removeItem('sportshub_feed')
+      // Clear all media storage
+      this.clearAllMedia()
       localStorage.setItem('sportshub_feed', JSON.stringify(feed.slice(-10)))
     }
+  }
+
+  // Store media separately to avoid quota issues
+  storeMedia(dataUrl, type) {
+    try {
+      const mediaId = `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      localStorage.setItem(`sportshub_media_${mediaId}`, dataUrl)
+      return `media://${mediaId}`
+    } catch (error) {
+      console.warn('Could not store media, using placeholder:', error)
+      return `placeholder://${type}`
+    }
+  }
+
+  // Get media from storage
+  getMedia(mediaRef) {
+    if (mediaRef && mediaRef.startsWith('media://')) {
+      const mediaId = mediaRef.replace('media://', '')
+      return localStorage.getItem(`sportshub_media_${mediaId}`) || `placeholder://${mediaId.split('_')[0]}`
+    }
+    return mediaRef
+  }
+
+  // Clear all media storage
+  clearAllMedia() {
+    const keys = Object.keys(localStorage)
+    keys.forEach(key => {
+      if (key.startsWith('sportshub_media_')) {
+        localStorage.removeItem(key)
+      }
+    })
+  }
+
+  // Clean up old media to prevent storage buildup
+  cleanupOldMedia() {
+    try {
+      const keys = Object.keys(localStorage)
+      const mediaKeys = keys.filter(key => key.startsWith('sportshub_media_'))
+      
+      // Keep only the most recent 100 media items
+      if (mediaKeys.length > 100) {
+        const sortedKeys = mediaKeys.sort((a, b) => {
+          const aTime = parseInt(a.split('_')[1])
+          const bTime = parseInt(b.split('_')[1])
+          return bTime - aTime
+        })
+        
+        // Remove oldest media
+        sortedKeys.slice(100).forEach(key => {
+          localStorage.removeItem(key)
+        })
+      }
+    } catch (error) {
+      console.warn('Error cleaning up old media:', error)
+    }
+  }
+
+  // Clear all feed data and start fresh
+  clearFeedData() {
+    localStorage.removeItem('sportshub_feed')
+    this.clearAllMedia()
+    console.log('Feed data and media cleared')
+  }
+
+  // Force refresh with default data (ignores localStorage)
+  refreshWithDefaultData() {
+    localStorage.removeItem('sportshub_feed')
+    this.clearAllMedia()
+    return this.getDefaultFeedData()
   }
 
   // Get default mock feed data
@@ -33,12 +131,12 @@ class FeedService {
         id: 'post_1',
         author: {
           id: 'user_1',
-          name: 'Alex Johnson',
+          name: 'Suraj Kumar',
           avatar: null,
           role: 'Player'
         },
-        caption: 'Just finished an amazing training session! 💪 The team is looking stronger than ever. Can\'t wait for the upcoming season!',
-        image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&h=300&fit=crop',
+        caption: 'Just finished an amazing training session! The team is looking stronger than ever. Can\'t wait for the upcoming season!',
+        image: 'https://images.unsplash.com/photo-1759354001829-233b2025c6b2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwzfHx8ZW58MHx8fHx8',
         timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
         stats: {
           likes: 24,
@@ -51,7 +149,7 @@ class FeedService {
         id: 'post_2',
         author: {
           id: 'user_2',
-          name: 'Sarah Wilson',
+          name: 'Tejaswii Singh',
           avatar: null,
           role: 'Academy'
         },
@@ -69,7 +167,7 @@ class FeedService {
         id: 'post_3',
         author: {
           id: 'user_3',
-          name: 'Mike Chen',
+          name: 'Trisha',
           avatar: null,
           role: 'Scout'
         },
@@ -87,11 +185,11 @@ class FeedService {
         id: 'post_4',
         author: {
           id: 'user_4',
-          name: 'Emma Davis',
+          name: 'Jay',
           avatar: null,
           role: 'Player'
         },
-        caption: 'Recovery day after yesterday\'s intense match. Proper rest and nutrition are just as important as training! 🥗💤',
+        caption: 'Recovery day after yesterday\'s intense match. Proper rest and nutrition are just as important as training! 💤',
         image: null,
         timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), // 8 hours ago
         stats: {
@@ -105,11 +203,11 @@ class FeedService {
         id: 'post_5',
         author: {
           id: 'user_5',
-          name: 'David Rodriguez',
+          name: 'David',
           avatar: null,
           role: 'Club'
         },
-        caption: 'Exciting news! Our club has signed a partnership with a major sports brand. This will help us provide better facilities and equipment for our players! 🎉',
+        caption: 'Exciting news! Our club has signed a partnership with a major sports brand. This will help us provide better facilities and equipment for our players!',
         image: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=500&h=300&fit=crop',
         timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // 12 hours ago
         stats: {
@@ -177,6 +275,39 @@ class FeedService {
         throw new Error('User not authenticated')
       }
 
+      let uploadedImage = null
+      let uploadedVideo = null
+
+      // Handle file uploads if files are provided
+      console.log('feedService - postData:', postData)
+      console.log('feedService - uploadService methods:', Object.getOwnPropertyNames(uploadService))
+      
+      if (postData.image && typeof postData.image === 'object' && postData.image instanceof File) {
+        try {
+          console.log('feedService - uploading image:', postData.image)
+          uploadedImage = await uploadService.uploadImageMock(postData.image)
+          console.log('feedService - image upload result:', uploadedImage)
+        } catch (error) {
+          console.error('Error uploading image:', error)
+          throw new Error('Failed to upload image')
+        }
+      } else if (postData.image) {
+        uploadedImage = { url: postData.image }
+      }
+
+      if (postData.video && typeof postData.video === 'object' && postData.video instanceof File) {
+        try {
+          console.log('feedService - uploading video:', postData.video)
+          uploadedVideo = await uploadService.uploadVideoMock(postData.video)
+          console.log('feedService - video upload result:', uploadedVideo)
+        } catch (error) {
+          console.error('Error uploading video:', error)
+          throw new Error('Failed to upload video')
+        }
+      } else if (postData.video) {
+        uploadedVideo = { url: postData.video }
+      }
+
       const newPost = {
         id: `post_${Date.now()}`,
         author: {
@@ -186,7 +317,9 @@ class FeedService {
           role: user.role
         },
         caption: postData.caption,
-        image: postData.image,
+        image: uploadedImage?.url || postData.image,
+        video: uploadedVideo?.url || postData.video,
+        fileType: postData.fileType,
         timestamp: new Date().toISOString(),
         stats: {
           likes: 0,
@@ -195,6 +328,9 @@ class FeedService {
         },
         liked: false
       }
+
+      // Clean up old media before adding new post
+      this.cleanupOldMedia()
 
       const feed = this.getFeedData()
       feed.unshift(newPost) // Add to beginning

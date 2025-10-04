@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Home, Users, Eye, Edit, Save, X, UserPlus, UserMinus, Loader2 } from 'lucide-react'
+import { User, Home, Users, Eye, Edit, Save, X, UserPlus, UserMinus, Loader2, Trophy, Target, BarChart3, Star, TrendingUp, Calendar, Award } from 'lucide-react'
 import { useToast } from '@/components/ui/simple-toast'
 import followService from '@/api/followService'
 
@@ -749,6 +749,311 @@ export default function Profile() {
             )}
           </CardContent>
         </Card>
+
+        {/* Role-Based Dashboard Sections */}
+        {user?.role === 'Player' && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Trophy className="w-5 h-5 text-yellow-500" />
+                <span>My Performance</span>
+              </CardTitle>
+              <CardDescription>
+                Track your athletic performance and achievements
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Goals This Season</p>
+                      <p className="text-2xl font-bold">12</p>
+                    </div>
+                    <Target className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Games Played</p>
+                      <p className="text-2xl font-bold">24</p>
+                    </div>
+                    <BarChart3 className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Win Rate</p>
+                      <p className="text-2xl font-bold">75%</p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6">
+                <h4 className="text-lg font-semibold mb-4">Recent Achievements</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <Award className="w-5 h-5 text-yellow-500" />
+                    <div>
+                      <p className="font-medium">Player of the Month</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">December 2024</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <Star className="w-5 h-5 text-blue-500" />
+                    <div>
+                      <p className="font-medium">Top Scorer</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Last 3 games</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {user?.role === 'Academy' && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Users className="w-5 h-5 text-blue-500" />
+                <span>My Students/Players</span>
+              </CardTitle>
+              <CardDescription>
+                Manage your academy students and track their progress
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Total Students</p>
+                      <p className="text-2xl font-bold">45</p>
+                    </div>
+                    <Users className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Active Programs</p>
+                      <p className="text-2xl font-bold">8</p>
+                    </div>
+                    <Calendar className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Graduates</p>
+                      <p className="text-2xl font-bold">12</p>
+                    </div>
+                    <Trophy className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold mb-4">Top Performing Students</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        A
+                      </div>
+                      <div>
+                        <p className="font-medium">Alex Johnson</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Forward • Age 16</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-green-600">Excellent</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">95% Progress</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        S
+                      </div>
+                      <div>
+                        <p className="font-medium">Sarah Wilson</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Midfielder • Age 15</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-green-600">Very Good</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">88% Progress</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {user?.role === 'Club' && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Users className="w-5 h-5 text-green-500" />
+                <span>My Players</span>
+              </CardTitle>
+              <CardDescription>
+                Manage your club players and team performance
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Squad Size</p>
+                      <p className="text-2xl font-bold">25</p>
+                    </div>
+                    <Users className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Season Wins</p>
+                      <p className="text-2xl font-bold">18</p>
+                    </div>
+                    <Trophy className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">League Position</p>
+                      <p className="text-2xl font-bold">3rd</p>
+                    </div>
+                    <BarChart3 className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold mb-4">Key Players</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        M
+                      </div>
+                      <div>
+                        <p className="font-medium">Mike Davis</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Captain • Midfielder</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-green-600">Captain</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">8 Goals</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        J
+                      </div>
+                      <div>
+                        <p className="font-medium">John Smith</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Striker</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-green-600">Top Scorer</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">15 Goals</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {user?.role === 'Scout' && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Eye className="w-5 h-5 text-purple-500" />
+                <span>Players of Interest</span>
+              </CardTitle>
+              <CardDescription>
+                Track and manage your scouting targets
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Active Targets</p>
+                      <p className="text-2xl font-bold">15</p>
+                    </div>
+                    <Target className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Reports This Month</p>
+                      <p className="text-2xl font-bold">8</p>
+                    </div>
+                    <BarChart3 className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Successful Signings</p>
+                      <p className="text-2xl font-bold">3</p>
+                    </div>
+                    <Trophy className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold mb-4">Top Prospects</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        R
+                      </div>
+                      <div>
+                        <p className="font-medium">Ryan Martinez</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Forward • Age 19</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-yellow-600">High Priority</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Rating: 9.2/10</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        L
+                      </div>
+                      <div>
+                        <p className="font-medium">Liam Thompson</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Midfielder • Age 20</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-green-600">Medium Priority</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Rating: 8.5/10</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
-import { Heart, MessageCircle, Share, MoreHorizontal, Loader2, Plus, Users, Globe, Send, ChevronDown, ChevronUp } from 'lucide-react'
+import { Heart, MessageCircle, Share, MoreHorizontal, Loader2, Plus, Users, Globe, Send, ChevronDown, ChevronUp, Image, Video, X, Upload } from 'lucide-react'
 import feedService from '../api/feedService'
 import { useToast } from '../components/ui/simple-toast'
 import { FeedSkeleton } from '../components/SkeletonLoaders'
@@ -21,7 +21,11 @@ export default function FeedSimple() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newPost, setNewPost] = useState({
     caption: '',
-    image: null
+    image: null,
+    video: null,
+    fileType: null, // 'image' or 'video'
+    imagePreview: null,
+    videoPreview: null
   })
   const { toast } = useToast()
 
@@ -185,13 +189,19 @@ export default function FeedSimple() {
       
       const postData = {
         caption: newPost.caption,
-        image: newPost.image
+        image: newPost.image,
+        video: newPost.video,
+        fileType: newPost.fileType
       }
+      
+      console.log('Post data being sent:', postData)
+      console.log('Image type:', typeof postData.image, postData.image instanceof File)
+      console.log('Video type:', typeof postData.video, postData.video instanceof File)
       
       const createdPost = await feedService.createPost(postData)
       
       setPosts(prev => [createdPost, ...prev])
-      setNewPost({ caption: '', image: null })
+      setNewPost({ caption: '', image: null, video: null, fileType: null, imagePreview: null, videoPreview: null })
       setShowCreateModal(false)
       
       toast({
@@ -211,18 +221,32 @@ export default function FeedSimple() {
     }
   }
 
-  const handleImageChange = (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (file) {
+      const fileType = file.type.startsWith('video/') ? 'video' : 'image'
       const reader = new FileReader()
       reader.onload = (e) => {
         setNewPost(prev => ({
           ...prev,
-          image: e.target.result
+          [fileType]: file, // Store the actual file object for upload
+          fileType: fileType,
+          [`${fileType}Preview`]: e.target.result // Store preview for display
         }))
       }
       reader.readAsDataURL(file)
     }
+  }
+
+  const removeFile = () => {
+    setNewPost(prev => ({
+      ...prev,
+      image: null,
+      video: null,
+      imagePreview: null,
+      videoPreview: null,
+      fileType: null
+    }))
   }
 
   if (isLoading) {
@@ -272,13 +296,31 @@ export default function FeedSimple() {
 
         {/* Create Post Button */}
         <div className="mb-6">
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create New Post
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button
+              onClick={() => {
+                const defaultData = feedService.refreshWithDefaultData()
+                setPosts(defaultData)
+                toast({
+                  title: "Feed Refreshed",
+                  description: "Feed has been refreshed with default data",
+                  variant: "default"
+                })
+              }}
+              variant="outline"
+              size="sm"
+              className="flex-1"
+            >
+              Refresh Feed
+            </Button>
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create New Post
+            </Button>
+          </div>
         </div>
 
         {/* Posts */}
@@ -318,6 +360,22 @@ export default function FeedSimple() {
                     <img
                       src={post.image}
                       alt="Post"
+                      className="w-full h-64 object-cover rounded-lg"
+                      onError={(e) => {
+                        console.error('Image failed to load:', post.image)
+                        // Try to load a fallback image
+                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNTAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2NjY2NjYyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM2NjY2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBOb3QgQXZhaWxhYmxlPC90ZXh0Pjwvc3ZnPg=='
+                      }}
+                      onLoad={() => console.log('Image loaded successfully:', post.image)}
+                    />
+                  </div>
+                )}
+                
+                {post.video && (
+                  <div className="mb-4">
+                    <video
+                      src={post.video}
+                      controls
                       className="w-full h-64 object-cover rounded-lg"
                     />
                   </div>
@@ -473,21 +531,58 @@ export default function FeedSimple() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Image (Optional)
+                    Media (Optional)
                   </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  {newPost.image && (
-                    <img
-                      src={newPost.image}
-                      alt="Preview"
-                      className="w-full h-32 object-cover rounded-lg mt-2"
-                    />
-                  )}
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="file"
+                        accept="image/*,video/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                        id="media-upload"
+                      />
+                      <label
+                        htmlFor="media-upload"
+                        className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600"
+                      >
+                        <Upload className="w-4 h-4" />
+                        <span className="text-sm">Choose Image or Video</span>
+                      </label>
+                    </div>
+                    
+                    {newPost.imagePreview && (
+                      <div className="relative">
+                        <img
+                          src={newPost.imagePreview}
+                          alt="Preview"
+                          className="w-full h-32 object-cover rounded-lg"
+                        />
+                        <button
+                          onClick={removeFile}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                    
+                    {newPost.videoPreview && (
+                      <div className="relative">
+                        <video
+                          src={newPost.videoPreview}
+                          controls
+                          className="w-full h-32 object-cover rounded-lg"
+                        />
+                        <button
+                          onClick={removeFile}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               

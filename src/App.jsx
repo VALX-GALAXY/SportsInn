@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { NotificationProvider } from './contexts/NotificationContext'
 import { ToastProvider } from './components/ui/simple-toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
@@ -9,6 +10,7 @@ import Profile from './pages/Profile'
 import Feed from './pages/Feed'
 import Notifications from './pages/Notifications'
 import Search from './pages/Search'
+import Messages from './pages/Messages'
 import './App.css'
 
 function App() {
@@ -16,7 +18,8 @@ function App() {
     <ErrorBoundary>
       <ToastProvider>
         <AuthProvider>
-          <Router>
+          <NotificationProvider>
+            <Router>
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
               <ErrorBoundary>
                 <Navbar />
@@ -53,9 +56,15 @@ function App() {
                     <Search />
                   </ErrorBoundary>
                 } />
+                <Route path="/messages" element={
+                  <ErrorBoundary>
+                    <Messages />
+                  </ErrorBoundary>
+                } />
               </Routes>
             </div>
           </Router>
+          </NotificationProvider>
         </AuthProvider>
       </ToastProvider>
     </ErrorBoundary>

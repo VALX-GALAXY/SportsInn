@@ -1,13 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useNotifications } from '../contexts/NotificationContext'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
-import { Moon, Sun, User, LogOut, Home, Users, Eye, Menu, X, Bell, Search } from 'lucide-react'
+import { Moon, Sun, User, LogOut, Home, Users, Eye, Menu, X, Bell, Search, MessageCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth()
+  const { unreadCount } = useNotifications()
   const navigate = useNavigate()
   const [theme, setTheme] = useState('light')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -134,9 +136,14 @@ const Navbar = () => {
               </Link>
               <Link to="/notifications" className="relative text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
                 <Bell className="w-5 h-5" />
-                <Badge variant="destructive" className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center text-xs">
-                  3
-                </Badge>
+                {unreadCount > 0 && (
+                  <Badge variant="destructive" className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center text-xs">
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Link>
+              <Link to="/messages" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+                <MessageCircle className="w-5 h-5" />
               </Link>
             </div>
           </div>
