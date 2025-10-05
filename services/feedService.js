@@ -2,43 +2,110 @@ const Post = require("../models/postModel");
 const User = require("../models/userModel");
 const Notification = require("../models/notificationModel");
 
+// Cloudinary
+const cloudinary = require("cloudinary").v2;
+const fs = require("fs");
+const path = require("path");
+
+// configure cloudinary if env present
+if (process.env.CLOUDINARY_CLOUD_NAME) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+}
+
+async function uploadFile(file) {
+  // file from multer: file.path
+  if (!file) throw new Error("No file provided");
+
+  // if cloudinary configured, upload there
+  if (process.env.CLOUDINARY_CLOUD_NAME) {
+    const res = await cloudinary.uploader.upload(file.path, { resource_type: "auto" });
+    // remove local file
+    fs.unlinkSync(file.path);
+    return { url: res.secure_url, type: res.resource_type };
+  }
+
+  // fallback: local URL
+  const url = `${process.env.BASE_URL || "http://localhost:3000"}/uploads/${path.basename(file.path)}`;
+  return { url, type: file.mimetype.startsWith("video") ? "video" : "image" };
+}
+
+
+
 async function createPost(user, body) {
   const post = new Post({
     authorId: user._id,
     role: user.role,
-    caption: body.caption,
-    imageUrl: body.imageUrl,
+    caption: body.caption || "",
+    mediaUrl: body.mediaUrl || null,
+    mediaType: body.mediaType || null,
     likes: []
   });
   await post.save();
   return post;
 }
 
-async function getFeed() {
-  return Post.find().populate("authorId", "name role").sort({ createdAt: -1 });
+async function getFeed(page = 1, limit = 20) {
+  const skip = (page - 1) * limit;
+  return Post.find()
+    .populate("authorId", "name role")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
 }
 
-async function toggleLike(user, postId) {
+async function likePost(user, postId, io) {
   const post = await Post.findById(postId);
   if (!post) throw new Error("Post not found");
 
-  const index = post.likes.indexOf(user._id);
-  if (index >= 0){
-    post.likes.splice(index, 1);
-  } 
-  else {
+  // add if not already liked
+  if (!post.likes.includes(user._id)) {
     post.likes.push(user._id);
-    if (String(post.authorId) !== String(user._id)) {
-      await Notification.create({
+    await post.save();
+
+    // create notification
+    if (String(post.authorId) !== String(user._id)) {  // don't notify self-likes
+      const note = await Notification.create({
         userId: post.authorId,
         type: "like",
-        message: `${user.name} liked your post`,
+        fromUserId: user._id,
+        postId: post._id,
+        read: false
       });
+
+      // emit socket event to post author room
+      if (io) io.to(String(post.authorId)).emit("notification:new", note);
     }
   }
+  return { likesCount: post.likes.length };
+}
 
-  await post.save();
-  return post;
+
+async function unlikePost(user, postId) {
+  const post = await Post.findById(postId);
+  if (!post) throw new Error("Post not found");
+
+  const idx = post.likes.indexOf(user._id);
+  if (idx >= 0) {
+    post.likes.splice(idx, 1);
+    await post.save();
+    // optionally remove like notifications - skipped for simplicity
+  }
+  return { likesCount: post.likes.length };
+}
+
+async function toggleLike(user, postId, io) {
+  const post = await Post.findById(postId);
+  if (!post) throw new Error("Post not found");
+
+  if (post.likes.includes(user._id)) {
+    return unlikePost(user, postId);
+  } else {
+    return likePost(user, postId, io);
+  }
 }
 
 async function deletePost(user, postId) {
@@ -61,22 +128,26 @@ async function getPersonalizedFeed(userId) {
   return posts;
 }
 
-async function addComment(userId, postId, text) {
+async function addComment(user, postId, text, io) {
   const post = await Post.findById(postId);
   if (!post) throw new Error("Post not found");
 
-  const comment = { userId, text };
+  const comment = { userId: user._id, text };
   post.comments.push(comment);
   await post.save();
-  
-  // Notify post author if not commenting on own post
-  if (String(post.authorId) !== String(userId)) {
-    await Notification.create({
+
+  // notification to author
+  if (String(post.authorId) !== String(user._id)) {
+    const note = await Notification.create({
       userId: post.authorId,
       type: "comment",
-      message: `User commented on your post`,
+      fromUserId: user._id,
+      postId: post._id,
+      read: false
     });
+    if (io) io.to(String(post.authorId)).emit("notification:new", note);
   }
+
   return comment;
 }
 
@@ -89,12 +160,15 @@ async function getComments(postId, page = 1, limit = 5) {
   return post.comments.slice(start, end);
 }
 
-module.exports = {
+module.exports = { 
+  uploadFile,
   createPost,
   getFeed,
+  likePost,
+  unlikePost,
   toggleLike,
   deletePost,
   getPersonalizedFeed,
   addComment,
-  getComments,
+  getComments
 };

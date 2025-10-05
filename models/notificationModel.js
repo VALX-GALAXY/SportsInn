@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  type: String, // follow, like, comment
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true},
+  type: { type: String, enum: ["follow","like","comment","message"], required: true },
   fromUserId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   postId: { type: mongoose.Schema.Types.ObjectId, ref: "Post" },
   createdAt: { type: Date, default: Date.now },

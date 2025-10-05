@@ -12,7 +12,7 @@ function generateTokens(user) {
 function verifyRefreshToken(token) {
   try {
     return jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-  } catch {
+  } catch (ex) {
     return null;
   }
 }
