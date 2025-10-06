@@ -674,7 +674,7 @@ export default function Profile() {
                 variant={activeTab === tab ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setActiveTab(tab)}
-                className={`transition-all duration-200 ${activeTab === tab ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                className={`transition-all duration-200 ${activeTab === tab ? 'bg-blue-600 dark:bg-gray-700 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
               >
                 {tab}
               </Button>
@@ -985,7 +985,7 @@ export default function Profile() {
                         A
                       </div>
                       <div>
-                        <p className="font-medium">Alex Johnson</p>
+                        <p className="font-medium">jay kumar</p>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Forward • Age 16</p>
                       </div>
                     </div>
@@ -1000,7 +1000,7 @@ export default function Profile() {
                         S
                       </div>
                       <div>
-                        <p className="font-medium">Sarah Wilson</p>
+                        <p className="font-medium"></p>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Midfielder • Age 15</p>
                       </div>
                     </div>
