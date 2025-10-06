@@ -4,7 +4,8 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, unique: true, required: true },
   passwordHash: { type: String, required: true },
-  role: { type: String, enum: ["player", "academy", "scout"], required: true },
+  role: { type: String, enum: ["player", "academy", "scout", "admin"], required: true },
+  isAdmin: { type: Boolean, default: false },
 
   // Role-specific fields
   age: Number,
@@ -16,7 +17,13 @@ const userSchema = new mongoose.Schema({
 
   refreshTokens: [String],
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+
+  stats: {
+    matches: { type: Number, default: 0 },
+    runs: { type: Number, default: 0 },
+    wickets: { type: Number, default: 0 }
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);

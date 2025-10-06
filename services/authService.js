@@ -32,6 +32,50 @@ async function login(body) {
   return { accessToken, refreshToken, user: { id: user._id, email: user.email, role: user.role, name: user.name } };
 }
 
+
+async function adminSignup(data) {
+  const existing = await User.findOne({ email: data.email });
+  if (existing) return { error: "Admin already exists" };
+
+  const hashedPassword = await bcrypt.hash(data.password, 10);
+  const user = await User.create({
+    name: data.name,
+    email: data.email,
+    passwordHash: hashedPassword,
+    role: "admin",
+    isAdmin: true,
+  });
+
+  const tokens = generateTokens(user);
+  return { user, ...tokens };
+}
+
+async function adminLogin({ email, password }) {
+  try {
+    const user = await User.findOne({ email, isAdmin: true });
+    if (!user) return { error: "Invalid admin credentials" };
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return { error: "Invalid admin credentials" };
+
+    const { accessToken, refreshToken } = generateTokens(user);
+
+    return {
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      },
+      accessToken,
+      refreshToken,
+    };
+  } catch (err) {
+    console.error("Admin login error:", err);
+    return { error: "Server error during admin login" };
+  }
+}
+
 async function refresh(refreshToken) {
   const payload = verifyRefreshToken(refreshToken);
   if (!payload) return { error: "Invalid refresh token" };
@@ -59,4 +103,4 @@ async function logout(refreshToken) {
   return { success: true };
 }
 
-module.exports = { signup, login, refresh, logout };
+module.exports = { signup, login, adminSignup, adminLogin, refresh, logout };

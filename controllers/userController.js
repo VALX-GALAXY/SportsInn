@@ -69,4 +69,15 @@ async function searchUsers(req, res) {
   res.json({ success: true, data: users });
 };
 
-module.exports = { followUser, getFollowers, getFollowing, searchUsers };
+async function getUserStats(req, res) {
+  try {
+    const User = require('../models/userModel');
+    const user = await User.findById(req.params.id).select('stats name');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.json({ success: true, data: user.stats });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+module.exports = { followUser, getFollowers, getFollowing, searchUsers, getUserStats };

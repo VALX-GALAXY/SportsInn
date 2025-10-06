@@ -13,6 +13,11 @@ const userRoutes = require("./routes/userRoutes");
 const notificationRoutes = require("./routes/notificationRoutes")
 const messageRoutes = require("./routes/messageRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const searchRoutes = require("./routes/searchRoutes");
+const applicationRoutes = require("./routes/applicationRoutes");
+const reportRoutes = require("./routes/reportRoutes");
+
+// Middleware imports
 const { authLimiter } = require("./middlewares/rateLimiter");
 
 const { verifyAccessToken } = require("./utils/jwtUtils");
@@ -38,6 +43,9 @@ app.use("/api/users", userRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/applications', applicationRoutes);
+app.use('/api/reports', reportRoutes);
 
 
 const server = http.createServer(app);
