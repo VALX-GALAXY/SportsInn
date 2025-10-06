@@ -4,7 +4,8 @@ import { useNotifications } from '../contexts/NotificationContext'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
-import { Moon, Sun, User, LogOut, Home, Users, Eye, Menu, X, Bell, Search, MessageCircle } from 'lucide-react'
+import { Moon, Sun, User, LogOut, Home, Users, Eye, Menu, X, Bell, Search, MessageCircle, Inbox } from 'lucide-react'
+import requestService from '@/api/requestService'
 import { useState, useEffect } from 'react'
 
 const Navbar = () => {
@@ -13,6 +14,7 @@ const Navbar = () => {
   const navigate = useNavigate()
   const [theme, setTheme] = useState('light')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [requestsCount, setRequestsCount] = useState(0)
 
   // Load theme from localStorage
   useEffect(() => {
@@ -20,6 +22,12 @@ const Navbar = () => {
     setTheme(savedTheme)
     document.documentElement.classList.toggle('dark', savedTheme === 'dark')
   }, [])
+
+  useEffect(() => {
+    // simple counter for pending requests
+    const { received } = requestService.list()
+    setRequestsCount(received.filter(r => r.status === 'pending').length)
+  })
 
   // Close mobile menu when clicking outside
   useEffect(() => {
@@ -142,6 +150,14 @@ const Navbar = () => {
                   </Badge>
                 )}
               </Link>
+              <Link to="/requests" className="relative text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+                <Inbox className="w-5 h-5" />
+                {requestsCount > 0 && (
+                  <Badge variant="secondary" className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center text-xs">
+                    {requestsCount}
+                  </Badge>
+                )}
+              </Link>
               <Link to="/messages" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
                 <MessageCircle className="w-5 h-5" />
               </Link>
@@ -250,6 +266,21 @@ const Navbar = () => {
                 <Badge variant="destructive" className="w-5 h-5 flex items-center justify-center text-xs">
                   3
                 </Badge>
+              </div>
+            </Link>
+            <Link 
+              to="/requests" 
+              className="relative block px-3 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <div className="flex items-center space-x-2">
+                <Inbox className="w-4 h-4" />
+                <span>Requests</span>
+                {requestsCount > 0 && (
+                  <Badge variant="secondary" className="w-5 h-5 flex items-center justify-center text-xs">
+                    {requestsCount}
+                  </Badge>
+                )}
               </div>
             </Link>
           </div>

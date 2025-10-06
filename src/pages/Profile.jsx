@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -6,13 +7,15 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Home, Users, Eye, Edit, Save, X, UserPlus, UserMinus, Loader2, Trophy, Target, BarChart3, Star, TrendingUp, Calendar, Award } from 'lucide-react'
+import { User, Home, Users, Eye, Edit, Save, X, UserPlus, UserMinus, Loader2, Trophy, Target, BarChart3, Star, TrendingUp, Calendar, Award, MailPlus, Mail } from 'lucide-react'
+import requestService from '@/api/requestService'
 import { useToast } from '@/components/ui/simple-toast'
 import followService from '@/api/followService'
 
 export default function Profile() {
   const { user, updateUser, isAuthenticated } = useAuth()
   const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState('About') // About | Performance
   const [formData, setFormData] = useState({
     username: user?.name || '',
     bio: user?.bio || '',
@@ -38,6 +41,18 @@ export default function Profile() {
     isFollowing: false
   })
   const { toast } = useToast()
+  const handleInviteOrApply = () => {
+    const currentUser = user
+    const target = { id: 'target_user', name: 'Target Profile' }
+    const isPlayer = currentUser?.role === 'Player'
+    const payload = {
+      fromUser: { id: currentUser.id, name: currentUser.name, role: currentUser.role },
+      toUser: target,
+      message: isPlayer ? 'Player application' : 'Invitation to player'
+    }
+    const record = isPlayer ? requestService.sendApplication(payload) : requestService.sendInvite(payload)
+    toast({ title: isPlayer ? 'Applied' : 'Invite sent', description: `Request ID: ${record.id}` })
+  }
 
   // Update form data when user data changes
   useEffect(() => {
@@ -608,6 +623,7 @@ export default function Profile() {
                   </div>
                 </div>
                 
+                <div className="flex items-center space-x-2">
                 <Button
                   onClick={handleFollow}
                   disabled={isFollowLoading}
@@ -635,16 +651,44 @@ export default function Profile() {
                     </div>
                   )}
                 </Button>
+                <Button
+                  onClick={handleInviteOrApply}
+                  variant="outline"
+                  className="flex items-center"
+                >
+                  {user?.role === 'Player' ? <Mail className="w-4 h-4 mr-2" /> : <MailPlus className="w-4 h-4 mr-2" />}
+                  {user?.role === 'Player' ? 'Apply' : 'Invite Player'}
+                </Button>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Role-specific Information */}
-        {renderRoleSpecificFields()}
+        {/* Tabs */}
+        <div className="mt-6">
+          <div className="flex space-x-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full">
+            {['About', 'Performance'].map(tab => (
+              <Button
+                key={tab}
+                variant={activeTab === tab ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setActiveTab(tab)}
+                className={`transition-all duration-200 ${activeTab === tab ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+              >
+                {tab}
+              </Button>
+            ))}
+          </div>
+        </div>
 
-        {/* Basic Profile Information */}
-        <Card className="mt-6">
+        {activeTab === 'About' && (
+        <>
+          {/* Role-specific Information */}
+          {renderRoleSpecificFields()}
+
+          {/* Basic Profile Information */}
+          <Card className="mt-6">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Basic Information</CardTitle>
@@ -749,6 +793,82 @@ export default function Profile() {
             )}
           </CardContent>
         </Card>
+        </>
+        )}
+
+        {activeTab === 'Performance' && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Trophy className="w-5 h-5 text-yellow-500" />
+                <span>Performance</span>
+              </CardTitle>
+              <CardDescription>Season stats and trends (mock data)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Matches Played</p>
+                      <p className="text-2xl font-bold">34</p>
+                    </div>
+                    <Calendar className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Runs Scored</p>
+                      <p className="text-2xl font-bold">1,120</p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Wickets Taken</p>
+                      <p className="text-2xl font-bold">27</p>
+                    </div>
+                    <BarChart3 className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Runs by Match</h4>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[{ m: 'M1', runs: 34 }, { m: 'M2', runs: 56 }, { m: 'M3', runs: 12 }, { m: 'M4', runs: 78 }, { m: 'M5', runs: 44 }] }>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                      <XAxis dataKey="m" stroke="#9CA3AF" />
+                      <YAxis stroke="#9CA3AF" />
+                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                      <Legend />
+                      <Line type="monotone" dataKey="runs" stroke="#3B82F6" strokeWidth={2} dot={{ r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Wickets by Match</h4>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[{ m: 'M1', wkts: 1 }, { m: 'M2', wkts: 2 }, { m: 'M3', wkts: 0 }, { m: 'M4', wkts: 4 }, { m: 'M5', wkts: 3 }] }>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                      <XAxis dataKey="m" stroke="#9CA3AF" />
+                      <YAxis stroke="#9CA3AF" />
+                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                      <Legend />
+                      <Bar dataKey="wkts" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Role-Based Dashboard Sections */}
         {user?.role === 'Player' && (

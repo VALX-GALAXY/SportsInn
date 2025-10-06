@@ -113,6 +113,8 @@ export default function Messages() {
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [deliveredIds, setDeliveredIds] = useState(new Set())
+  const [readIds, setReadIds] = useState(new Set())
   const [searchQuery, setSearchQuery] = useState('')
   const messagesEndRef = useRef(null)
 
@@ -142,6 +144,7 @@ export default function Messages() {
     }
 
     setMessages(prev => [...prev, message])
+    setDeliveredIds(prev => new Set([...prev, message.id]))
     setNewMessage('')
 
     // Simulate typing indicator
@@ -157,6 +160,10 @@ export default function Messages() {
         isOwn: false
       }
       setMessages(prev => [...prev, response])
+      // Mark last sent as read after delay
+      setTimeout(() => {
+        setReadIds(prev => new Set([...prev, message.id]))
+      }, 1500)
     }, 2000)
 
     toast({
@@ -379,11 +386,16 @@ export default function Messages() {
                     }`}
                   >
                     <p className="text-sm">{message.text}</p>
-                    <p className={`text-xs mt-1 ${
-                      message.isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
-                    }`}>
-                      {message.timestamp}
-                    </p>
+                    <div className="flex items-center justify-end space-x-2 mt-1">
+                      <p className={`text-xs ${message.isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                        {message.timestamp}
+                      </p>
+                      {message.isOwn && (
+                        <span className="text-[10px]">
+                          {readIds.has(message.id) ? 'Read' : deliveredIds.has(message.id) ? 'Delivered' : 'Sending...'}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

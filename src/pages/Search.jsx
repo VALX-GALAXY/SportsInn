@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -29,6 +29,7 @@ const dummySearchResults = {
       location: 'New York, NY',
       age: 22,
       position: 'Forward',
+      playerRole: 'Batsman',
       experience: '5 years',
       verified: true,
       followers: 1250,
@@ -42,6 +43,7 @@ const dummySearchResults = {
       location: 'Los Angeles, CA',
       age: 19,
       position: 'Midfielder',
+      playerRole: 'Bowler',
       experience: '3 years',
       verified: false,
       followers: 890,
@@ -98,6 +100,17 @@ export default function Search() {
   const [isLoading, setIsLoading] = useState(false)
   const [activeFilter, setActiveFilter] = useState('all') // 'all', 'players', 'academies', 'clubs', 'scouts'
   const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState({
+    name: '',
+    playerRole: '', // Batsman | Bowler | All-rounder
+    ageMin: '',
+    ageMax: '',
+    location: ''
+  })
+  const [page, setPage] = useState(1)
+  const pageSize = 9
+  const [visibleResults, setVisibleResults] = useState([])
+  const loadMoreRef = useRef(null)
   const { toast } = useToast()
 
   // Debounced search function
@@ -119,6 +132,8 @@ export default function Search() {
       debouncedSearch(searchQuery)
     } else {
       setSearchResults({})
+      setVisibleResults([])
+      setPage(1)
     }
   }, [searchQuery, debouncedSearch])
 
@@ -131,14 +146,39 @@ export default function Search() {
       // Filter results based on query
       const filteredResults = {}
       Object.keys(dummySearchResults).forEach(category => {
-        filteredResults[category] = dummySearchResults[category].filter(item =>
-          item.name.toLowerCase().includes(query.toLowerCase()) ||
-          item.bio.toLowerCase().includes(query.toLowerCase()) ||
-          item.location.toLowerCase().includes(query.toLowerCase())
-        )
+        filteredResults[category] = dummySearchResults[category].filter(item => {
+          const matchesQuery =
+            item.name.toLowerCase().includes(query.toLowerCase()) ||
+            item.bio.toLowerCase().includes(query.toLowerCase()) ||
+            item.location.toLowerCase().includes(query.toLowerCase())
+
+          // Advanced filters (apply only where relevant)
+          const matchesName = filters.name
+            ? item.name.toLowerCase().includes(filters.name.toLowerCase())
+            : true
+          const matchesLocation = filters.location
+            ? item.location.toLowerCase().includes(filters.location.toLowerCase())
+            : true
+          const matchesAge = (() => {
+            if (typeof item.age !== 'number') return true
+            const minOk = filters.ageMin ? item.age >= Number(filters.ageMin) : true
+            const maxOk = filters.ageMax ? item.age <= Number(filters.ageMax) : true
+            return minOk && maxOk
+          })()
+          const matchesPlayerRole = (() => {
+            if (category !== 'players' || !filters.playerRole) return true
+            return (item.playerRole || '').toLowerCase() === filters.playerRole.toLowerCase()
+          })()
+
+          return matchesQuery && matchesName && matchesLocation && matchesAge && matchesPlayerRole
+        })
       })
       
       setSearchResults(filteredResults)
+      setPage(1)
+      // initialize visible results for current active filter
+      const all = Object.values(filteredResults).flat()
+      setVisibleResults(all.slice(0, pageSize))
     } catch (error) {
       console.error('Search error:', error)
       toast({
@@ -150,6 +190,33 @@ export default function Search() {
       setIsLoading(false)
     }
   }
+
+  // Update visibleResults when filter tab or searchResults change
+  useEffect(() => {
+    const next = (() => {
+      const list = activeFilter === 'all' ? Object.values(searchResults).flat() : (searchResults[activeFilter] || [])
+      return list.slice(0, page * pageSize)
+    })()
+    setVisibleResults(next)
+  }, [searchResults, activeFilter, page])
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!loadMoreRef.current) return
+    const el = loadMoreRef.current
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries[0]
+      if (entry.isIntersecting) {
+        const total = activeFilter === 'all' ? Object.values(searchResults).flat().length : (searchResults[activeFilter]?.length || 0)
+        const canLoadMore = visibleResults.length < total
+        if (canLoadMore) {
+          setPage(prev => prev + 1)
+        }
+      }
+    }, { rootMargin: '200px' })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [visibleResults.length, searchResults, activeFilter])
 
   const getRoleIcon = (role) => {
     switch (role) {
@@ -255,7 +322,128 @@ export default function Search() {
             )}
           </div>
 
+          {/* Sidebar filter panel */}
+          {showFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <div className="md:col-span-1 bg-white dark:bg-gray-800 border-0 shadow-sm rounded-lg p-4">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                    <Input
+                      placeholder="e.g., Alex"
+                      value={filters.name}
+                      onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Player Role</label>
+                    <select
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                      value={filters.playerRole}
+                      onChange={(e) => setFilters(prev => ({ ...prev, playerRole: e.target.value }))}
+                    >
+                      <option value="">Any</option>
+                      <option value="Batsman">Batsman</option>
+                      <option value="Bowler">Bowler</option>
+                      <option value="All-rounder">All-rounder</option>
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Age Min</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={filters.ageMin}
+                        onChange={(e) => setFilters(prev => ({ ...prev, ageMin: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Age Max</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={filters.ageMax}
+                        onChange={(e) => setFilters(prev => ({ ...prev, ageMax: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                    <Input
+                      placeholder="City, State"
+                      value={filters.location}
+                      onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        if (!searchQuery.trim()) {
+                          toast({ title: 'Enter a search term first', variant: 'default' })
+                          return
+                        }
+                        performSearch(searchQuery)
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Apply
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setFilters({ name: '', playerRole: '', ageMin: '', ageMax: '', location: '' })
+                        setPage(1)
+                        performSearch(searchQuery)
+                      }}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="md:col-span-3">
+                {/* Filter Tabs */}
+                <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+                  {[
+                    { key: 'all', label: 'All', count: totalResults },
+                    { key: 'players', label: 'Players', count: searchResults.players?.length || 0 },
+                    { key: 'academies', label: 'Academies', count: searchResults.academies?.length || 0 },
+                    { key: 'clubs', label: 'Clubs', count: searchResults.clubs?.length || 0 },
+                    { key: 'scouts', label: 'Scouts', count: searchResults.scouts?.length || 0 }
+                  ].map(({ key, label, count }) => (
+                    <Button
+                      key={key}
+                      variant={activeFilter === key ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => {
+                        setActiveFilter(key)
+                        setPage(1)
+                      }}
+                      className={`flex items-center space-x-2 transition-all duration-200 ${
+                        activeFilter === key 
+                          ? 'bg-white dark:bg-gray-700 shadow-sm' 
+                          : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <span>{label}</span>
+                      {count > 0 && (
+                        <Badge variant="secondary" className="ml-1 px-2 py-0.5 text-xs">
+                          {count}
+                        </Badge>
+                      )}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Filter Tabs */}
+          {!showFilters && (
           <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
             {[
               { key: 'all', label: 'All', count: totalResults },
@@ -268,7 +456,10 @@ export default function Search() {
                 key={key}
                 variant={activeFilter === key ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => setActiveFilter(key)}
+                onClick={() => {
+                  setActiveFilter(key)
+                  setPage(1)
+                }}
                 className={`flex items-center space-x-2 transition-all duration-200 ${
                   activeFilter === key 
                     ? 'bg-white dark:bg-gray-700 shadow-sm' 
@@ -284,6 +475,7 @@ export default function Search() {
               </Button>
             ))}
           </div>
+          )}
         </div>
 
         {/* Search Results */}
@@ -315,7 +507,7 @@ export default function Search() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredResults.map((result) => (
+            {visibleResults.map((result) => (
               <Card 
                 key={result.id} 
                 className="bg-white dark:bg-gray-800 border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
@@ -388,6 +580,12 @@ export default function Search() {
                 </CardContent>
               </Card>
             ))}
+            {/* Infinite scroll sentinel */}
+            {visibleResults.length < filteredResults.length && (
+              <div ref={loadMoreRef} className="col-span-full flex justify-center py-6">
+                <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+              </div>
+            )}
           </div>
         )}
       </div>

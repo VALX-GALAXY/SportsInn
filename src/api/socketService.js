@@ -118,6 +118,13 @@ class SocketService {
       this.listeners.get('notification')(notification)
     }
   }
+
+  // Mock: simulate a post created event
+  simulatePostCreated(post) {
+    if (this.listeners.has('post:created')) {
+      this.listeners.get('post:created')(post)
+    }
+  }
 }
 
 export default new SocketService()

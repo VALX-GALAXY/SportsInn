@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
-import { Heart, MessageCircle, Share, MoreHorizontal, Loader2, Plus, Users, Globe, Send, ChevronDown, ChevronUp, Image, Video, X, Upload } from 'lucide-react'
+import { Heart, MessageCircle, Share, MoreHorizontal, Loader2, Plus, Users, Globe, Send, ChevronDown, ChevronUp, Image, Video, X, Upload, Flag } from 'lucide-react'
+import reportService from '../api/reportService'
 import feedService from '../api/feedService'
+import socketService from '../api/socketService'
 import { useToast } from '../components/ui/simple-toast'
 import { FeedSkeleton } from '../components/SkeletonLoaders'
 
@@ -28,10 +30,29 @@ export default function FeedSimple() {
     videoPreview: null
   })
   const { toast } = useToast()
+  const [reportingPostId, setReportingPostId] = useState(null)
+  const [reportReason, setReportReason] = useState('spam')
+  const [reportDetails, setReportDetails] = useState('')
+  const [isReporting, setIsReporting] = useState(false)
 
   useEffect(() => {
     fetchFeed()
   }, [feedType])
+
+  // Real-time updates via mock socket
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'))
+    if (!user) return
+    // Use mock connection
+    socketService.connectMock(user.id)
+    const onNewPost = (post) => {
+      setPosts(prev => [post, ...prev])
+    }
+    socketService.on('post:created', onNewPost)
+    return () => {
+      socketService.off('post:created')
+    }
+  }, [])
 
   const fetchFeed = async () => {
     try {
@@ -201,6 +222,8 @@ export default function FeedSimple() {
       const createdPost = await feedService.createPost(postData)
       
       setPosts(prev => [createdPost, ...prev])
+      // Broadcast via mock socket so other tabs could receive
+      socketService.simulatePostCreated(createdPost)
       setNewPost({ caption: '', image: null, video: null, fileType: null, imagePreview: null, videoPreview: null })
       setShowCreateModal(false)
       
@@ -354,6 +377,12 @@ export default function FeedSimple() {
                 <p className="text-gray-900 dark:text-white mb-4">
                   {post.caption}
                 </p>
+                {/* Post actions dropdown (inline simple) */}
+                <div className="flex justify-end -mt-2 mb-2">
+                  <Button variant="outline" size="sm" onClick={() => setReportingPostId(post.id)} className="text-gray-600 dark:text-gray-300">
+                    <Flag className="w-4 h-4 mr-2" /> Report Post
+                  </Button>
+                </div>
                 
                 {post.image && (
                   <div className="mb-4">
@@ -603,6 +632,65 @@ export default function FeedSimple() {
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : null}
                   {isCreating ? 'Creating...' : 'Create Post'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Report Post Modal */}
+        {reportingPostId && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report Post</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reason</label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-white"
+                    value={reportReason}
+                    onChange={(e) => setReportReason(e.target.value)}
+                  >
+                    <option value="spam">Spam</option>
+                    <option value="abusive">Abusive</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                {reportReason === 'other' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Details</label>
+                    <textarea
+                      value={reportDetails}
+                      onChange={(e) => setReportDetails(e.target.value)}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      placeholder="Describe the issue"
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center justify-end space-x-3 mt-6">
+                <Button onClick={() => setReportingPostId(null)} variant="outline" disabled={isReporting}>Cancel</Button>
+                <Button
+                  onClick={async () => {
+                    try {
+                      setIsReporting(true)
+                      await reportService.reportPost({ postId: reportingPostId, reason: reportReason, details: reportDetails })
+                      setReportingPostId(null)
+                      setReportDetails('')
+                      setReportReason('spam')
+                      toast({ title: 'Reported', description: 'Thanks for your feedback.' })
+                    } catch (e) {
+                      toast({ title: 'Error', description: 'Failed to submit report', variant: 'destructive' })
+                    } finally {
+                      setIsReporting(false)
+                    }
+                  }}
+                  disabled={isReporting}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {isReporting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  {isReporting ? 'Submitting...' : 'Submit Report'}
                 </Button>
               </div>
             </div>

@@ -11,6 +11,7 @@ import Feed from './pages/Feed'
 import Notifications from './pages/Notifications'
 import Search from './pages/Search'
 import Messages from './pages/Messages'
+import Requests from './pages/Requests'
 import './App.css'
 
 function App() {
@@ -59,6 +60,11 @@ function App() {
                 <Route path="/messages" element={
                   <ErrorBoundary>
                     <Messages />
+                  </ErrorBoundary>
+                } />
+                <Route path="/requests" element={
+                  <ErrorBoundary>
+                    <Requests />
                   </ErrorBoundary>
                 } />
               </Routes>
