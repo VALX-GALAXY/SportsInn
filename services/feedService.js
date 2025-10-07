@@ -48,13 +48,37 @@ async function createPost(user, body) {
   return post;
 }
 
-async function getFeed(page = 1, limit = 20) {
-  const skip = (page - 1) * limit;
-  return Post.find()
-    .populate("authorId", "name role")
-    .sort({ createdAt: -1 })
+async function getFeed(filters = {}, page = 1, limit = 10) {
+  const q = {};
+  // apply filters
+  if (filters.role) q.role = filters.role;
+  if (filters.type) {
+    // type: 'image'|'video'|'text'
+    if (filters.type === 'text') q.mediaUrl = { $in: [null, ''] };
+    else if (filters.type === 'image') q.mediaType = 'image';
+    else if (filters.type === 'video') q.mediaType = 'video';
+  }
+
+  // pagination
+  const skip = (Math.max(1, page) - 1) * Math.max(1, limit);
+  const docs = await Post.find(q)
+    .populate('authorId', 'name role')
+    .sort({ createdAt: -1 }) // latest first
     .skip(skip)
-    .limit(limit);
+    .limit(Number(limit) + 1); // fetch one extra to check hasMore
+
+  // determine hasMore, nextPage
+  const hasMore = docs.length > limit;
+  const paged = hasMore ? docs.slice(0, limit) : docs;
+
+  const nextPage = hasMore ? page + 1 : null;
+  return {
+    page,
+    limit: Number(limit),
+    hasMore,
+    nextPage,
+    data: paged
+  };
 }
 
 async function likePost(user, postId, io) {

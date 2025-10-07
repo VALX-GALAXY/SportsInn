@@ -23,16 +23,17 @@ async function createPost(req, res) {
   }
 };
 
-async function getFeed(req, res) {
+async function getFeed(req, res, next) {
   try {
+    const role = req.query.role;
+    const type = req.query.type;
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const posts = await feedService.getFeed(page, limit);
-    res.json({ success: true, data: posts });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
+    const limit = parseInt(req.query.limit) || 10;
+
+    const result = await feedService.getFeed({ role, type }, page, limit);
+    res.json({ success: true, page: result.page, limit: result.limit, hasMore: result.hasMore, nextPage: result.nextPage, data: result.data });
+  } catch (err) { next(err); }
+}
 
 async function likePost(req, res) {
   try {

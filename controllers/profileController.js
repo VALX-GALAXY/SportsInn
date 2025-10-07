@@ -6,10 +6,33 @@ async function getProfile(req, res) {
   res.json({ success: true, data: user });
 }
 
-async function updateProfile(req, res) {
-  const result = await profileService.updateProfile(req.params.id, req.user, req.body);
-  if (result.error) return res.status(403).json({ success: false, message: result.error });
-  res.json({ success: true, data: result, message: "Profile updated" });
+async function updateProfile(req, res, next) {
+  try {
+    const id = req.params.id;
+    if (String(id) !== String(req.user._id) && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'You can only update your own profile' });
+    }
+    
+    // Role-based field restrictions
+    const allowed = roleFields[req.user.role] || [];
+    // exclude protected fields
+    const protectedFields = ['passwordHash', 'email', 'role', 'refreshTokens', '_id', 'isAdmin'];
+    const updates = {};
+
+    for (const key of Object.keys(req.body)) {
+      if (protectedFields.includes(key)) continue;
+      // if role-specific list exists, only allow those fields (plus generic fields)
+      if (allowed.length && !allowed.includes(key) && !['name', 'location', 'contactInfo', 'bio'].includes(key)) {
+        // skip fields not allowed
+        continue;
+      }
+      updates[key] = req.body[key];
+    }
+
+    // Validate required role fields: ensure required fields exist if provided empty
+    const user = await User.findByIdAndUpdate(id, updates, { new: true }).select('-passwordHash -refreshTokens');
+    res.json({ success: true, data: user, message: 'Profile updated' });
+  } catch (err) { next(err); }
 }
 
 module.exports = { getProfile, updateProfile };

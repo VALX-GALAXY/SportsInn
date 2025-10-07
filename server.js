@@ -18,7 +18,8 @@ const applicationRoutes = require("./routes/applicationRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 
 // Middleware imports
-const { authLimiter } = require("./middlewares/rateLimiter");
+const { generalLimiter, authLimiter } = require("./middlewares/rateLimiter");
+const errorHandler = require('./middlewares/errorHandler');
 
 const { verifyAccessToken } = require("./utils/jwtUtils");
 const User = require("./models/userModel");
@@ -27,12 +28,13 @@ const User = require("./models/userModel");
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(generalLimiter);
 
 // serve uploaded files (local fallback)
 app.use("/uploads", express.static("uploads"));
 
 // Rate Limiter
-app.use("/api/auth/login", authLimiter);
+app.use("/api/auth", authLimiter);
 
 
 // Routes
@@ -48,6 +50,10 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/reports', reportRoutes);
 
 
+// Error Handler
+app.use(errorHandler);
+
+// HTTP server
 const server = http.createServer(app);
 
 // Socket.IO
