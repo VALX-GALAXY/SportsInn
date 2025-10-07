@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Card, CardContent, CardHeader } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
-import { Heart, MessageCircle, Share, MoreHorizontal, Loader2, Plus, Users, Globe, Send, ChevronDown, ChevronUp, Image, Video, X, Upload, Flag } from 'lucide-react'
+import { Heart, MessageCircle, Share, MoreHorizontal, Loader2, Plus, Users, Globe, Send, ChevronDown, ChevronUp, Image, Video, X, Upload, Flag, Filter } from 'lucide-react'
 import reportService from '../api/reportService'
 import feedService from '../api/feedService'
 import socketService from '../api/socketService'
@@ -34,10 +34,24 @@ export default function FeedSimple() {
   const [reportReason, setReportReason] = useState('spam')
   const [reportDetails, setReportDetails] = useState('')
   const [isReporting, setIsReporting] = useState(false)
+  
+  // Infinite scroll state
+  const [hasMore, setHasMore] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const observerRef = useRef()
+  const lastPostRef = useRef()
+  
+  // Filter state
+  const [filters, setFilters] = useState({
+    role: 'all', // 'all', 'Player', 'Academy', 'Club', 'Scout'
+    postType: 'all' // 'all', 'image', 'video', 'text'
+  })
+  const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
-    fetchFeed()
-  }, [feedType])
+    fetchFeed(true) // Reset feed
+  }, [feedType, filters])
 
   // Real-time updates via mock socket
   useEffect(() => {
@@ -54,23 +68,67 @@ export default function FeedSimple() {
     }
   }, [])
 
-  const fetchFeed = async () => {
+  // Infinite scroll observer
+  useEffect(() => {
+    if (isLoading || isLoadingMore) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          loadMorePosts()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (lastPostRef.current) {
+      observer.observe(lastPostRef.current)
+    }
+
+    return () => {
+      if (lastPostRef.current) {
+        observer.unobserve(lastPostRef.current)
+      }
+    }
+  }, [isLoading, isLoadingMore, hasMore])
+
+  const fetchFeed = async (reset = false) => {
     try {
-      setIsLoading(true)
-      const response = feedType === 'global' 
-        ? await feedService.getFeed()
-        : await feedService.getPersonalizedFeed()
+      if (reset) {
+        setIsLoading(true)
+        setCurrentPage(1)
+        setHasMore(true)
+      } else {
+        setIsLoadingMore(true)
+      }
       
-      setPosts(response.posts || [])
+      const response = feedType === 'global' 
+        ? await feedService.getFeed(reset ? 1 : currentPage)
+        : await feedService.getPersonalizedFeed(reset ? 1 : currentPage)
+      
+      const newPosts = response.posts || []
+      
+      if (reset) {
+        setPosts(newPosts)
+      } else {
+        setPosts(prev => [...prev, ...newPosts])
+      }
+      
+      // Check if there are more posts
+      setHasMore(newPosts.length >= 10) // Assuming 10 posts per page
+      
+      if (!reset) {
+        setCurrentPage(prev => prev + 1)
+      }
       
       // Initialize liked posts
       const liked = new Set()
-      response.posts?.forEach(post => {
+      newPosts.forEach(post => {
         if (post.liked) {
           liked.add(post.id)
         }
       })
-      setLikedPosts(liked)
+      setLikedPosts(prev => new Set([...prev, ...liked]))
     } catch (error) {
       console.error('Error fetching feed:', error)
       toast({
@@ -80,8 +138,26 @@ export default function FeedSimple() {
       })
     } finally {
       setIsLoading(false)
+      setIsLoadingMore(false)
     }
   }
+
+  const loadMorePosts = useCallback(() => {
+    if (!isLoadingMore && hasMore) {
+      fetchFeed(false)
+    }
+  }, [isLoadingMore, hasMore, currentPage, feedType, filters])
+
+  // Filter posts based on current filters
+  const filteredPosts = posts.filter(post => {
+    const roleMatch = filters.role === 'all' || post.author.role === filters.role
+    const typeMatch = filters.postType === 'all' || 
+      (filters.postType === 'image' && post.image) ||
+      (filters.postType === 'video' && post.video) ||
+      (filters.postType === 'text' && !post.image && !post.video)
+    
+    return roleMatch && typeMatch
+  })
 
   const handleLike = async (postId) => {
     try {
@@ -278,28 +354,28 @@ export default function FeedSimple() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="w-full max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
+      <div className="w-full max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:text-3xl">Sports Feed</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 sm:text-base">Stay updated with the latest from the sports community</p>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 space-y-4 lg:space-y-0">
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:text-3xl lg:text-4xl">Sports Feed</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 sm:text-base lg:text-lg">Stay updated with the latest from the sports community</p>
           </div>
           
           {/* Feed Type Toggle */}
-          <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
             <Button
               variant={feedType === 'global' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setFeedType('global')}
               className={`flex items-center space-x-2 transition-all duration-200 ${
                 feedType === 'global' 
-                  ? 'bg-white dark:bg-gray-700 shadow-sm' 
-                  : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                  ? 'bg-blue-600 dark:bg-grey-700 shadow-sm' 
+                  : 'hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-400 dark:hover:bg-red-900/20 rounded-xl py-3 transition-all duration-200'
               }`}
             >
               <Globe className="w-4 h-4" />
-              <span>Global</span>
+              <span className="hidden sm:inline">Global</span>
             </Button>
             <Button
               variant={feedType === 'personalized' ? 'default' : 'ghost'}
@@ -307,67 +383,124 @@ export default function FeedSimple() {
               onClick={() => setFeedType('personalized')}
               className={`flex items-center space-x-2 transition-all duration-200 ${
                 feedType === 'personalized' 
-                  ? 'bg-white dark:bg-gray-700 shadow-sm' 
-                  : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                  ? 'bg-blue-600 dark:bg-gray-700 shadow-sm' 
+                  : 'hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-400 dark:hover:bg-red-900/20 rounded-xl py-3 transition-all duration-200'
               }`}
             >
               <Users className="w-4 h-4" />
-              <span>My Feed</span>
+              <span className="hidden sm:inline">My Feed</span>
             </Button>
           </div>
         </div>
 
-        {/* Create Post Button */}
-        <div className="mb-6">
-          <div className="flex items-center space-x-2">
+        {/* Filters and Actions */}
+        <div className="mb-6 space-y-4">
+          {/* Filter Toggle */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
             <Button
-              onClick={() => {
-                const defaultData = feedService.refreshWithDefaultData()
-                setPosts(defaultData)
-                toast({
-                  title: "Feed Refreshed",
-                  description: "Feed has been refreshed with default data",
-                  variant: "default"
-                })
-              }}
+              onClick={() => setShowFilters(!showFilters)}
               variant="outline"
               size="sm"
-              className="flex-1"
+              className="flex items-center space-x-2 w-fit"
             >
-              Refresh Feed
+              <Filter className="w-4 h-4" />
+              <span>Filters</span>
+              {(filters.role !== 'all' || filters.postType !== 'all') && (
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              )}
             </Button>
-            <Button
-              onClick={() => setShowCreateModal(true)}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create New Post
-            </Button>
+            
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+              <Button
+                onClick={() => {
+                  const defaultData = feedService.refreshWithDefaultData()
+                  setPosts(defaultData)
+                  toast({
+                    title: "Feed Refreshed",
+                    description: "Feed has been refreshed with default data",
+                    variant: "default"
+                  })
+                }}
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto"
+              >
+                <span className="hidden sm:inline">Refresh Feed</span>
+                <span className="sm:hidden">Refresh</span>
+              </Button>
+              <Button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Create New Post</span>
+                <span className="sm:hidden">Create Post</span>
+              </Button>
+            </div>
           </div>
+
+          {/* Filter Options */}
+          {showFilters && (
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Filter by Role
+                  </label>
+                  <select
+                    value={filters.role}
+                    onChange={(e) => setFilters(prev => ({ ...prev, role: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="Player">Players</option>
+                    <option value="Academy">Academies</option>
+                    <option value="Club">Clubs</option>
+                    <option value="Scout">Scouts</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Filter by Post Type
+                  </label>
+                  <select
+                    value={filters.postType}
+                    onChange={(e) => setFilters(prev => ({ ...prev, postType: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">All Types</option>
+                    <option value="image">Images</option>
+                    <option value="video">Videos</option>
+                    <option value="text">Text Only</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Posts */}
         <div className="space-y-4">
-          {posts.map((post) => (
+          {filteredPosts.map((post, index) => (
             <Card key={post.id} className="bg-white dark:bg-gray-800 shadow-sm border-0">
               <CardHeader className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
                       <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                         {post.author.name.charAt(0)}
                       </span>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 dark:text-white truncate">
                         {post.author.name}
                       </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                         {post.author.role} • {new Date(post.timestamp).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="flex-shrink-0 ml-2">
                     <MoreHorizontal className="w-4 h-4" />
                   </Button>
                 </div>
@@ -412,14 +545,14 @@ export default function FeedSimple() {
                 
                 {/* Actions */}
                 <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-4">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2 sm:space-x-4">
                     <div className="cursor-pointer">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleLike(post.id)}
                         disabled={isLiking.has(post.id)}
-                        className={`flex items-center space-x-2 px-3 py-2 ${
+                        className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 ${
                           likedPosts.has(post.id) 
                             ? 'text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300' 
                             : 'text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400'
@@ -430,7 +563,7 @@ export default function FeedSimple() {
                         ) : (
                           <Heart className={`w-4 h-4 ${likedPosts.has(post.id) ? 'fill-current' : ''}`} />
                         )}
-                        <span className="text-sm">{post.stats.likes}</span>
+                        <span className="text-sm hidden sm:inline">{post.stats.likes}</span>
                       </Button>
                     </div>
                     
@@ -439,20 +572,20 @@ export default function FeedSimple() {
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleComments(post.id)}
-                        className="flex items-center space-x-2 px-3 py-2 text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
+                        className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
                       >
                         <MessageCircle className="w-4 h-4" />
-                        <span className="text-sm">{post.stats.comments}</span>
+                        <span className="text-sm hidden sm:inline">{post.stats.comments}</span>
                       </Button>
                     </div>
                     
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="flex items-center space-x-2 px-3 py-2 text-gray-500 hover:text-green-500 dark:text-gray-400 dark:hover:text-green-400"
+                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 text-gray-500 hover:text-green-500 dark:text-gray-400 dark:hover:text-green-400"
                     >
                       <Share className="w-4 h-4" />
-                      <span className="text-sm">{post.stats.shares}</span>
+                      <span className="text-sm hidden sm:inline">{post.stats.shares}</span>
                     </Button>
                   </div>
                 </div>
@@ -498,11 +631,11 @@ export default function FeedSimple() {
                     </div>
                     
                     {/* Add Comment Input */}
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-start space-x-2">
                       <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
                         <span className="text-xs font-medium text-gray-600 dark:text-gray-400">U</span>
                       </div>
-                      <div className="flex-1 flex items-center space-x-2">
+                      <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                         <Input
                           placeholder="Write a comment..."
                           value={newComment}
@@ -519,7 +652,7 @@ export default function FeedSimple() {
                           size="sm"
                           onClick={() => handleAddComment(post.id)}
                           disabled={!newComment.trim() || isCommenting.has(post.id)}
-                          className="px-3"
+                          className="px-3 w-full sm:w-auto"
                         >
                           {isCommenting.has(post.id) ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -534,12 +667,56 @@ export default function FeedSimple() {
               </CardContent>
             </Card>
           ))}
+          
+          {/* Infinite Scroll Trigger */}
+          {filteredPosts.length > 0 && (
+            <div ref={lastPostRef} className="flex justify-center py-8">
+              {isLoadingMore ? (
+                <div className="flex items-center space-x-2 text-gray-500 dark:text-gray-400">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Loading more posts...</span>
+                </div>
+              ) : !hasMore ? (
+                <div className="text-center py-8">
+                  <div className="text-gray-500 dark:text-gray-400 text-sm">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                      <span className="text-2xl">📝</span>
+                    </div>
+                    <p className="font-medium">No more posts</p>
+                    <p className="text-xs mt-1">You've reached the end of the feed</p>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
+          
+          {/* Empty State */}
+          {filteredPosts.length === 0 && !isLoading && (
+            <div className="text-center py-12">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <span className="text-4xl">🔍</span>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                No posts found
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
+                Try adjusting your filters or create a new post
+              </p>
+              <Button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create First Post
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Create Post Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Create New Post
               </h2>
@@ -615,18 +792,19 @@ export default function FeedSimple() {
                 </div>
               </div>
               
-              <div className="flex items-center justify-end space-x-3 mt-6">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-6">
                 <Button
                   onClick={() => setShowCreateModal(false)}
                   variant="outline"
                   disabled={isCreating}
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleCreatePost}
                   disabled={isCreating || !newPost.caption.trim()}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
                 >
                   {isCreating ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -641,7 +819,7 @@ export default function FeedSimple() {
         {/* Report Post Modal */}
         {reportingPostId && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report Post</h2>
               <div className="space-y-4">
                 <div>
@@ -669,8 +847,15 @@ export default function FeedSimple() {
                   </div>
                 )}
               </div>
-              <div className="flex items-center justify-end space-x-3 mt-6">
-                <Button onClick={() => setReportingPostId(null)} variant="outline" disabled={isReporting}>Cancel</Button>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-6">
+                <Button 
+                  onClick={() => setReportingPostId(null)} 
+                  variant="outline" 
+                  disabled={isReporting}
+                  className="w-full sm:w-auto"
+                >
+                  Cancel
+                </Button>
                 <Button
                   onClick={async () => {
                     try {
@@ -687,7 +872,7 @@ export default function FeedSimple() {
                     }
                   }}
                   disabled={isReporting}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
                 >
                   {isReporting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   {isReporting ? 'Submitting...' : 'Submit Report'}
@@ -700,3 +885,4 @@ export default function FeedSimple() {
     </div>
   )
 }
+

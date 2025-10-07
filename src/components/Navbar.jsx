@@ -8,12 +8,11 @@ import { Moon, Sun, User, LogOut, Home, Users, Eye, Menu, X, Bell, Search, Messa
 import requestService from '@/api/requestService'
 import { useState, useEffect } from 'react'
 
-const Navbar = () => {
+const Navbar = ({ onMenuClick }) => {
   const { user, isAuthenticated, logout } = useAuth()
   const { unreadCount } = useNotifications()
   const navigate = useNavigate()
   const [theme, setTheme] = useState('light')
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [requestsCount, setRequestsCount] = useState(0)
 
   // Load theme from localStorage
@@ -29,22 +28,6 @@ const Navbar = () => {
     setRequestsCount(received.filter(r => r.status === 'pending').length)
   })
 
-  // Close mobile menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (isMobileMenuOpen && !event.target.closest('nav')) {
-        setIsMobileMenuOpen(false)
-      }
-    }
-
-    if (isMobileMenuOpen) {
-      document.addEventListener('click', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('click', handleClickOutside)
-    }
-  }, [isMobileMenuOpen])
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light'
@@ -58,9 +41,6 @@ const Navbar = () => {
     navigate('/login')
   }
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen)
-  }
 
   const getRoleIcon = (role) => {
     switch (role) {
@@ -94,7 +74,7 @@ const Navbar = () => {
 
   if (!isAuthenticated) {
     return (
-      <nav className="bg-white/90 backdrop-blur-sm border-b border-gray-200 dark:bg-gray-900/90 dark:border-gray-700 shadow-sm">
+      <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 dark:bg-gray-900/95 dark:border-gray-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -125,8 +105,8 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="bg-white/90 backdrop-blur-sm border-b border-gray-200 dark:bg-gray-900/90 dark:border-gray-700 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 dark:bg-gray-900/95 dark:border-gray-700 shadow-sm sticky top-0 z-30">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-8">
             <Link to="/" className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
@@ -169,10 +149,10 @@ const Navbar = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleMobileMenu}
-              className="md:hidden hover:bg-gray-100 dark:hover:bg-gray-800"
+              onClick={onMenuClick}
+              className="lg:hidden hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              <Menu className="w-4 h-4" />
             </Button>
             
             <Button
@@ -227,65 +207,6 @@ const Navbar = () => {
         </div>
       </div>
       
-      {/* Mobile menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-          <div className="px-4 py-2 space-y-1">
-            <Link 
-              to="/profile" 
-              className="block px-3 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Profile
-            </Link>
-            <Link 
-              to="/feed" 
-              className="block px-3 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Feed
-            </Link>
-            <Link 
-              to="/search" 
-              className="block px-3 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <div className="flex items-center space-x-2">
-                <Search className="w-4 h-4" />
-                <span>Search</span>
-              </div>
-            </Link>
-            <Link 
-              to="/notifications" 
-              className="relative block px-3 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <div className="flex items-center space-x-2">
-                <Bell className="w-4 h-4" />
-                <span>Notifications</span>
-                <Badge variant="destructive" className="w-5 h-5 flex items-center justify-center text-xs">
-                  3
-                </Badge>
-              </div>
-            </Link>
-            <Link 
-              to="/requests" 
-              className="relative block px-3 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <div className="flex items-center space-x-2">
-                <Inbox className="w-4 h-4" />
-                <span>Requests</span>
-                {requestsCount > 0 && (
-                  <Badge variant="secondary" className="w-5 h-5 flex items-center justify-center text-xs">
-                    {requestsCount}
-                  </Badge>
-                )}
-              </div>
-            </Link>
-          </div>
-        </div>
-      )}
     </nav>
   )
 }

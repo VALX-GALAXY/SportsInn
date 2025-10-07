@@ -796,12 +796,12 @@ export default function Profile() {
         </>
         )}
 
-        {activeTab === 'Performance' && (
+        {activeTab === 'Performance' && user?.role === 'Player' && (
           <Card className="mt-6">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Trophy className="w-5 h-5 text-yellow-500" />
-                <span>Performance</span>
+                <span>Player Performance</span>
               </CardTitle>
               <CardDescription>Season stats and trends (mock data)</CardDescription>
             </CardHeader>
@@ -862,6 +862,228 @@ export default function Profile() {
                       <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
                       <Legend />
                       <Bar dataKey="wkts" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'Performance' && user?.role === 'Academy' && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <BarChart3 className="w-5 h-5 text-blue-500" />
+                <span>Academy Performance</span>
+              </CardTitle>
+              <CardDescription>Training program statistics and student progress</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Training Sessions</p>
+                      <p className="text-2xl font-bold">156</p>
+                    </div>
+                    <Calendar className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Success Rate</p>
+                      <p className="text-2xl font-bold">87%</p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Graduation Rate</p>
+                      <p className="text-2xl font-bold">92%</p>
+                    </div>
+                    <Trophy className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Student Progress</h4>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[{ month: 'Jan', progress: 65 }, { month: 'Feb', progress: 72 }, { month: 'Mar', progress: 78 }, { month: 'Apr', progress: 85 }, { month: 'May', progress: 87 }] }>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                      <XAxis dataKey="month" stroke="#9CA3AF" />
+                      <YAxis stroke="#9CA3AF" />
+                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                      <Legend />
+                      <Line type="monotone" dataKey="progress" stroke="#3B82F6" strokeWidth={2} dot={{ r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Training Hours</h4>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[{ month: 'Jan', hours: 120 }, { month: 'Feb', hours: 135 }, { month: 'Mar', hours: 142 }, { month: 'Apr', hours: 158 }, { month: 'May', hours: 165 }] }>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                      <XAxis dataKey="month" stroke="#9CA3AF" />
+                      <YAxis stroke="#9CA3AF" />
+                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                      <Legend />
+                      <Bar dataKey="hours" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'Performance' && user?.role === 'Scout' && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Eye className="w-5 h-5 text-purple-500" />
+                <span>Scouting Performance</span>
+              </CardTitle>
+              <CardDescription>Scouting activities and success metrics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Players Scouted</p>
+                      <p className="text-2xl font-bold">89</p>
+                    </div>
+                    <Target className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Reports Written</p>
+                      <p className="text-2xl font-bold">67</p>
+                    </div>
+                    <BarChart3 className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Success Rate</p>
+                      <p className="text-2xl font-bold">78%</p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Monthly Scouting Activity</h4>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[{ month: 'Jan', players: 12 }, { month: 'Feb', players: 18 }, { month: 'Mar', players: 15 }, { month: 'Apr', players: 22 }, { month: 'May', players: 19 }] }>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                      <XAxis dataKey="month" stroke="#9CA3AF" />
+                      <YAxis stroke="#9CA3AF" />
+                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                      <Legend />
+                      <Line type="monotone" dataKey="players" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Player Ratings Distribution</h4>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[{ rating: '7-8', count: 15 }, { rating: '8-9', count: 25 }, { rating: '9-10', count: 8 }] }>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                      <XAxis dataKey="rating" stroke="#9CA3AF" />
+                      <YAxis stroke="#9CA3AF" />
+                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                      <Legend />
+                      <Bar dataKey="count" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'Performance' && user?.role === 'Club' && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Users className="w-5 h-5 text-green-500" />
+                <span>Club Performance</span>
+              </CardTitle>
+              <CardDescription>Team performance and management metrics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Matches Won</p>
+                      <p className="text-2xl font-bold">18</p>
+                    </div>
+                    <Trophy className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Goals Scored</p>
+                      <p className="text-2xl font-bold">45</p>
+                    </div>
+                    <Target className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Win Percentage</p>
+                      <p className="text-2xl font-bold">75%</p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Season Performance</h4>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[{ month: 'Jan', wins: 3 }, { month: 'Feb', wins: 4 }, { month: 'Mar', wins: 2 }, { month: 'Apr', wins: 5 }, { month: 'May', wins: 4 }] }>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                      <XAxis dataKey="month" stroke="#9CA3AF" />
+                      <YAxis stroke="#9CA3AF" />
+                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                      <Legend />
+                      <Line type="monotone" dataKey="wins" stroke="#10B981" strokeWidth={2} dot={{ r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Goals by Month</h4>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[{ month: 'Jan', goals: 8 }, { month: 'Feb', goals: 12 }, { month: 'Mar', goals: 6 }, { month: 'Apr', goals: 15 }, { month: 'May', goals: 4 }] }>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                      <XAxis dataKey="month" stroke="#9CA3AF" />
+                      <YAxis stroke="#9CA3AF" />
+                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                      <Legend />
+                      <Bar dataKey="goals" fill="#10B981" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -940,18 +1162,18 @@ export default function Profile() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Users className="w-5 h-5 text-blue-500" />
-                <span>My Students/Players</span>
+                <span>Academy Performance</span>
               </CardTitle>
               <CardDescription>
-                Manage your academy students and track their progress
+                Track your academy's training programs and capacity
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm opacity-90">Total Students</p>
+                      <p className="text-sm opacity-90">Number of Trainees</p>
                       <p className="text-2xl font-bold">45</p>
                     </div>
                     <Users className="w-8 h-8 opacity-80" />
@@ -960,19 +1182,10 @@ export default function Profile() {
                 <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm opacity-90">Active Programs</p>
+                      <p className="text-sm opacity-90">Open Slots</p>
                       <p className="text-2xl font-bold">8</p>
                     </div>
                     <Calendar className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Graduates</p>
-                      <p className="text-2xl font-bold">12</p>
-                    </div>
-                    <Trophy className="w-8 h-8 opacity-80" />
                   </div>
                 </div>
               </div>
@@ -1120,7 +1333,7 @@ export default function Profile() {
                 <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm opacity-90">Reports This Month</p>
+                      <p className="text-sm opacity-90">Applicants Reviewed</p>
                       <p className="text-2xl font-bold">8</p>
                     </div>
                     <BarChart3 className="w-8 h-8 opacity-80" />
