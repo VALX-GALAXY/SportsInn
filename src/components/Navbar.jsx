@@ -1,16 +1,16 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { useNotifications } from '../contexts/NotificationContext'
+// import { useNotifications } from '../contexts/NotificationContext' // Not used in this component
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
-import { Moon, Sun, User, LogOut, Home, Users, Eye, Menu, X, Bell, Search, MessageCircle, Inbox } from 'lucide-react'
+import { Moon, Sun, User, LogOut, Home, Users, Eye, Menu, X, Bell, Search, MessageCircle, Inbox, Plus } from 'lucide-react'
 import requestService from '@/api/requestService'
+import NotificationDropdown from './NotificationDropdown'
 import { useState, useEffect } from 'react'
 
 const Navbar = ({ onMenuClick }) => {
   const { user, isAuthenticated, logout } = useAuth()
-  const { unreadCount } = useNotifications()
   const navigate = useNavigate()
   const [theme, setTheme] = useState('light')
   const [requestsCount, setRequestsCount] = useState(0)
@@ -26,7 +26,7 @@ const Navbar = ({ onMenuClick }) => {
     // simple counter for pending requests
     const { received } = requestService.list()
     setRequestsCount(received.filter(r => r.status === 'pending').length)
-  })
+  }, [])
 
 
   const toggleTheme = () => {
@@ -119,17 +119,23 @@ const Navbar = ({ onMenuClick }) => {
               <Link to="/feed" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
                 Feed
               </Link>
+              <Link to="/tournaments" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+                Tournaments
+              </Link>
+              {(user?.role === 'Player' || user?.role === 'Academy' || user?.role === 'Club') && (
+                <Button
+                  onClick={() => navigate('/feed')}
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Post
+                </Button>
+              )}
               <Link to="/search" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
                 <Search className="w-5 h-5" />
               </Link>
-              <Link to="/notifications" className="relative text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
-                <Bell className="w-5 h-5" />
-                {unreadCount > 0 && (
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center text-xs">
-                    {unreadCount}
-                  </Badge>
-                )}
-              </Link>
+              <NotificationDropdown />
               <Link to="/requests" className="relative text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
                 <Inbox className="w-5 h-5" />
                 {requestsCount > 0 && (

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
 import socketService from '../api/socketService'
+import notificationService from '../api/notificationService'
 import { useToast } from '../components/ui/simple-toast'
 
 const NotificationContext = createContext()
@@ -20,10 +21,27 @@ export const NotificationProvider = ({ children }) => {
   const { user } = useAuth()
   const { toast } = useToast()
 
+  const loadNotifications = async () => {
+    try {
+      const response = await notificationService.getNotifications(1, 20)
+      setNotifications(response.notifications || [])
+      setUnreadCount(response.unreadCount || 0)
+    } catch (error) {
+      console.error('Error loading notifications:', error)
+      // Fallback to localStorage
+      const savedNotifications = localStorage.getItem(`notifications_${user.id}`)
+      if (savedNotifications) {
+        const parsed = JSON.parse(savedNotifications)
+        setNotifications(parsed)
+        setUnreadCount(parsed.filter(n => !n.read).length)
+      }
+    }
+  }
+
   useEffect(() => {
     if (user?.id) {
       // Connect to socket
-      const socket = socketService.connectMock(user.id)
+      socketService.connectMock(user.id)
       setIsConnected(true)
 
       // Subscribe to notifications
@@ -42,13 +60,8 @@ export const NotificationProvider = ({ children }) => {
         })
       })
 
-      // Load existing notifications from localStorage
-      const savedNotifications = localStorage.getItem(`notifications_${user.id}`)
-      if (savedNotifications) {
-        const parsed = JSON.parse(savedNotifications)
-        setNotifications(parsed)
-        setUnreadCount(parsed.filter(n => !n.read).length)
-      }
+      // Load notifications from service
+      loadNotifications()
     }
 
     return () => {
@@ -67,22 +80,46 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [notifications, user?.id])
 
-  const markAsRead = (notificationId) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === notificationId 
-          ? { ...notif, read: true }
-          : notif
+  const markAsRead = async (notificationId) => {
+    try {
+      await notificationService.markAsRead(notificationId)
+      setNotifications(prev => 
+        prev.map(notif => 
+          notif.id === notificationId 
+            ? { ...notif, isRead: true }
+            : notif
+        )
       )
-    )
-    setUnreadCount(prev => Math.max(0, prev - 1))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+    } catch (error) {
+      console.error('Error marking notification as read:', error)
+      // Fallback to local update
+      setNotifications(prev => 
+        prev.map(notif => 
+          notif.id === notificationId 
+            ? { ...notif, isRead: true }
+            : notif
+        )
+      )
+      setUnreadCount(prev => Math.max(0, prev - 1))
+    }
   }
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notif => ({ ...notif, read: true }))
-    )
-    setUnreadCount(0)
+  const markAllAsRead = async () => {
+    try {
+      await notificationService.markAllAsRead()
+      setNotifications(prev => 
+        prev.map(notif => ({ ...notif, isRead: true }))
+      )
+      setUnreadCount(0)
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error)
+      // Fallback to local update
+      setNotifications(prev => 
+        prev.map(notif => ({ ...notif, isRead: true }))
+      )
+      setUnreadCount(0)
+    }
   }
 
   const clearNotifications = () => {

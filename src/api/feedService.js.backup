@@ -297,7 +297,6 @@ class FeedService {
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
-      
       // Fallback to mock implementation
       await new Promise(resolve => setTimeout(resolve, 1000))
       
@@ -368,6 +367,8 @@ class FeedService {
       this.saveFeedData(feed)
       
       return newPost
+    } catch (error) {
+      throw new Error(error.message || 'Failed to create post')
     }
   }
 
@@ -398,6 +399,8 @@ class FeedService {
 
       this.saveFeedData(feed)
       return post
+    } catch (error) {
+      throw new Error(error.message || 'Failed to like post')
     }
   }
 
@@ -413,6 +416,8 @@ class FeedService {
       
       const comments = localStorage.getItem(`sportshub_comments_${postId}`)
       return comments ? JSON.parse(comments) : []
+    } catch (error) {
+      throw new Error(error.message || 'Failed to fetch comments')
     }
   }
 
@@ -456,6 +461,8 @@ class FeedService {
       }
       
       return newComment
+    } catch (error) {
+      throw new Error(error.message || 'Failed to add comment')
     }
   }
 
@@ -512,7 +519,7 @@ class FeedService {
     }
   }
 
-  async uploadImage() {
+  async uploadImage(imageFile) {
     try {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 2000))

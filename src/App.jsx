@@ -14,6 +14,11 @@ import Notifications from './pages/Notifications'
 import Search from './pages/Search'
 import Messages from './pages/Messages'
 import Requests from './pages/Requests'
+import Tournaments from './pages/Tournaments'
+import PlayerDashboard from './pages/dashboard/PlayerDashboard'
+import AcademyDashboard from './pages/dashboard/AcademyDashboard'
+import ClubDashboard from './pages/dashboard/ClubDashboard'
+import ScoutDashboard from './pages/dashboard/ScoutDashboard'
 import './App.css'
 
 // Layout component for authenticated users
@@ -115,6 +120,41 @@ function AppRoutes() {
         <AuthenticatedLayout>
           <ErrorBoundary>
             <Requests />
+          </ErrorBoundary>
+        </AuthenticatedLayout>
+      } />
+      <Route path="/tournaments" element={
+        <AuthenticatedLayout>
+          <ErrorBoundary>
+            <Tournaments />
+          </ErrorBoundary>
+        </AuthenticatedLayout>
+      } />
+      <Route path="/dashboard/player" element={
+        <AuthenticatedLayout>
+          <ErrorBoundary>
+            <PlayerDashboard />
+          </ErrorBoundary>
+        </AuthenticatedLayout>
+      } />
+      <Route path="/dashboard/academy" element={
+        <AuthenticatedLayout>
+          <ErrorBoundary>
+            <AcademyDashboard />
+          </ErrorBoundary>
+        </AuthenticatedLayout>
+      } />
+      <Route path="/dashboard/club" element={
+        <AuthenticatedLayout>
+          <ErrorBoundary>
+            <ClubDashboard />
+          </ErrorBoundary>
+        </AuthenticatedLayout>
+      } />
+      <Route path="/dashboard/scout" element={
+        <AuthenticatedLayout>
+          <ErrorBoundary>
+            <ScoutDashboard />
           </ErrorBoundary>
         </AuthenticatedLayout>
       } />

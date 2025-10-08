@@ -512,7 +512,7 @@ class FeedService {
     }
   }
 
-  async uploadImage() {
+  async uploadImage(imageFile) {
     try {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 2000))
