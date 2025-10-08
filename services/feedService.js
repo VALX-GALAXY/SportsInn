@@ -156,7 +156,7 @@ async function addComment(user, postId, text, io) {
   const post = await Post.findById(postId);
   if (!post) throw new Error("Post not found");
 
-  const comment = { userId: user._id, text };
+  const comment = { userId: user._id, text, createdAt: new Date() };  
   post.comments.push(comment);
   await post.save();
 

@@ -16,6 +16,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
 const reportRoutes = require("./routes/reportRoutes");
+const tournamentRoutes = require("./routes/tournamentRoutes");
 
 // Middleware imports
 const { generalLimiter, authLimiter } = require("./middlewares/rateLimiter");
@@ -48,6 +49,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/reports', reportRoutes);
+app.use("/api/tournaments", tournamentRoutes);
 
 
 // Error Handler

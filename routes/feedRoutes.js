@@ -20,7 +20,7 @@ const upload = multer({ storage });
 
 router.post("/upload", authMiddleware, upload.single("media"), feedController.uploadMedia);
 
-router.post("/", authMiddleware, feedController.createPost);
+router.post("/", authMiddleware, feedController.  createPost);
 router.get("/", authMiddleware, feedController.getFeed);
 
 router.post("/:id/like", authMiddleware, feedController.likePost);

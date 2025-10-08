@@ -2,7 +2,7 @@
 
 A Node.js + Express + MongoDB backend that allows players, academies, and scouts to connect, share posts, follow each other, chat, and get real-time notifications.
 
-This project progressed across multiple days — authentication, role-aware profiles, feeds, media uploads, sockets, chat, and now **Day 7 updates: message read endpoint, improved pagination, and admin flow fixes.**
+This project progressed across multiple days — authentication, role-aware profiles, feeds, media uploads, sockets, chat, and now **Day 8 updates: a full tournament system and bug fixes for the notification system.**
 
 ---
 
@@ -22,6 +22,7 @@ This project progressed across multiple days — authentication, role-aware prof
 - **Moderation / Reports:** Submit & admin review  
 - **Role Dashboards:** For academies/scouts  
 - **Day 7:** Message read endpoint + conversation pagination fixes  
+- **Day 8:** Tournament System (creation, listing, application) + Bug fixes for notifications related to tournament applications.
 
 ---
 
@@ -40,6 +41,7 @@ npm install
 
 ### 3. Environment Variables
 Create a `.env` file at the root:
+
 ```env
 MONGO_URI=mongodb://127.0.0.1:27017/project1db
 JWT_SECRET=your_jwt_secret
@@ -66,8 +68,9 @@ npm start
 npm run dev
 ```
 
-**Runs at:** `http://localhost:3000`  
-**Socket.IO:** same host (`/socket.io`)
+Runs at: `http://localhost:3000`
+
+Socket.IO: same host (`/socket.io`)
 
 ---
 
@@ -83,10 +86,12 @@ exit
 
 ### 2. Create secure admin (auto-hashed):
 ```bash
-curl -X POST http://localhost:3000/api/auth/admin/signup   -H "Content-Type: application/json"   -d '{"name":"Admin","email":"admin@test.com","password":"123456"}'
+curl -X POST http://localhost:3000/api/auth/admin/signup \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Admin","email":"admin@test.com","password":"123456"}'
 ```
 
-After that you can log in via `/api/auth/admin/login`.
+After that you can log in via `/api/auth/login`.
 
 ---
 
@@ -96,31 +101,39 @@ After that you can log in via `/api/auth/admin/login`.
 
 #### Regular Signup
 ```bash
-curl -X POST http://localhost:3000/api/auth/signup   -H "Content-Type: application/json"   -d '{"name":"Ashu","email":"ashu@test.com","password":"123456","role":"player","age":21,"playingRole":"batsman"}'
+curl -X POST http://localhost:3000/api/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Ashu","email":"ashu@test.com","password":"123456","role":"player","age":21,"playingRole":"batsman"}'
 ```
 
 #### Admin Signup
 ```bash
-curl -X POST http://localhost:3000/api/auth/admin/signup   -H "Content-Type: application/json"   -d '{"name":"Admin","email":"admin@test.com","password":"123456"}'
+curl -X POST http://localhost:3000/api/auth/admin/signup \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Admin","email":"admin@test.com","password":"123456"}'
 ```
 
 #### Login
 ```bash
-curl -X POST http://localhost:3000/api/auth/login   -H "Content-Type: application/json"   -d '{"email":"ashu@test.com","password":"123456"}'
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"ashu@test.com","password":"123456"}'
 ```
 
 ---
 
 ### Search API
 ```bash
-curl -X GET "http://localhost:3000/api/search?role=player&name=ashu&ageMin=18&ageMax=25&location=pune&page=1&limit=10"   -H "Authorization: Bearer <access_token>"
+curl -X GET "http://localhost:3000/api/search?role=player&name=ashu&ageMin=18&ageMax=25&location=pune&page=1&limit=10" \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 ---
 
 ### Player Stats
 ```bash
-curl -X GET http://localhost:3000/api/users/<user_id>/stats   -H "Authorization: Bearer <access_token>"
+curl -X GET http://localhost:3000/api/users/<user_id>/stats \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 ---
@@ -129,19 +142,27 @@ curl -X GET http://localhost:3000/api/users/<user_id>/stats   -H "Authorization:
 
 #### Create
 ```bash
-curl -X POST http://localhost:3000/api/applications   -H "Authorization: Bearer <access_token>"   -H "Content-Type: application/json"   -d '{"toUserId":"<target_user_id>"}'
+curl -X POST http://localhost:3000/api/applications \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"toUserId":"<target_user_id>"}'
 ```
 
 #### Sent / Received
 ```bash
-curl -X GET http://localhost:3000/api/applications/sent   -H "Authorization: Bearer <access_token>"
+curl -X GET http://localhost:3000/api/applications/sent \
+  -H "Authorization: Bearer <access_token>"
 
-curl -X GET http://localhost:3000/api/applications/received   -H "Authorization: Bearer <access_token>"
+curl -X GET http://localhost:3000/api/applications/received \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 #### Update Status
 ```bash
-curl -X PUT http://localhost:3000/api/applications/<application_id>   -H "Authorization: Bearer <access_token>"   -H "Content-Type: application/json"   -d '{"status":"accepted"}'
+curl -X PUT http://localhost:3000/api/applications/<application_id> \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"accepted"}'
 ```
 
 ---
@@ -150,12 +171,16 @@ curl -X PUT http://localhost:3000/api/applications/<application_id>   -H "Author
 
 #### Report Post
 ```bash
-curl -X POST http://localhost:3000/api/reports   -H "Authorization: Bearer <access_token>"   -H "Content-Type: application/json"   -d '{"postId":"<post_id>","reason":"spam"}'
+curl -X POST http://localhost:3000/api/reports \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"postId":"<post_id>","reason":"spam"}'
 ```
 
 #### List Reports (Admin)
 ```bash
-curl -X GET http://localhost:3000/api/reports   -H "Authorization: Bearer <admin_access_token>"
+curl -X GET http://localhost:3000/api/reports \
+  -H "Authorization: Bearer <admin_access_token>"
 ```
 
 ---
@@ -164,28 +189,36 @@ curl -X GET http://localhost:3000/api/reports   -H "Authorization: Bearer <admin
 
 #### Upload Media
 ```bash
-curl -X POST http://localhost:3000/api/feed/upload   -H "Authorization: Bearer <access_token>"   -F "file=@/path/to/image.jpg"
+curl -X POST http://localhost:3000/api/feed/upload \
+  -H "Authorization: Bearer <access_token>" \
+  -F "file=@/path/to/image.jpg"
 ```
 
 ---
 
-### 💬 Messaging
+## 💬 Messaging
 
-#### Send Message
+### Send Message
 ```bash
-curl -X POST http://localhost:3000/api/messages   -H "Authorization: Bearer <access_token>"   -H "Content-Type: application/json"   -d '{"receiverId":"<user_id>","text":"Hello!"}'
+curl -X POST http://localhost:3000/api/messages \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"receiverId":"<user_id>","text":"Hello!"}'
 ```
 
-#### Fetch Conversation (Paginated)
+### Fetch Conversation (Paginated)
 ```bash
-curl -X GET http://localhost:3000/api/messages/<user_id>?page=1   -H "Authorization: Bearer <access_token>"
+curl -X GET "http://localhost:3000/api/messages/<user_id>?page=1" \
+  -H "Authorization: Bearer <access_token>"
 ```
 
-#### ✅ Mark Message as Read (Day 7)
+### ✅ Mark Message as Read
 ```bash
-curl -X PUT http://localhost:3000/api/messages/read/<message_id>   -H "Authorization: Bearer <access_token>"
+curl -X PUT http://localhost:3000/api/messages/read/<message_id> \
+  -H "Authorization: Bearer <access_token>"
 ```
-Response:
+
+**Response:**
 ```json
 {
   "success": true,
@@ -196,8 +229,54 @@ Response:
 
 ---
 
+## 🏆 Tournaments (Day 8 Updates)
+
+### Create Tournament (Admin Only)
+```bash
+curl -X POST http://localhost:3000/api/tournaments \
+  -H "Authorization: Bearer <admin_access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Local League Cup",
+    "entryFee": 100,
+    "location": "Pune",
+    "type": "Knockout",
+    "vacancies": 8
+  }'
+```
+
+### List All Tournaments
+```bash
+curl -X GET "http://localhost:3000/api/tournaments"
+```
+
+### Apply to Tournament
+```bash
+curl -X POST http://localhost:3000/api/tournaments/apply/<tournament_id> \
+  -H "Authorization: Bearer <player_access_token>"
+```
+
+---
+
+## 🔔 Notifications (Day 8 Updates)
+
+### Get Notifications (Paginated)
+```bash
+curl -X GET "http://localhost:3000/api/notifications?page=1&limit=10" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### Mark Notification as Read
+```bash
+curl -X PUT http://localhost:3000/api/notifications/read/<notification_id> \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
 ## 🔌 Socket.IO Quick Test
-```js
+
+```javascript
 const socket = io('http://localhost:3000', { auth: { token: '<access_token>' } });
 socket.on('connect', () => console.log('connected', socket.id));
 socket.on('notification:new', n => console.log('notif', n));
@@ -209,23 +288,24 @@ socket.on('feed:new', p => console.log('new post', p));
 
 ## 🔒 Notes
 
-- Always use signup APIs for bcrypt-hashed passwords.  
-- `isAdmin` flag + `role: "admin"` handled automatically.  
-- Pagination: use `page` & `limit`.  
-- Cloudinary fallback → `uploads/` folder.  
-- Socket authentication: `{ auth: { token } }`.  
-- Rate limiter applied to sensitive routes.  
+- Always use signup APIs for bcrypt-hashed passwords.
+- `isAdmin` flag + `role: "admin"` handled automatically.
+- Pagination: use `page` & `limit`.
+- Cloudinary fallback → `uploads/` folder.
+- Socket authentication: `{ auth: { token } }`.
+- Rate limiter applied to sensitive routes.
 
 ---
 
 ## 🧪 Debug Tips
 
-- Test with multiple accounts (player/academy/scout/admin).  
-- Save `accessToken` & `refreshToken` from login responses.  
-- If socket fails, check you’re sending JWT in `auth`.  
-- For local images, confirm `uploads/` is writable.  
+- Test with multiple accounts (player/academy/scout/admin).
+- Save `accessToken` & `refreshToken` from login responses.
+- If socket fails, check you're sending JWT in auth.
+- For local images, confirm `uploads/` is writable.
 
 ---
 
 ## 📄 License
+
 MIT © 2025 Cricket Social Platform API
