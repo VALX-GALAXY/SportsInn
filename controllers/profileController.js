@@ -1,4 +1,6 @@
+const User = require("../models/userModel");
 const profileService = require("../services/profileService");
+const roleFields = require("../utils/roleFields");
 
 async function getProfile(req, res) {
   const user = await profileService.getProfile(req.params.id);
@@ -18,6 +20,14 @@ async function updateProfile(req, res, next) {
     // exclude protected fields
     const protectedFields = ['passwordHash', 'email', 'role', 'refreshTokens', '_id', 'isAdmin'];
     const updates = {};
+
+    // Handle uploaded image URL
+    if (req.body.profilePic) updates.profilePic = req.body.profilePic;
+
+    // Allow clearing profilePic if explicitly sent as empty string
+    if (req.body.profilePic === "") {
+      updates.profilePic = "";
+    }
 
     for (const key of Object.keys(req.body)) {
       if (protectedFields.includes(key)) continue;

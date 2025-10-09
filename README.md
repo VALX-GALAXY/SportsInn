@@ -8,38 +8,41 @@ This project progressed across multiple days — authentication, role-aware prof
 
 ## 🚀 Features
 
-- **User Authentication:** Signup & login with JWT (access + refresh tokens)  
-- **Admin Panel:** Admin signup/login + moderation endpoints  
-- **Role-based Profiles:** Player / Academy / Scout  
-- **Social Feed:** Create posts, like/unlike, comment, personalized feed  
-- **Media Uploads:** Cloudinary + multer (local fallback)  
-- **Follow System:** Follow/unfollow + follower lists  
-- **Real-time:** Notifications & chat via Socket.IO  
-- **Private Messaging:** Store + real-time message delivery  
-- **Search API:** Filter by role, age, location, name (in-memory filters)  
-- **Player Stats (Mock):** Basic match/runs/wickets fields  
-- **Applications / Invites:** Apply & accept/reject flow  
-- **Moderation / Reports:** Submit & admin review  
-- **Role Dashboards:** For academies/scouts  
-- **Day 7:** Message read endpoint + conversation pagination fixes  
-- **Day 8:** Tournament System (creation, listing, application) + Bug fixes for notifications related to tournament applications.
+- **User Authentication:** Signup & login with JWT (access + refresh tokens)
+- **Admin Panel:** Admin signup/login + moderation endpoints
+- **Role-based Profiles:** Player / Academy / Scout
+- **Social Feed:** Create posts, like/unlike, comment, personalized feed
+- **Media Uploads:** Cloudinary + multer (local fallback)
+- **Follow System:** Follow/unfollow + follower lists
+- **Real-time:** Notifications & chat via Socket.IO
+- **Private Messaging:** Store + real-time message delivery
+- **Search API:** Filter by role, age, location, name (in-memory filters)
+- **Player Stats (Mock):** Basic match/runs/wickets fields
+- **Applications / Invites:** Apply & accept/reject flow
+- **Moderation / Reports:** Submit & admin review
+- **Role Dashboards:** For academies/scouts
+- **Day 7:** Message read endpoint + conversation pagination fixes
+- **Day 8:** Tournament System (creation, listing, application) + Bug fixes for notifications related to tournament applications
 
 ---
 
 ## ⚡ Setup Instructions
 
 ### 1. Clone Repository
+
 ```bash
 git clone <repo_url>
 cd <project_folder>
 ```
 
 ### 2. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 3. Environment Variables
+
 Create a `.env` file at the root:
 
 ```env
@@ -55,6 +58,7 @@ CLOUDINARY_API_SECRET=...
 ```
 
 ### 4. Start MongoDB
+
 ```bash
 mongod --dbpath ~/data/db
 # or
@@ -62,21 +66,23 @@ sudo systemctl start mongod
 ```
 
 ### 5. Start Server
+
 ```bash
 npm start
 # or during development
 npm run dev
 ```
 
-Runs at: `http://localhost:3000`
+**Runs at:** `http://localhost:3000`
 
-Socket.IO: same host (`/socket.io`)
+**Socket.IO:** same host (`/socket.io`)
 
 ---
 
 ## 🧾 Admin Setup (Safe Way)
 
 ### 1. Remove incorrect admin if any:
+
 ```bash
 mongosh
 use project1db
@@ -85,6 +91,7 @@ exit
 ```
 
 ### 2. Create secure admin (auto-hashed):
+
 ```bash
 curl -X POST http://localhost:3000/api/auth/admin/signup \
   -H "Content-Type: application/json" \
@@ -100,6 +107,7 @@ After that you can log in via `/api/auth/login`.
 ### Authentication
 
 #### Regular Signup
+
 ```bash
 curl -X POST http://localhost:3000/api/auth/signup \
   -H "Content-Type: application/json" \
@@ -107,6 +115,7 @@ curl -X POST http://localhost:3000/api/auth/signup \
 ```
 
 #### Admin Signup
+
 ```bash
 curl -X POST http://localhost:3000/api/auth/admin/signup \
   -H "Content-Type: application/json" \
@@ -114,6 +123,7 @@ curl -X POST http://localhost:3000/api/auth/admin/signup \
 ```
 
 #### Login
+
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -123,6 +133,7 @@ curl -X POST http://localhost:3000/api/auth/login \
 ---
 
 ### Search API
+
 ```bash
 curl -X GET "http://localhost:3000/api/search?role=player&name=ashu&ageMin=18&ageMax=25&location=pune&page=1&limit=10" \
   -H "Authorization: Bearer <access_token>"
@@ -131,6 +142,7 @@ curl -X GET "http://localhost:3000/api/search?role=player&name=ashu&ageMin=18&ag
 ---
 
 ### Player Stats
+
 ```bash
 curl -X GET http://localhost:3000/api/users/<user_id>/stats \
   -H "Authorization: Bearer <access_token>"
@@ -141,6 +153,7 @@ curl -X GET http://localhost:3000/api/users/<user_id>/stats \
 ### Applications / Invites
 
 #### Create
+
 ```bash
 curl -X POST http://localhost:3000/api/applications \
   -H "Authorization: Bearer <access_token>" \
@@ -149,6 +162,7 @@ curl -X POST http://localhost:3000/api/applications \
 ```
 
 #### Sent / Received
+
 ```bash
 curl -X GET http://localhost:3000/api/applications/sent \
   -H "Authorization: Bearer <access_token>"
@@ -158,6 +172,7 @@ curl -X GET http://localhost:3000/api/applications/received \
 ```
 
 #### Update Status
+
 ```bash
 curl -X PUT http://localhost:3000/api/applications/<application_id> \
   -H "Authorization: Bearer <access_token>" \
@@ -170,6 +185,7 @@ curl -X PUT http://localhost:3000/api/applications/<application_id> \
 ### Reports
 
 #### Report Post
+
 ```bash
 curl -X POST http://localhost:3000/api/reports \
   -H "Authorization: Bearer <access_token>" \
@@ -178,6 +194,7 @@ curl -X POST http://localhost:3000/api/reports \
 ```
 
 #### List Reports (Admin)
+
 ```bash
 curl -X GET http://localhost:3000/api/reports \
   -H "Authorization: Bearer <admin_access_token>"
@@ -188,6 +205,7 @@ curl -X GET http://localhost:3000/api/reports \
 ### Feed
 
 #### Upload Media
+
 ```bash
 curl -X POST http://localhost:3000/api/feed/upload \
   -H "Authorization: Bearer <access_token>" \
@@ -199,6 +217,7 @@ curl -X POST http://localhost:3000/api/feed/upload \
 ## 💬 Messaging
 
 ### Send Message
+
 ```bash
 curl -X POST http://localhost:3000/api/messages \
   -H "Authorization: Bearer <access_token>" \
@@ -207,18 +226,21 @@ curl -X POST http://localhost:3000/api/messages \
 ```
 
 ### Fetch Conversation (Paginated)
+
 ```bash
 curl -X GET "http://localhost:3000/api/messages/<user_id>?page=1" \
   -H "Authorization: Bearer <access_token>"
 ```
 
-### ✅ Mark Message as Read
+### Mark Message as Read
+
 ```bash
 curl -X PUT http://localhost:3000/api/messages/read/<message_id> \
   -H "Authorization: Bearer <access_token>"
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -232,6 +254,7 @@ curl -X PUT http://localhost:3000/api/messages/read/<message_id> \
 ## 🏆 Tournaments (Day 8 Updates)
 
 ### Create Tournament (Admin Only)
+
 ```bash
 curl -X POST http://localhost:3000/api/tournaments \
   -H "Authorization: Bearer <admin_access_token>" \
@@ -246,11 +269,13 @@ curl -X POST http://localhost:3000/api/tournaments \
 ```
 
 ### List All Tournaments
+
 ```bash
 curl -X GET "http://localhost:3000/api/tournaments"
 ```
 
 ### Apply to Tournament
+
 ```bash
 curl -X POST http://localhost:3000/api/tournaments/apply/<tournament_id> \
   -H "Authorization: Bearer <player_access_token>"
@@ -261,12 +286,14 @@ curl -X POST http://localhost:3000/api/tournaments/apply/<tournament_id> \
 ## 🔔 Notifications (Day 8 Updates)
 
 ### Get Notifications (Paginated)
+
 ```bash
 curl -X GET "http://localhost:3000/api/notifications?page=1&limit=10" \
   -H "Authorization: Bearer <access_token>"
 ```
 
 ### Mark Notification as Read
+
 ```bash
 curl -X PUT http://localhost:3000/api/notifications/read/<notification_id> \
   -H "Authorization: Bearer <access_token>"
@@ -288,21 +315,21 @@ socket.on('feed:new', p => console.log('new post', p));
 
 ## 🔒 Notes
 
-- Always use signup APIs for bcrypt-hashed passwords.
-- `isAdmin` flag + `role: "admin"` handled automatically.
-- Pagination: use `page` & `limit`.
-- Cloudinary fallback → `uploads/` folder.
-- Socket authentication: `{ auth: { token } }`.
-- Rate limiter applied to sensitive routes.
+- Always use signup APIs for bcrypt-hashed passwords
+- `isAdmin` flag + `role: "admin"` handled automatically
+- Pagination: use `page` & `limit`
+- Cloudinary fallback → `uploads/` folder
+- Socket authentication: `{ auth: { token } }`
+- Rate limiter applied to sensitive routes
 
 ---
 
 ## 🧪 Debug Tips
 
-- Test with multiple accounts (player/academy/scout/admin).
-- Save `accessToken` & `refreshToken` from login responses.
-- If socket fails, check you're sending JWT in auth.
-- For local images, confirm `uploads/` is writable.
+- Test with multiple accounts (player/academy/scout/admin)
+- Save `accessToken` & `refreshToken` from login responses
+- If socket fails, check you're sending JWT in auth
+- For local images, confirm `uploads/` is writable
 
 ---
 

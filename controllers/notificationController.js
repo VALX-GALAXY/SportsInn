@@ -2,11 +2,12 @@ const Notification = require("../models/notificationModel");
 
 async function getNotifications(req, res, next) {
   try {
+    const userId = req.params.userId || req.user._id;
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.max(1, parseInt(req.query.limit) || 10);
     const skip = (page - 1) * limit;
 
-    const notes = await Notification.find({ userId: req.user._id })
+    const notes = await Notification.find({ userId })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);

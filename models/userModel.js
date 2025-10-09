@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema({
   refreshTokens: [String],
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  profilePic: { type: String, default: '' },
 
   stats: {
     matches: { type: Number, default: 0 },
