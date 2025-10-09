@@ -15,6 +15,7 @@ import Search from './pages/Search'
 import Messages from './pages/Messages'
 import Requests from './pages/Requests'
 import Tournaments from './pages/Tournaments'
+import Dashboard from './pages/Dashboard'
 import PlayerDashboard from './pages/dashboard/PlayerDashboard'
 import AcademyDashboard from './pages/dashboard/AcademyDashboard'
 import ClubDashboard from './pages/dashboard/ClubDashboard'
@@ -27,16 +28,19 @@ function AuthenticatedLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="flex h-screen">
+      {/* Navbar at the top */}
+      <ErrorBoundary>
+        <Navbar onMenuClick={() => setSidebarOpen(true)} />
+      </ErrorBoundary>
+      
+      {/* Main content area */}
+      <div className="flex min-h-screen pt-16">
         <ErrorBoundary>
           <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         </ErrorBoundary>
-        <div className="flex-1 flex flex-col lg:ml-64">
-          <ErrorBoundary>
-            <Navbar onMenuClick={() => setSidebarOpen(true)} />
-          </ErrorBoundary>
-          <main className="flex-1 overflow-y-auto">
-            <div className="min-h-full">
+        <div className="flex-1 min-w-0">
+          <main className="min-h-[calc(100vh-4rem)] overflow-y-auto">
+            <div className="p-4 pt-6">
               {children}
             </div>
           </main>
@@ -53,8 +57,10 @@ function UnauthenticatedLayout({ children }) {
       <ErrorBoundary>
         <Navbar />
       </ErrorBoundary>
-      <div className="min-h-screen">
-        {children}
+      <div className="min-h-screen pt-16">
+        <div className="p-4 pt-6">
+          {children}
+        </div>
       </div>
     </div>
   )
@@ -127,6 +133,13 @@ function AppRoutes() {
         <AuthenticatedLayout>
           <ErrorBoundary>
             <Tournaments />
+          </ErrorBoundary>
+        </AuthenticatedLayout>
+      } />
+      <Route path="/dashboard" element={
+        <AuthenticatedLayout>
+          <ErrorBoundary>
+            <Dashboard />
           </ErrorBoundary>
         </AuthenticatedLayout>
       } />

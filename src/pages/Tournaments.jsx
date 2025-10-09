@@ -32,7 +32,9 @@ export default function Tournaments() {
     type: 'all',
     minFee: '',
     maxFee: '',
-    search: ''
+    search: '',
+    sortBy: 'date', // date, fee, prize, popularity
+    sortOrder: 'asc' // asc, desc
   })
   const [showFilters, setShowFilters] = useState(false)
   const [selectedTournament, setSelectedTournament] = useState(null)
@@ -44,6 +46,7 @@ export default function Tournaments() {
     additionalInfo: ''
   })
   const [isApplying, setIsApplying] = useState(false)
+  const [applicationStatuses, setApplicationStatuses] = useState({})
   const { toast } = useToast()
 
   useEffect(() => {
@@ -55,6 +58,29 @@ export default function Tournaments() {
       setIsLoading(true)
       const response = await tournamentService.getTournaments(filters)
       setTournaments(response.tournaments || [])
+      
+      // Load application statuses for each tournament
+      const statusPromises = (response.tournaments || []).map(async (tournament) => {
+        try {
+          const status = await tournamentService.getApplicationStatus(tournament.id)
+          return { tournamentId: tournament.id, status }
+        } catch (error) {
+          console.error(`Error fetching status for tournament ${tournament.id}:`, error)
+          return { tournamentId: tournament.id, status: { status: 'not_applied' } }
+        }
+      })
+      
+      const statuses = await Promise.all(statusPromises)
+      const statusMap = statuses.reduce((acc, { tournamentId, status }) => {
+        acc[tournamentId] = status
+        return acc
+      }, {})
+      
+      setApplicationStatuses(statusMap)
+      
+      // Apply sorting
+      const sortedTournaments = sortTournaments(response.tournaments || [], filters.sortBy, filters.sortOrder)
+      setTournaments(sortedTournaments)
     } catch (error) {
       console.error('Error fetching tournaments:', error)
       toast({
@@ -65,6 +91,40 @@ export default function Tournaments() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const sortTournaments = (tournaments, sortBy, sortOrder) => {
+    return [...tournaments].sort((a, b) => {
+      let aValue, bValue
+      
+      switch (sortBy) {
+        case 'date':
+          aValue = new Date(a.startDate)
+          bValue = new Date(b.startDate)
+          break
+        case 'fee':
+          aValue = a.entryFee
+          bValue = b.entryFee
+          break
+        case 'prize':
+          aValue = a.prizePool
+          bValue = b.prizePool
+          break
+        case 'popularity':
+          aValue = a.registeredTeams / a.maxTeams
+          bValue = b.registeredTeams / b.maxTeams
+          break
+        default:
+          aValue = new Date(a.startDate)
+          bValue = new Date(b.startDate)
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1
+      } else {
+        return aValue < bValue ? 1 : -1
+      }
+    })
   }
 
   const handleApply = async () => {
@@ -79,6 +139,16 @@ export default function Tournaments() {
         description: response.message || "Application submitted successfully!",
         variant: "default"
       })
+      
+      // Update application status
+      setApplicationStatuses(prev => ({
+        ...prev,
+        [selectedTournament.id]: { 
+          status: 'applied', 
+          applicationId: response.applicationId,
+          appliedAt: new Date().toISOString()
+        }
+      }))
       
       setShowApplyModal(false)
       setSelectedTournament(null)
@@ -97,6 +167,31 @@ export default function Tournaments() {
       })
     } finally {
       setIsApplying(false)
+    }
+  }
+
+  const handleWithdraw = async (tournamentId) => {
+    try {
+      const response = await tournamentService.withdrawApplication(tournamentId)
+      
+      toast({
+        title: "Success",
+        description: response.message || "Application withdrawn successfully!",
+        variant: "default"
+      })
+      
+      // Update application status
+      setApplicationStatuses(prev => ({
+        ...prev,
+        [tournamentId]: { status: 'not_applied' }
+      }))
+    } catch (error) {
+      console.error('Error withdrawing application:', error)
+      toast({
+        title: "Error",
+        description: "Failed to withdraw application",
+        variant: "destructive"
+      })
     }
   }
 
@@ -140,6 +235,87 @@ export default function Tournaments() {
       currency: 'INR',
       maximumFractionDigits: 0
     }).format(amount)
+  }
+
+  const getApplicationButton = (tournament) => {
+    const appStatus = applicationStatuses[tournament.id]?.status || 'not_applied'
+    
+    switch (appStatus) {
+      case 'applied':
+        return (
+          <div className="space-y-2">
+            <Button
+              disabled
+              className="w-full bg-yellow-600 text-white cursor-not-allowed"
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Applied
+            </Button>
+            <Button
+              onClick={() => handleWithdraw(tournament.id)}
+              variant="outline"
+              size="sm"
+              className="w-full text-red-600 border-red-300 hover:bg-red-50"
+            >
+              Withdraw
+            </Button>
+          </div>
+        )
+      case 'approved':
+        return (
+          <Button
+            disabled
+            className="w-full bg-green-600 text-white cursor-not-allowed"
+          >
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Selected
+          </Button>
+        )
+      case 'rejected':
+        return (
+          <Button
+            disabled
+            className="w-full bg-red-600 text-white cursor-not-allowed"
+          >
+            <XCircle className="w-4 h-4 mr-2" />
+            Rejected
+          </Button>
+        )
+      default:
+        if (tournament.status === 'open') {
+          return (
+            <Button
+              onClick={() => {
+                setSelectedTournament(tournament)
+                setShowApplyModal(true)
+              }}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Apply Now
+            </Button>
+          )
+        } else if (tournament.status === 'full') {
+          return (
+            <Button
+              disabled
+              className="w-full bg-yellow-600 text-white cursor-not-allowed"
+            >
+              <AlertCircle className="w-4 h-4 mr-2" />
+              Tournament Full
+            </Button>
+          )
+        } else {
+          return (
+            <Button
+              disabled
+              className="w-full bg-gray-600 text-white cursor-not-allowed"
+            >
+              <XCircle className="w-4 h-4 mr-2" />
+              Registration Closed
+            </Button>
+          )
+        }
+    }
   }
 
   if (isLoading) {
@@ -188,15 +364,44 @@ export default function Tournaments() {
               />
             </div>
 
-            {/* Filter Toggle */}
-            <Button
-              onClick={() => setShowFilters(!showFilters)}
-              variant="outline"
-              className="flex items-center space-x-2"
-            >
-              <Filter className="w-4 h-4" />
-              <span>Filters</span>
-            </Button>
+            {/* Sort and Filter Controls */}
+            <div className="flex items-center space-x-4">
+              {/* Sort Dropdown */}
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sort by:</label>
+                <select
+                  value={filters.sortBy}
+                  onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value }))}
+                  className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="date">Date</option>
+                  <option value="fee">Entry Fee</option>
+                  <option value="prize">Prize Pool</option>
+                  <option value="popularity">Popularity</option>
+                </select>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFilters(prev => ({ 
+                    ...prev, 
+                    sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc' 
+                  }))}
+                  className="p-1"
+                >
+                  {filters.sortOrder === 'asc' ? '↑' : '↓'}
+                </Button>
+              </div>
+
+              {/* Filter Toggle */}
+              <Button
+                onClick={() => setShowFilters(!showFilters)}
+                variant="outline"
+                className="flex items-center space-x-2"
+              >
+                <Filter className="w-4 h-4" />
+                <span>Filters</span>
+              </Button>
+            </div>
           </div>
 
           {/* Filter Options */}
@@ -348,17 +553,7 @@ export default function Tournaments() {
                   </p>
 
                   {/* Apply Button */}
-                  <Button
-                    onClick={() => {
-                      setSelectedTournament(tournament)
-                      setShowApplyModal(true)
-                    }}
-                    disabled={tournament.status !== 'open'}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    {tournament.status === 'open' ? 'Apply Now' : 
-                     tournament.status === 'full' ? 'Tournament Full' : 'Registration Closed'}
-                  </Button>
+                  {getApplicationButton(tournament)}
                 </div>
               </CardContent>
               </Card>
@@ -385,7 +580,9 @@ export default function Tournaments() {
                 type: 'all',
                 minFee: '',
                 maxFee: '',
-                search: ''
+                search: '',
+                sortBy: 'date',
+                sortOrder: 'asc'
               })}
               variant="outline"
             >

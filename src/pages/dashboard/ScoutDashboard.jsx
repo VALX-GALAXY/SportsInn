@@ -47,12 +47,22 @@ export default function ScoutDashboard() {
       setIsLoading(true)
       
       // Fetch upcoming tournaments
-      const tournaments = await tournamentService.getTournaments({ limit: 3 })
-      setUpcomingTournaments(tournaments.tournaments || [])
+      try {
+        const tournaments = await tournamentService.getTournaments({ limit: 3 })
+        setUpcomingTournaments(tournaments.tournaments || [])
+      } catch (error) {
+        console.info('Tournament service unavailable, using mock data')
+        setUpcomingTournaments([])
+      }
       
       // Fetch recent posts
-      const feed = await feedService.getFeed(1, 3)
-      setRecentPosts(feed.posts || [])
+      try {
+        const feed = await feedService.getFeed(1, 3)
+        setRecentPosts(feed.posts || [])
+      } catch (error) {
+        console.info('Feed service unavailable, using mock data')
+        setRecentPosts([])
+      }
       
       // Mock recommended players
       setRecommendedPlayers([

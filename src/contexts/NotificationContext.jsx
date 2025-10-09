@@ -24,6 +24,7 @@ export const NotificationProvider = ({ children }) => {
   const loadNotifications = async () => {
     try {
       const response = await notificationService.getNotifications(1, 20)
+      console.log('NotificationContext - API response:', response)
       setNotifications(response.notifications || [])
       setUnreadCount(response.unreadCount || 0)
     } catch (error) {
@@ -32,8 +33,15 @@ export const NotificationProvider = ({ children }) => {
       const savedNotifications = localStorage.getItem(`notifications_${user.id}`)
       if (savedNotifications) {
         const parsed = JSON.parse(savedNotifications)
+        console.log('NotificationContext - Using saved notifications:', parsed)
         setNotifications(parsed)
-        setUnreadCount(parsed.filter(n => !n.read).length)
+        setUnreadCount(parsed.filter(n => !n.isRead).length)
+      } else {
+        // If no saved notifications, use mock data directly
+        const mockResponse = notificationService.getMockNotifications(1, 20)
+        console.log('NotificationContext - Using mock data:', mockResponse)
+        setNotifications(mockResponse.notifications || [])
+        setUnreadCount(mockResponse.unreadCount || 0)
       }
     }
   }
@@ -62,10 +70,28 @@ export const NotificationProvider = ({ children }) => {
 
       // Load notifications from service
       loadNotifications()
-    }
 
-    return () => {
-      if (user?.id) {
+      // Start polling for new notifications
+      notificationService.startPolling(30000) // 30 seconds
+
+      // Subscribe to polling updates
+      const unsubscribe = notificationService.subscribe((newNotifications) => {
+        if (newNotifications && newNotifications.length > 0) {
+          setNotifications(prev => {
+            const existingIds = new Set(prev.map(n => n.id))
+            const newNotifs = newNotifications.filter(n => !existingIds.has(n.id))
+            if (newNotifs.length > 0) {
+              setUnreadCount(prev => prev + newNotifs.length)
+              return [...newNotifs, ...prev]
+            }
+            return prev
+          })
+        }
+      })
+
+      return () => {
+        unsubscribe()
+        notificationService.stopPolling()
         socketService.unsubscribeFromNotifications(user.id)
         socketService.disconnect()
         setIsConnected(false)

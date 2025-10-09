@@ -1,6 +1,11 @@
 import axiosInstance from './axiosInstance'
 
 class NotificationService {
+  constructor() {
+    this.pollingInterval = null
+    this.subscribers = new Set()
+  }
+
   // Get notifications
   async getNotifications(page = 1, limit = 20) {
     try {
@@ -15,6 +20,41 @@ class NotificationService {
       await new Promise(resolve => setTimeout(resolve, 500))
       return this.getMockNotifications(page, limit)
     }
+  }
+
+  // Start polling for new notifications
+  startPolling(interval = 30000) { // 30 seconds
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval)
+    }
+    
+    this.pollingInterval = setInterval(async () => {
+      try {
+        const response = await this.getNotifications(1, 5) // Get latest 5 notifications
+        this.notifySubscribers(response.notifications)
+      } catch (error) {
+        console.error('Error polling notifications:', error)
+      }
+    }, interval)
+  }
+
+  // Stop polling
+  stopPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval)
+      this.pollingInterval = null
+    }
+  }
+
+  // Subscribe to notification updates
+  subscribe(callback) {
+    this.subscribers.add(callback)
+    return () => this.subscribers.delete(callback)
+  }
+
+  // Notify all subscribers
+  notifySubscribers(notifications) {
+    this.subscribers.forEach(callback => callback(notifications))
   }
 
   // Mark notification as read

@@ -13,7 +13,8 @@ import {
   Search,
   Users,
   Eye,
-  LogOut
+  LogOut,
+  Trophy
 } from 'lucide-react'
 import { useNotifications } from '../contexts/NotificationContext'
 import requestService from '../api/requestService'
@@ -32,6 +33,12 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const navigationItems = [
     {
+      name: 'Dashboard',
+      href: '/dashboard',
+      icon: BarChart3,
+      description: 'Analytics and insights'
+    },
+    {
       name: 'Feed',
       href: '/feed',
       icon: Home,
@@ -44,22 +51,22 @@ const Sidebar = ({ isOpen, onClose }) => {
       description: 'Your profile and settings'
     },
     {
-      name: 'Messages',
-      href: '/messages',
-      icon: MessageCircle,
-      description: 'Chat with other users'
-    },
-    {
-      name: 'Dashboard',
-      href: '/dashboard',
-      icon: BarChart3,
-      description: 'Analytics and insights'
+      name: 'Tournaments',
+      href: '/tournaments',
+      icon: Trophy,
+      description: 'Browse tournaments'
     },
     {
       name: 'Search',
       href: '/search',
       icon: Search,
       description: 'Find players and organizations'
+    },
+    {
+      name: 'Messages',
+      href: '/messages',
+      icon: MessageCircle,
+      description: 'Chat with other users'
     },
     {
       name: 'Notifications',
@@ -123,17 +130,19 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* Overlay for mobile */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden transition-opacity duration-300"
           onClick={onClose}
         />
       )}
       
       {/* Sidebar */}
       <div className={`
-        fixed top-0 left-0 h-screen w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 
-        transform transition-transform duration-300 ease-in-out z-50 shadow-lg
+        w-72 sm:w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 
+        transform transition-transform duration-300 ease-in-out shadow-lg
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:z-auto lg:shadow-none
+        lg:translate-x-0 lg:static lg:z-auto lg:shadow-none lg:block
+        fixed lg:relative top-0 left-0 h-full lg:h-full z-50 lg:z-auto
+        min-h-screen lg:min-h-[calc(100vh-4rem)]
       `}>
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -163,7 +172,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.href
               const Icon = item.icon
@@ -184,11 +193,16 @@ const Sidebar = ({ isOpen, onClose }) => {
                   <Icon className={`w-5 h-5 flex-shrink-0 transition-colors ${
                     isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-200'
                   }`} />
-                  <span className="flex-1">{item.name}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="block truncate">{item.name}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 truncate block">
+                      {item.description}
+                    </span>
+                  </div>
                   {item.badge && item.badge > 0 && (
                     <Badge 
                       variant={isActive ? "secondary" : "destructive"} 
-                      className={`w-5 h-5 flex items-center justify-center text-xs ${
+                      className={`w-5 h-5 flex items-center justify-center text-xs flex-shrink-0 ${
                         isActive ? 'bg-white/20 text-white' : ''
                       }`}
                     >

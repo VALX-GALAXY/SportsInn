@@ -74,7 +74,7 @@ const Navbar = ({ onMenuClick }) => {
 
   if (!isAuthenticated) {
     return (
-      <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 dark:bg-gray-900/95 dark:border-gray-700 shadow-sm">
+      <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 dark:bg-gray-900/95 dark:border-gray-700 shadow-sm w-full h-16 flex items-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -92,10 +92,10 @@ const Navbar = ({ onMenuClick }) => {
                 {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
               </Button>
               <Link to="/login">
-                <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300" variant="outline">Login</Button>
+                <Button className="sportshub-button" variant="outline">Login</Button>
               </Link>
               <Link to="/signup">
-                <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300">Sign Up</Button>
+                <Button className="sportshub-button">Sign Up</Button>
               </Link>
             </div>
           </div>
@@ -105,101 +105,114 @@ const Navbar = ({ onMenuClick }) => {
   }
 
   return (
-    <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 dark:bg-gray-900/95 dark:border-gray-700 shadow-sm sticky top-0 z-30">
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-8">
-            <Link to="/" className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+    <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 dark:bg-gray-900/95 dark:border-gray-700 shadow-sm w-full h-16 flex items-center fixed top-0 left-0 right-0 z-50">
+      <div className="w-full px-3 sm:px-4 lg:px-6">
+        <div className="flex items-center justify-between h-16">
+          {/* Left side - Logo and Desktop Navigation */}
+          <div className="flex items-center space-x-4">
+            <Link to="/" className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent flex-shrink-0">
               SportsHub
             </Link>
-            <div className="hidden md:flex items-center space-x-6">
-              <Link to="/profile" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+            
+            {/* Desktop Navigation Links */}
+            <div className="hidden lg:flex items-center space-x-4">
+              <Link to="/dashboard" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors px-2 py-1 text-sm">
+                Dashboard
+              </Link>
+              <Link to="/profile" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors px-2 py-1 text-sm">
                 Profile
               </Link>
-              <Link to="/feed" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+              <Link to="/feed" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors px-2 py-1 text-sm">
                 Feed
               </Link>
-              <Link to="/tournaments" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+              <Link to="/tournaments" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors px-2 py-1 text-sm">
                 Tournaments
-              </Link>
-              {(user?.role === 'Player' || user?.role === 'Academy' || user?.role === 'Club') && (
-                <Button
-                  onClick={() => navigate('/feed')}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Post
-                </Button>
-              )}
-              <Link to="/search" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
-                <Search className="w-5 h-5" />
-              </Link>
-              <NotificationDropdown />
-              <Link to="/requests" className="relative text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
-                <Inbox className="w-5 h-5" />
-                {requestsCount > 0 && (
-                  <Badge variant="secondary" className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center text-xs">
-                    {requestsCount}
-                  </Badge>
-                )}
-              </Link>
-              <Link to="/messages" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
-                <MessageCircle className="w-5 h-5" />
               </Link>
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
-            {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onMenuClick}
-              className="lg:hidden hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <Menu className="w-4 h-4" />
-            </Button>
+          {/* Right side - Icons and User Info */}
+          <div className="flex items-center space-x-1 sm:space-x-2">
+            {/* Mobile Navigation Icons - Always visible */}
+            <div className="flex items-center space-x-1">
+              {/* Search */}
+              <Link to="/search" className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+                <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+              </Link>
+              
+              {/* Notifications */}
+              <NotificationDropdown />
+              
+              {/* Messages */}
+              <Link to="/messages" className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+              </Link>
+              
+              {/* Requests */}
+              <Link to="/requests" className="relative p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+                <Inbox className="w-4 h-4 sm:w-5 sm:h-5" />
+                {requestsCount > 0 && (
+                  <Badge variant="secondary" className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-xs">
+                    {requestsCount}
+                  </Badge>
+                )}
+              </Link>
+            </div>
             
+            {/* Theme Toggle */}
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </Button>
             
-            <div className="flex items-center space-x-3">
-              <div className={`flex items-center space-x-2 px-3 py-1 rounded-full ${getRoleColor(user?.role)}`}>
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onMenuClick}
+              className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <Menu className="w-4 h-4" />
+            </Button>
+            
+            {/* User Profile - Desktop Only */}
+            <div className="hidden lg:flex items-center space-x-3">
+              {/* Role Badge */}
+              <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(user?.role)}`}>
                 {getRoleIcon(user?.role)}
-                <span className="text-sm font-medium">{user?.role}</span>
+                <span className="hidden xl:inline">{user?.role}</span>
               </div>
               
-              <div className="flex items-center space-x-2">
-                {user?.profilePicture ? (
-                  <img
-                    src={user.profilePicture}
-                    alt={user.name}
-                    className="w-8 h-8 rounded-full object-cover border-2 border-white dark:border-gray-700"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center border-2 border-white dark:border-gray-700">
-                    <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                  </div>
-                )}
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {user?.name}
-                  </span>
-                  {user?.age && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      Age: {user.age}
-                    </span>
-                  )}
+              {/* Profile Picture */}
+              {user?.profilePicture ? (
+                <img
+                  src={user.profilePicture}
+                  alt={user.name}
+                  className="w-8 h-8 rounded-full object-cover border-2 border-white dark:border-gray-700 flex-shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center border-2 border-white dark:border-gray-700 flex-shrink-0">
+                  <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                 </div>
+              )}
+              
+              {/* User Name */}
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                  {user?.name}
+                </span>
+                {user?.age && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    Age: {user.age}
+                  </span>
+                )}
               </div>
               
+              {/* Logout Button */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -212,7 +225,6 @@ const Navbar = ({ onMenuClick }) => {
           </div>
         </div>
       </div>
-      
     </nav>
   )
 }

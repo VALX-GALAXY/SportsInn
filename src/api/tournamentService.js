@@ -41,6 +41,30 @@ class TournamentService {
     }
   }
 
+  // Get tournament application status
+  async getApplicationStatus(tournamentId) {
+    try {
+      const response = await axiosInstance.get(`/tournaments/${tournamentId}/application-status`)
+      return response.data
+    } catch (error) {
+      console.warn('Backend API unavailable, using mock data:', error.message)
+      await new Promise(resolve => setTimeout(resolve, 300))
+      return this.mockGetApplicationStatus(tournamentId)
+    }
+  }
+
+  // Withdraw application
+  async withdrawApplication(tournamentId) {
+    try {
+      const response = await axiosInstance.delete(`/tournaments/${tournamentId}/application`)
+      return response.data
+    } catch (error) {
+      console.warn('Backend API unavailable, using mock data:', error.message)
+      await new Promise(resolve => setTimeout(resolve, 500))
+      return this.mockWithdrawApplication(tournamentId)
+    }
+  }
+
   // Get user's tournament applications
   async getUserApplications() {
     try {
@@ -246,6 +270,26 @@ class TournamentService {
         teamName: 'Street Kings'
       }
     ]
+  }
+
+  mockGetApplicationStatus(tournamentId) {
+    // Mock application status - in real app, this would check user's application
+    const mockStatuses = {
+      'tournament_1': { status: 'not_applied' },
+      'tournament_2': { status: 'applied', applicationId: 'app_123', appliedAt: new Date().toISOString() },
+      'tournament_3': { status: 'approved', applicationId: 'app_456', appliedAt: new Date().toISOString() },
+      'tournament_4': { status: 'rejected', applicationId: 'app_789', appliedAt: new Date().toISOString() }
+    }
+    
+    return mockStatuses[tournamentId] || { status: 'not_applied' }
+  }
+
+  mockWithdrawApplication(tournamentId) {
+    return {
+      success: true,
+      message: 'Application withdrawn successfully',
+      tournamentId
+    }
   }
 }
 

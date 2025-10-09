@@ -13,10 +13,16 @@ import {
   Loader2,
   Check,
   X,
-  MoreHorizontal
+  MoreHorizontal,
+  Trophy,
+  Eye,
+  GraduationCap,
+  Handshake
 } from 'lucide-react'
 import { useToast } from '../components/ui/simple-toast'
 import { NotificationsSkeleton } from '../components/SkeletonLoaders'
+import { useNotifications } from '../contexts/NotificationContext'
+import notificationService from '../api/notificationService'
 
 // Dummy notifications data
 const dummyNotifications = [
@@ -103,7 +109,7 @@ const dummyNotifications = [
 ]
 
 export default function Notifications() {
-  const [notifications, setNotifications] = useState([])
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState('all') // 'all', 'unread', 'likes', 'follows', 'comments'
   const { toast } = useToast()
@@ -115,9 +121,8 @@ export default function Notifications() {
   const loadNotifications = async () => {
     try {
       setIsLoading(true)
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setNotifications(dummyNotifications)
+      // Notifications are already loaded by the context
+      await new Promise(resolve => setTimeout(resolve, 500))
     } catch (error) {
       console.error('Error loading notifications:', error)
       toast({
@@ -130,31 +135,8 @@ export default function Notifications() {
     }
   }
 
-  const markAsRead = (notificationId) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === notificationId 
-          ? { ...notification, read: true }
-          : notification
-      )
-    )
-  }
-
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    )
-    toast({
-      title: "All notifications marked as read",
-      description: "You're all caught up!",
-      variant: "success"
-    })
-  }
-
   const deleteNotification = (notificationId) => {
-    setNotifications(prev => 
-      prev.filter(notification => notification.id !== notificationId)
-    )
+    // In a real app, this would call the API to delete the notification
     toast({
       title: "Notification deleted",
       description: "Notification removed",
@@ -172,6 +154,14 @@ export default function Notifications() {
         return <UserPlus className="w-5 h-5 text-green-500" />
       case 'share':
         return <Share2 className="w-5 h-5 text-purple-500" />
+      case 'tournament':
+        return <Trophy className="w-5 h-5 text-yellow-500" />
+      case 'scout':
+        return <Eye className="w-5 h-5 text-purple-500" />
+      case 'academy':
+        return <GraduationCap className="w-5 h-5 text-indigo-500" />
+      case 'club':
+        return <Handshake className="w-5 h-5 text-orange-500" />
       default:
         return <Bell className="w-5 h-5 text-gray-500" />
     }
@@ -195,7 +185,7 @@ export default function Notifications() {
   const filteredNotifications = notifications.filter(notification => {
     switch (filter) {
       case 'unread':
-        return !notification.read
+        return !notification.isRead
       case 'likes':
         return notification.type === 'like'
       case 'follows':
@@ -207,17 +197,15 @@ export default function Notifications() {
     }
   })
 
-  const unreadCount = notifications.filter(n => !n.read).length
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="w-full max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:text-3xl">
+        <div className="w-full max-w-4xl mx-auto px-3 py-4 sm:px-6 sm:py-8">
+          <div className="mb-4 sm:mb-6">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1 sm:text-2xl lg:text-3xl">
               Notifications
             </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 sm:text-base">
+            <p className="text-xs text-gray-600 dark:text-gray-400 sm:text-sm lg:text-base">
               Stay updated with your activity
             </p>
           </div>
@@ -229,39 +217,40 @@ export default function Notifications() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="w-full max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
+      <div className="w-full max-w-4xl mx-auto px-3 py-4 sm:px-6 sm:py-8">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-3 sm:space-y-0">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:text-3xl">
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1 sm:text-2xl lg:text-3xl">
                 Notifications
               </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 sm:text-base">
+              <p className="text-xs text-gray-600 dark:text-gray-400 sm:text-sm lg:text-base">
                 Stay updated with your activity
               </p>
             </div>
             
             {unreadCount > 0 && (
-              <div className="flex items-center space-x-4">
-                <Badge variant="destructive" className="px-3 py-1">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                <Badge variant="destructive" className="px-2 py-1 text-xs sm:px-3 sm:py-1 sm:text-sm">
                   {unreadCount} unread
                 </Badge>
                 <Button
                   onClick={markAllAsRead}
                   variant="outline"
                   size="sm"
-                  className="flex items-center space-x-2"
+                  className="flex items-center space-x-2 text-xs sm:text-sm w-full sm:w-auto"
                 >
-                  <Check className="w-4 h-4" />
-                  <span>Mark all read</span>
+                  <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Mark all read</span>
+                  <span className="sm:hidden">Mark all</span>
                 </Button>
               </div>
             )}
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <div className="flex overflow-x-auto space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 scrollbar-hide">
             {[
               { key: 'all', label: 'All', count: notifications.length },
               { key: 'unread', label: 'Unread', count: unreadCount },
@@ -274,15 +263,16 @@ export default function Notifications() {
                 variant={filter === key ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setFilter(key)}
-                className={`flex items-center space-x-2 transition-all duration-200 ${
+                className={`flex items-center space-x-1 sm:space-x-2 transition-all duration-200 whitespace-nowrap text-xs sm:text-sm ${
                   filter === key 
                     ? 'bg-white dark:bg-gray-700 shadow-sm' 
                     : 'hover:bg-gray-200 dark:hover:bg-gray-700'
                 }`}
               >
-                <span>{label}</span>
+                <span className="hidden sm:inline">{label}</span>
+                <span className="sm:hidden">{label.charAt(0)}</span>
                 {count > 0 && (
-                  <Badge variant="secondary" className="ml-1 px-2 py-0.5 text-xs">
+                  <Badge variant="secondary" className="ml-1 px-1.5 py-0.5 text-xs">
                     {count}
                   </Badge>
                 )}
@@ -308,57 +298,42 @@ export default function Notifications() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {filteredNotifications.map((notification) => (
-              <Card 
+                <Card 
                 key={notification.id} 
                 className={`bg-white dark:bg-gray-800 border-0 shadow-sm hover:shadow-md transition-all duration-200 ${
-                  !notification.read ? 'ring-2 ring-blue-100 dark:ring-blue-900' : ''
+                  !notification.isRead ? 'ring-2 ring-blue-100 dark:ring-blue-900' : ''
                 }`}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start space-x-4">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-start space-x-3 sm:space-x-4">
                     {/* Notification Icon */}
                     <div className="flex-shrink-0">
                       {getNotificationIcon(notification.type)}
                     </div>
 
-                    {/* User Avatar */}
-                    <div className="flex-shrink-0">
-                      <img
-                        src={notification.user.avatar}
-                        alt={notification.user.name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                    </div>
-
                     {/* Notification Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-2 sm:space-y-0">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2 mb-1">
-                            <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                              {notification.user.name}
+                            <h3 className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {notification.title}
                             </h3>
-                            <Badge 
-                              variant="secondary" 
-                              className={`text-xs ${getRoleColor(notification.user.role)}`}
-                            >
-                              {notification.user.role}
-                            </Badge>
-                            {!notification.read && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            {!notification.isRead && (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                             )}
                           </div>
                           
-                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-2 leading-relaxed">
                             {notification.message}
                           </p>
 
                           {/* Comment Preview */}
                           {notification.comment && (
-                            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mt-2">
-                              <p className="text-sm text-gray-700 dark:text-gray-300 italic">
+                            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3 mt-2">
+                              <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 italic">
                                 "{notification.comment.text}"
                               </p>
                             </div>
@@ -366,37 +341,37 @@ export default function Notifications() {
 
                           {/* Post Preview */}
                           {notification.post && (
-                            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mt-2">
-                              <p className="text-sm text-gray-700 dark:text-gray-300">
+                            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3 mt-2">
+                              <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
                                 {notification.post.preview}
                               </p>
                             </div>
                           )}
 
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                            {notification.timestamp}
+                            {new Date(notification.createdAt).toLocaleString()}
                           </p>
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center space-x-2">
-                          {!notification.read && (
+                        <div className="flex items-center space-x-1 sm:space-x-2 self-end sm:self-start">
+                          {!notification.isRead && (
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => markAsRead(notification.id)}
-                              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-1 sm:p-2"
                             >
-                              <Check className="w-4 h-4" />
+                              <Check className="w-3 h-3 sm:w-4 sm:h-4" />
                             </Button>
                           )}
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => deleteNotification(notification.id)}
-                            className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
+                            className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 p-1 sm:p-2"
                           >
-                            <X className="w-4 h-4" />
+                            <X className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                         </div>
                       </div>

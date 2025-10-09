@@ -14,8 +14,26 @@ import {
   MapPin,
   Clock,
   Eye,
-  Heart
+  Heart,
+  BarChart3,
+  PieChart,
+  TrendingDown
 } from 'lucide-react'
+import { 
+  LineChart, 
+  Line, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Legend,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell
+} from 'recharts'
 import { useAuth } from '../../contexts/AuthContext'
 import tournamentService from '../../api/tournamentService'
 import feedService from '../../api/feedService'
@@ -24,13 +42,37 @@ import { DashboardStatsSkeleton } from '../../components/SkeletonLoaders'
 export default function PlayerDashboard() {
   const { user } = useAuth()
   const [stats] = useState({
-    tournamentsPlayed: 12,
-    tournamentsWon: 3,
+    tournamentsApplied: 15,
+    acceptedPercentage: 75,
+    connectionsCount: 89,
     totalMatches: 45,
     winRate: 68,
     currentRank: 15,
-    totalPoints: 1250
+    totalPoints: 1250,
+    averageRating: 4.2
   })
+
+  // Chart data
+  const performanceData = [
+    { month: 'Jan', matches: 8, wins: 5, rating: 4.1 },
+    { month: 'Feb', matches: 12, wins: 8, rating: 4.3 },
+    { month: 'Mar', matches: 10, wins: 7, rating: 4.2 },
+    { month: 'Apr', matches: 15, wins: 10, rating: 4.4 },
+    { month: 'May', matches: 0, wins: 0, rating: 4.2 }
+  ]
+
+  const tournamentParticipation = [
+    { name: 'Won', value: 3, color: '#10B981' },
+    { name: 'Lost', value: 9, color: '#EF4444' },
+    { name: 'Pending', value: 2, color: '#F59E0B' }
+  ]
+
+  const connectionsData = [
+    { name: 'Players', value: 45, color: '#3B82F6' },
+    { name: 'Academies', value: 12, color: '#8B5CF6' },
+    { name: 'Clubs', value: 8, color: '#10B981' },
+    { name: 'Scouts', value: 24, color: '#F59E0B' }
+  ]
   const [tournamentInvites, setTournamentInvites] = useState([])
   const [recentPosts, setRecentPosts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -44,12 +86,22 @@ export default function PlayerDashboard() {
       setIsLoading(true)
       
       // Fetch tournament invites (mock data for now)
-      const tournaments = await tournamentService.getTournaments({ limit: 3 })
-      setTournamentInvites(tournaments.tournaments || [])
+      try {
+        const tournaments = await tournamentService.getTournaments({ limit: 3 })
+        setTournamentInvites(tournaments.tournaments || [])
+      } catch (error) {
+        console.info('Tournament service unavailable, using mock data')
+        setTournamentInvites([])
+      }
       
       // Fetch recent posts from feed
-      const feed = await feedService.getFeed(1, 3)
-      setRecentPosts(feed.posts || [])
+      try {
+        const feed = await feedService.getFeed(1, 3)
+        setRecentPosts(feed.posts || [])
+      } catch (error) {
+        console.info('Feed service unavailable, using mock data')
+        setRecentPosts([])
+      }
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
@@ -107,199 +159,121 @@ export default function PlayerDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
           <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Tournaments Played</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.tournamentsPlayed}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Tournaments Applied</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.tournamentsApplied}</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 flex items-center mt-1">
+                    <TrendingUp className="w-3 h-3 mr-1" />
+                    +3 this month
+                  </p>
                 </div>
-                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
-                  <Trophy className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+                  <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Win Rate</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.winRate}%</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Accepted %</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.acceptedPercentage}%</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 flex items-center mt-1">
+                    <TrendingUp className="w-3 h-3 mr-1" />
+                    +5% from last month
+                  </p>
                 </div>
-                <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
-                  <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900 rounded-full">
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Current Rank</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">#{stats.currentRank}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Connections Count</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.connectionsCount}</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center mt-1">
+                    <Users className="w-3 h-3 mr-1" />
+                    Active network
+                  </p>
                 </div>
-                <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
-                  <Target className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Points</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalPoints}</p>
-                </div>
-                <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-full">
-                  <Award className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                <div className="p-2 sm:p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
+                  <Users className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Tournament Invites */}
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-8">
+          {/* Tournament Participation Pie Chart */}
           <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
-            <CardHeader className="p-6 pb-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Tournament Invites</h2>
-                <Button variant="outline" size="sm">
-                  View All
-                </Button>
-              </div>
+            <CardHeader className="p-4 sm:p-6 pb-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Tournament Participation</h2>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Applied vs Accepted breakdown</p>
             </CardHeader>
-            <CardContent className="p-6 pt-0">
-              <div className="space-y-4">
-                {tournamentInvites.map((tournament) => (
-                  <div key={tournament.id} className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    {tournament.image && (
-                      <img
-                        src={tournament.image}
-                        alt={tournament.title}
-                        className="w-12 h-12 object-cover rounded-lg"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 dark:text-white truncate">
-                        {tournament.title}
-                      </h3>
-                      <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                        <MapPin className="w-3 h-3" />
-                        <span>{tournament.location}</span>
-                        <Clock className="w-3 h-3 ml-2" />
-                        <span>{formatDate(tournament.startDate)}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          {tournament.type}
-                        </Badge>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatCurrency(tournament.entryFee)}
-                        </span>
-                      </div>
-                    </div>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                      Apply
-                    </Button>
-                  </div>
-                ))}
-                
-                {tournamentInvites.length === 0 && (
-                  <div className="text-center py-8">
-                    <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400">No tournament invites yet</p>
-                  </div>
-                )}
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="h-48 sm:h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <Pie
+                      data={tournamentParticipation}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {tournamentParticipation.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                    <Legend />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
 
-          {/* Recent Activity */}
+          {/* Connections vs Interactions Bar Chart */}
           <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
-            <CardHeader className="p-6 pb-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Activity</h2>
-                <Button variant="outline" size="sm">
-                  View All
-                </Button>
-              </div>
+            <CardHeader className="p-4 sm:p-6 pb-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Connections vs Interactions</h2>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Network activity breakdown</p>
             </CardHeader>
-            <CardContent className="p-6 pt-0">
-              <div className="space-y-4">
-                {recentPosts.map((post) => (
-                  <div key={post.id} className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                        {post.author.name.charAt(0)}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          {post.author.name}
-                        </span>
-                        <Badge variant="outline" className="text-xs">
-                          {post.author.role}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                        {post.caption}
-                      </p>
-                      <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                        <div className="flex items-center space-x-1">
-                          <Heart className="w-3 h-3" />
-                          <span>{post.stats.likes}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Eye className="w-3 h-3" />
-                          <span>{post.stats.comments}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                
-                {recentPosts.length === 0 && (
-                  <div className="text-center py-8">
-                    <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400">No recent activity</p>
-                  </div>
-                )}
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="h-48 sm:h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={connectionsData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                    <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} />
+                    <YAxis stroke="#9CA3AF" fontSize={12} />
+                    <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {connectionsData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Quick Actions */}
-        <Card className="bg-white dark:bg-gray-800 shadow-sm border-0 mt-8">
-          <CardHeader className="p-6 pb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Quick Actions</h2>
-          </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button className="h-16 bg-blue-600 hover:bg-blue-700 text-white flex flex-col items-center space-y-2">
-                <Trophy className="w-6 h-6" />
-                <span>Browse Tournaments</span>
-              </Button>
-              <Button className="h-16 bg-green-600 hover:bg-green-700 text-white flex flex-col items-center space-y-2">
-                <Users className="w-6 h-6" />
-                <span>Find Teams</span>
-              </Button>
-              <Button className="h-16 bg-purple-600 hover:bg-purple-700 text-white flex flex-col items-center space-y-2">
-                <Star className="w-6 h-6" />
-                <span>Update Profile</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

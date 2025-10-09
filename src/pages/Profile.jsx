@@ -7,10 +7,12 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Home, Users, Eye, Edit, Save, X, UserPlus, UserMinus, Loader2, Trophy, Target, BarChart3, Star, TrendingUp, Calendar, Award, MailPlus, Mail } from 'lucide-react'
+import { User, Home, Users, Eye, Edit, Save, X, UserPlus, UserMinus, Loader2, Trophy, Target, BarChart3, Star, TrendingUp, Calendar, Award, MailPlus, Mail, Upload, Image, Trash2, Plus, CheckCircle, AlertCircle } from 'lucide-react'
 import requestService from '@/api/requestService'
 import { useToast } from '@/components/ui/simple-toast'
 import followService from '@/api/followService'
+import uploadService from '@/api/uploadService'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function Profile() {
   const { user, updateUser, isAuthenticated } = useAuth()
@@ -32,6 +34,11 @@ export default function Profile() {
   const [imagePreview, setImagePreview] = useState(user?.profilePicture || null)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [editingSection, setEditingSection] = useState(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [galleryImages, setGalleryImages] = useState(user?.galleryImages || [])
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadStatus, setUploadStatus] = useState('idle') // 'idle', 'uploading', 'success', 'error'
   
   // Follow functionality state
   const [isFollowLoading, setIsFollowLoading] = useState(false)
@@ -229,7 +236,7 @@ export default function Profile() {
     }
   }
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0]
     if (file) {
       // Validate file type
@@ -238,6 +245,7 @@ export default function Profile() {
           ...prev,
           profilePicture: 'Please select a valid image file'
         }))
+        setUploadStatus('error')
         return
       }
       
@@ -247,29 +255,202 @@ export default function Profile() {
           ...prev,
           profilePicture: 'Image size must be less than 5MB'
         }))
+        setUploadStatus('error')
         return
       }
       
-      setFormData(prev => ({
-        ...prev,
-        profilePicture: file
-      }))
+      setIsUploading(true)
+      setUploadStatus('uploading')
+      setUploadProgress(0)
       
-      // Create preview
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const imageUrl = e.target.result
-        setImagePreview(imageUrl)
-        // Immediately update the user's profile picture
-        updateUser({ profilePicture: imageUrl })
+      // Simulate progress for better UX
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval)
+            return prev
+          }
+          return prev + Math.random() * 15
+        })
+      }, 200)
+      
+      try {
+        // Upload image to Cloudinary
+        const uploadResult = await uploadService.uploadProfilePicture(file)
+        
+        if (uploadResult.success) {
+          setUploadProgress(100)
+          setImagePreview(uploadResult.url)
+          updateUser({ profilePicture: uploadResult.url })
+          setUploadStatus('success')
+          
+          toast({
+            title: "Success",
+            description: "Profile picture updated successfully!",
+            variant: "default"
+          })
+          
+          // Reset status after 2 seconds
+          setTimeout(() => {
+            setUploadStatus('idle')
+            setUploadProgress(0)
+          }, 2000)
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error)
+        setUploadStatus('error')
+        toast({
+          title: "Error",
+          description: "Failed to upload image. Please try again.",
+          variant: "destructive"
+        })
+        
+        // Reset status after 3 seconds
+        setTimeout(() => {
+          setUploadStatus('idle')
+          setUploadProgress(0)
+        }, 3000)
+      } finally {
+        clearInterval(progressInterval)
+        setIsUploading(false)
       }
-      reader.readAsDataURL(file)
       
       // Clear any previous errors
       setErrors(prev => ({
         ...prev,
         profilePicture: ''
       }))
+    }
+  }
+
+  const handleGalleryUpload = async (e) => {
+    const files = Array.from(e.target.files)
+    
+    if (files.length === 0) return
+    
+    // Validate files
+    const validFiles = files.filter(file => {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file",
+          description: `${file.name} is not a valid image file`,
+          variant: "destructive"
+        })
+        return false
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: `${file.name} is larger than 5MB`,
+          variant: "destructive"
+        })
+        return false
+      }
+      
+      return true
+    })
+    
+    if (validFiles.length === 0) return
+    
+    // Check if adding these files would exceed the limit
+    if (galleryImages.length + validFiles.length > 3) {
+      toast({
+        title: "Gallery limit reached",
+        description: "You can only have 3 images in your gallery",
+        variant: "destructive"
+      })
+      return
+    }
+    
+    setIsUploadingGallery(true)
+    setUploadStatus('uploading')
+    setUploadProgress(0)
+    
+    // Simulate progress for better UX
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval)
+          return prev
+        }
+        return prev + Math.random() * 10
+      })
+    }, 300)
+    
+    try {
+      const uploadResult = await uploadService.uploadGalleryImages(validFiles)
+      
+      if (uploadResult.success) {
+        setUploadProgress(100)
+        const newImages = uploadResult.urls.map((url, index) => ({
+          id: `gallery_${Date.now()}_${index}`,
+          url,
+          publicId: uploadResult.publicIds[index]
+        }))
+        
+        const updatedGallery = [...galleryImages, ...newImages]
+        setGalleryImages(updatedGallery)
+        updateUser({ galleryImages: updatedGallery })
+        setUploadStatus('success')
+        
+        toast({
+          title: "Success",
+          description: `${validFiles.length} image(s) uploaded successfully!`,
+          variant: "default"
+        })
+        
+        // Reset status after 2 seconds
+        setTimeout(() => {
+          setUploadStatus('idle')
+          setUploadProgress(0)
+        }, 2000)
+      }
+    } catch (error) {
+      console.error('Error uploading gallery images:', error)
+      setUploadStatus('error')
+      toast({
+        title: "Error",
+        description: "Failed to upload images. Please try again.",
+        variant: "destructive"
+      })
+      
+      // Reset status after 3 seconds
+      setTimeout(() => {
+        setUploadStatus('idle')
+        setUploadProgress(0)
+      }, 3000)
+    } finally {
+      clearInterval(progressInterval)
+      setIsUploadingGallery(false)
+    }
+  }
+
+  const handleRemoveGalleryImage = async (imageId) => {
+    const imageToRemove = galleryImages.find(img => img.id === imageId)
+    if (!imageToRemove) return
+    
+    try {
+      // Delete from Cloudinary
+      await uploadService.deleteImage(imageToRemove.publicId)
+      
+      // Update local state
+      const updatedGallery = galleryImages.filter(img => img.id !== imageId)
+      setGalleryImages(updatedGallery)
+      updateUser({ galleryImages: updatedGallery })
+      
+      toast({
+        title: "Success",
+        description: "Image removed from gallery",
+        variant: "default"
+      })
+    } catch (error) {
+      console.error('Error removing image:', error)
+      toast({
+        title: "Error",
+        description: "Failed to remove image. Please try again.",
+        variant: "destructive"
+      })
     }
   }
 
@@ -327,7 +508,7 @@ export default function Profile() {
             <CardContent>
               {editingSection === 'player' ? (
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="age">Age</Label>
                       <Input
@@ -580,38 +761,49 @@ export default function Profile() {
 
         {/* Profile Header */}
         <Card className="mb-8 bg-white dark:bg-gray-800 border-0 shadow-lg">
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-6">
-              <div className="relative">
+          <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+              <div className="relative flex-shrink-0">
                 {user?.profilePicture ? (
-                  <img
-                    src={user.profilePicture}
-                    alt={user.name}
-                    className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-lg"
-                  />
+                  <div className="relative">
+                    <img
+                      src={user.profilePicture}
+                      alt={user.name}
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-lg"
+                    />
+                    {isUploading && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 text-white animate-spin" />
+                      </div>
+                    )}
+                  </div>
                 ) : (
-                  <div className="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center border-4 border-white dark:border-gray-700 shadow-lg">
-                    <User className="w-12 h-12 text-gray-500 dark:text-gray-400" />
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center border-4 border-white dark:border-gray-700 shadow-lg">
+                    {isUploading ? (
+                      <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-gray-500 dark:text-gray-400 animate-spin" />
+                    ) : (
+                      <User className="w-10 h-10 sm:w-12 sm:h-12 text-gray-500 dark:text-gray-400" />
+                    )}
                   </div>
                 )}
               </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-2">
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              <div className="flex-1 text-center sm:text-left min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-2">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white truncate">
                     {user?.name || 'User Name'}
                   </h1>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(user?.role)}`}>
+                  <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getRoleColor(user?.role)} flex items-center justify-center sm:justify-start`}>
                     {getRoleIcon(user?.role)}
                     <span className="ml-1">{user?.role}</span>
                   </span>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 mb-2">{user?.email}</p>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-2 truncate">{user?.email}</p>
                 {user?.bio && (
-                  <p className="text-gray-700 dark:text-gray-300 mb-2 italic">
+                  <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-2 italic break-words">
                     "{user.bio}"
                   </p>
                 )}
-                <p className="text-gray-500 dark:text-gray-500 text-sm">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500">
                   Member since {new Date().toLocaleDateString()}
                 </p>
               </div>
@@ -619,58 +811,60 @@ export default function Profile() {
             
             {/* Follow/Unfollow Section */}
             <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                <div className="flex items-center justify-center sm:justify-start space-x-6">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                       {followStats.followers}
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">Followers</div>
+                    <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Followers</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                       {followStats.following}
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">Following</div>
+                    <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Following</div>
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                <Button
-                  onClick={handleFollow}
-                  disabled={isFollowLoading}
-                  variant={followStats.isFollowing ? "outline" : "default"}
-                  className={`transition-all duration-200 ${
-                    followStats.isFollowing 
-                      ? 'border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900' 
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
-                  }`}
-                >
-                  {isFollowLoading ? (
-                    <div className="flex items-center">
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      <span>Loading...</span>
-                    </div>
-                  ) : followStats.isFollowing ? (
-                    <div className="flex items-center">
-                      <UserMinus className="w-4 h-4 mr-2" />
-                      <span>Unfollow</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center">
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      <span>Follow</span>
-                    </div>
-                  )}
-                </Button>
-                <Button
-                  onClick={handleInviteOrApply}
-                  variant="outline"
-                  className="flex items-center"
-                >
-                  {user?.role === 'Player' ? <Mail className="w-4 h-4 mr-2" /> : <MailPlus className="w-4 h-4 mr-2" />}
-                  {user?.role === 'Player' ? 'Apply' : 'Invite Player'}
-                </Button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                  <Button
+                    onClick={handleFollow}
+                    disabled={isFollowLoading}
+                    variant={followStats.isFollowing ? "outline" : "default"}
+                    size="sm"
+                    className={`w-full sm:w-auto transition-all duration-200 ${
+                      followStats.isFollowing 
+                        ? 'border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900' 
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                  >
+                    {isFollowLoading ? (
+                      <div className="flex items-center justify-center">
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        <span className="text-sm">Loading...</span>
+                      </div>
+                    ) : followStats.isFollowing ? (
+                      <div className="flex items-center justify-center">
+                        <UserMinus className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Unfollow</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center">
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Follow</span>
+                      </div>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handleInviteOrApply}
+                    variant="outline"
+                    size="sm"
+                    className="w-full sm:w-auto flex items-center justify-center"
+                  >
+                    {user?.role === 'Player' ? <Mail className="w-4 h-4 mr-2" /> : <MailPlus className="w-4 h-4 mr-2" />}
+                    <span className="text-sm">{user?.role === 'Player' ? 'Apply' : 'Invite Player'}</span>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -679,14 +873,14 @@ export default function Profile() {
 
         {/* Tabs */}
         <div className="mt-6">
-          <div className="flex space-x-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full">
+          <div className="flex space-x-1 sm:space-x-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full">
             {['About', 'Performance'].map(tab => (
               <Button
                 key={tab}
                 variant={activeTab === tab ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setActiveTab(tab)}
-                className={`transition-all duration-200 ${activeTab === tab ? 'bg-blue-600 dark:bg-gray-700 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                className={`flex-1 sm:flex-none transition-all duration-200 text-xs sm:text-sm ${activeTab === tab ? 'bg-blue-600 dark:bg-gray-700 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
               >
                 {tab}
               </Button>
@@ -715,8 +909,17 @@ export default function Profile() {
             </div>
           </CardHeader>
           <CardContent>
-            {editingSection === 'basic' ? (
-              <form onSubmit={handleSubmit} className="space-y-4">
+            <AnimatePresence mode="wait">
+              {editingSection === 'basic' ? (
+                <motion.form
+                  key="edit-form"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  onSubmit={handleSubmit}
+                  className="space-y-4"
+                >
                 <div className="space-y-2">
                   <Label htmlFor="username">Username</Label>
                   <Input
@@ -746,27 +949,86 @@ export default function Profile() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="profilePicture">Profile Picture</Label>
-                  <Input
-                    id="profilePicture"
-                    name="profilePicture"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  />
+                  <div className="flex items-center space-x-4">
+                    <Input
+                      id="profilePicture"
+                      name="profilePicture"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      disabled={isUploading}
+                      className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    <AnimatePresence>
+                      {isUploading && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="flex items-center space-x-2 text-blue-600"
+                        >
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-sm">Uploading...</span>
+                          {uploadProgress > 0 && (
+                            <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <motion.div
+                                className="h-full bg-blue-600 rounded-full"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${uploadProgress}%` }}
+                                transition={{ duration: 0.3 }}
+                              />
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    <AnimatePresence>
+                      {uploadStatus === 'success' && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="flex items-center space-x-2 text-green-600"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          <span className="text-sm">Uploaded!</span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    <AnimatePresence>
+                      {uploadStatus === 'error' && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="flex items-center space-x-2 text-red-600"
+                        >
+                          <AlertCircle className="w-4 h-4" />
+                          <span className="text-sm">Upload failed</span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                   {errors.profilePicture && (
                     <p className="text-sm text-red-500">{errors.profilePicture}</p>
                   )}
-                  {imagePreview && (
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-600 mb-2">Preview:</p>
-                      <img
-                        src={imagePreview}
-                        alt="Profile preview"
-                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
-                      />
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {imagePreview && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="mt-2"
+                      >
+                        <p className="text-sm text-gray-600 mb-2">Preview:</p>
+                        <img
+                          src={imagePreview}
+                          alt="Profile preview"
+                          className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 shadow-lg"
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
                 <div className="flex space-x-2">
                   <Button type="submit" size="sm">
@@ -778,9 +1040,16 @@ export default function Profile() {
                     Cancel
                   </Button>
                 </div>
-              </form>
-            ) : (
-              <div className="space-y-4">
+                </motion.form>
+              ) : (
+                <motion.div
+                  key="view-mode"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-4"
+                >
                 <div>
                   <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Username</Label>
                   <p className="text-lg text-gray-900 dark:text-white">{user?.name || 'Not specified'}</p>
@@ -801,6 +1070,166 @@ export default function Profile() {
                     </div>
                   </div>
                 )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </CardContent>
+        </Card>
+
+        {/* Gallery Section */}
+        <Card className="mt-6">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+              <CardTitle className="flex items-center space-x-2">
+                <Image className="w-5 h-5" />
+                <span>Gallery</span>
+              </CardTitle>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleGalleryUpload}
+                  disabled={isUploadingGallery || galleryImages.length >= 3}
+                  className="hidden"
+                  id="gallery-upload"
+                />
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('gallery-upload').click()}
+                    disabled={isUploadingGallery || galleryImages.length >= 3}
+                    className="w-full sm:w-auto flex items-center justify-center space-x-2"
+                  >
+                    {isUploadingGallery ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
+                    )}
+                    <span className="text-sm">Add Images</span>
+                  </Button>
+                  <AnimatePresence>
+                    {isUploadingGallery && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="flex items-center space-x-2 text-blue-600"
+                      >
+                        <span className="text-sm">Uploading...</span>
+                        {uploadProgress > 0 && (
+                          <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <motion.div
+                              className="h-full bg-blue-600 rounded-full"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${uploadProgress}%` }}
+                              transition={{ duration: 0.3 }}
+                            />
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <AnimatePresence>
+                    {uploadStatus === 'success' && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="flex items-center space-x-2 text-green-600"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        <span className="text-sm">Uploaded!</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <AnimatePresence>
+                    {uploadStatus === 'error' && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="flex items-center space-x-2 text-red-600"
+                      >
+                        <AlertCircle className="w-4 h-4" />
+                        <span className="text-sm">Upload failed</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </div>
+            <CardDescription>
+              Upload up to 3 images to showcase your achievements and activities
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {galleryImages.length === 0 ? (
+              <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                <Image className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400 mb-2">No images in gallery yet</p>
+                <p className="text-sm text-gray-400">Click "Add Images" to upload photos</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <AnimatePresence>
+                  {galleryImages.map((image, index) => (
+                    <motion.div
+                      key={image.id}
+                      initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.8, y: -20 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      className="relative group"
+                    >
+                      <img
+                        src={image.url}
+                        alt="Gallery"
+                        className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg"
+                      />
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        whileHover={{ opacity: 1 }}
+                        className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center"
+                      >
+                        <motion.div
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          whileHover={{ scale: 1, opacity: 1 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleRemoveGalleryImage(image.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </motion.div>
+                      </motion.div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                {galleryImages.length < 3 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3, delay: galleryImages.length * 0.1 }}
+                    className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center min-h-[192px] hover:border-blue-400 transition-colors duration-200 cursor-pointer"
+                    onClick={() => document.getElementById('gallery-upload').click()}
+                  >
+                    <div className="text-center">
+                      <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <Plus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      </motion.div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Add more images</p>
+                    </div>
+                  </motion.div>
+                )}
               </div>
             )}
           </CardContent>
@@ -818,7 +1247,7 @@ export default function Profile() {
               <CardDescription>Season stats and trends (mock data)</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
                 <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>
@@ -849,7 +1278,7 @@ export default function Profile() {
               </div>
 
               {/* Charts */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Runs by Match</h4>
                   <ResponsiveContainer width="100%" height="100%">
@@ -892,7 +1321,7 @@ export default function Profile() {
               <CardDescription>Training program statistics and student progress</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
                 <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>
@@ -923,7 +1352,7 @@ export default function Profile() {
               </div>
 
               {/* Charts */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Student Progress</h4>
                   <ResponsiveContainer width="100%" height="100%">
@@ -966,7 +1395,7 @@ export default function Profile() {
               <CardDescription>Scouting activities and success metrics</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
                 <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>
@@ -997,7 +1426,7 @@ export default function Profile() {
               </div>
 
               {/* Charts */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Monthly Scouting Activity</h4>
                   <ResponsiveContainer width="100%" height="100%">
@@ -1040,7 +1469,7 @@ export default function Profile() {
               <CardDescription>Team performance and management metrics</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
                 <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>
@@ -1071,7 +1500,7 @@ export default function Profile() {
               </div>
 
               {/* Charts */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Season Performance</h4>
                   <ResponsiveContainer width="100%" height="100%">
@@ -1252,7 +1681,7 @@ export default function Profile() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
                 <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>
@@ -1332,7 +1761,7 @@ export default function Profile() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
                 <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>

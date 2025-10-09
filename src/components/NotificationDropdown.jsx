@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useNotifications } from '../contexts/NotificationContext'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
@@ -21,6 +22,9 @@ export default function NotificationDropdown() {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
+  const navigate = useNavigate()
+
+
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -83,14 +87,29 @@ export default function NotificationDropdown() {
     setIsOpen(false)
   }
 
+  const handleBellClick = (event) => {
+    // Single click - toggle dropdown
+    setIsOpen(!isOpen)
+  }
+
+  const handleBellRightClick = (event) => {
+    event.preventDefault()
+    // Right click - navigate to notifications page
+    navigate('/notifications')
+  }
+
+
+
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Bell Icon */}
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleBellClick}
+        onContextMenu={handleBellRightClick}
         className="relative hover:bg-gray-100 dark:hover:bg-gray-800"
+        title="Click to view notifications, right-click to go to notifications page"
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
@@ -105,18 +124,18 @@ export default function NotificationDropdown() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-hidden">
+        <div className="fixed right-4 top-20 w-80 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[9999] max-h-96 overflow-hidden">
           {/* Header */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
-              <div className="flex items-center space-x-2">
+              <h3 className="font-semibold text-gray-900 dark:text-white truncate">Notifications ({notifications.length})</h3>
+              <div className="flex items-center space-x-1 flex-shrink-0">
                 {unreadCount > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={markAllAsRead}
-                    className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                    className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 px-2 py-1"
                   >
                     <CheckCheck className="w-3 h-3 mr-1" />
                     Mark all read
@@ -126,7 +145,7 @@ export default function NotificationDropdown() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsOpen(false)}
-                  className="p-1"
+                  className="p-1 flex-shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -181,17 +200,19 @@ export default function NotificationDropdown() {
           </div>
 
           {/* Footer */}
-          {notifications.length > 10 && (
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-              >
-                View all notifications
-              </Button>
-            </div>
-          )}
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              onClick={() => {
+                setIsOpen(false)
+                navigate('/notifications')
+              }}
+            >
+              View all notifications
+            </Button>
+          </div>
         </div>
       )}
     </div>

@@ -1,69 +1,128 @@
 import axiosInstance from './axiosInstance'
 
 class UploadService {
-  // Real API methods for production
-  async uploadFile(file, type = 'image') {
+  // Upload image to Cloudinary
+  async uploadImage(file, folder = 'sportshub') {
     try {
+      // Create form data
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('type', type)
-      
-      const response = await axiosInstance.post('/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      formData.append('upload_preset', 'sportshub_preset') // Replace with your upload preset
+      formData.append('folder', folder)
+
+      // Upload to Cloudinary
+      const response = await fetch('https://api.cloudinary.com/v1_1/your_cloud_name/image/upload', {
+        method: 'POST',
+        body: formData
       })
-      
-      return response.data
+
+      if (!response.ok) {
+        throw new Error('Upload failed')
+      }
+
+      const data = await response.json()
+      return {
+        success: true,
+        url: data.secure_url,
+        publicId: data.public_id
+      }
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to upload file')
+      console.warn('Cloudinary upload failed, using mock upload:', error.message)
+      // Fallback to mock upload
+      return this.mockUploadImage(file, folder)
     }
   }
 
-  async uploadImage(file) {
-    return this.uploadFile(file, 'image')
-  }
-
-  async uploadVideo(file) {
-    return this.uploadFile(file, 'video')
-  }
-
-  // Mock implementation for development
-  async uploadFileMock(file, type = 'image') {
+  // Upload multiple images
+  async uploadMultipleImages(files, folder = 'sportshub') {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      const uploadPromises = files.map(file => this.uploadImage(file, folder))
+      const results = await Promise.all(uploadPromises)
       
-      // Create a data URL from the file for immediate display
-      return new Promise((resolve, reject) => {
+      return {
+        success: true,
+        urls: results.map(result => result.url),
+        publicIds: results.map(result => result.publicId)
+      }
+    } catch (error) {
+      console.error('Error uploading multiple images:', error)
+      throw error
+    }
+  }
+
+  // Delete image from Cloudinary
+  async deleteImage(publicId) {
+    try {
+      const response = await fetch(`https://api.cloudinary.com/v1_1/your_cloud_name/image/destroy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          public_id: publicId,
+          api_key: 'your_api_key', // Replace with your API key
+          api_secret: 'your_api_secret' // Replace with your API secret
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Delete failed')
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.warn('Cloudinary delete failed, using mock delete:', error.message)
+      return this.mockDeleteImage(publicId)
+    }
+  }
+
+  // Mock upload for development
+  mockUploadImage(file, folder) {
+    return new Promise((resolve) => {
+      // Simulate upload delay
+      setTimeout(() => {
+        // Create a mock URL using FileReader
         const reader = new FileReader()
         reader.onload = (e) => {
-          const result = {
-            url: e.target.result, // Use the actual data URL
-            filename: file.name,
-            size: file.size,
-            type: file.type,
-            uploadedAt: new Date().toISOString()
-          }
-          console.log('Upload service returning:', result)
-          resolve(result)
+          resolve({
+            success: true,
+            url: e.target.result,
+            publicId: `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          })
         }
-        reader.onerror = () => reject(new Error('Failed to read file'))
         reader.readAsDataURL(file)
-      })
-    } catch (error) {
-      throw new Error('Failed to upload file')
-    }
+      }, 1000)
+    })
   }
 
-  async uploadImageMock(file) {
-    return this.uploadFileMock(file, 'image')
+  // Mock delete
+  mockDeleteImage(publicId) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ success: true })
+      }, 500)
+    })
   }
 
-  async uploadVideoMock(file) {
-    return this.uploadFileMock(file, 'video')
+  // Upload profile picture
+  async uploadProfilePicture(file) {
+    return this.uploadImage(file, 'sportshub/profiles')
+  }
+
+  // Upload gallery images
+  async uploadGalleryImages(files) {
+    return this.uploadMultipleImages(files, 'sportshub/gallery')
+  }
+
+  // Upload tournament image
+  async uploadTournamentImage(file) {
+    return this.uploadImage(file, 'sportshub/tournaments')
+  }
+
+  // Upload post image
+  async uploadPostImage(file) {
+    return this.uploadImage(file, 'sportshub/posts')
   }
 }
 
 export default new UploadService()
-
