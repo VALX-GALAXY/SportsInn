@@ -20,6 +20,7 @@ import PlayerDashboard from './pages/dashboard/PlayerDashboard'
 import AcademyDashboard from './pages/dashboard/AcademyDashboard'
 import ClubDashboard from './pages/dashboard/ClubDashboard'
 import ScoutDashboard from './pages/dashboard/ScoutDashboard'
+import TestConnection from './pages/TestConnection'
 import './App.css'
 
 // Layout component for authenticated users
@@ -168,6 +169,13 @@ function AppRoutes() {
         <AuthenticatedLayout>
           <ErrorBoundary>
             <ScoutDashboard />
+          </ErrorBoundary>
+        </AuthenticatedLayout>
+      } />
+      <Route path="/test-connection" element={
+        <AuthenticatedLayout>
+          <ErrorBoundary>
+            <TestConnection />
           </ErrorBoundary>
         </AuthenticatedLayout>
       } />

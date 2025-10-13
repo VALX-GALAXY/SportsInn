@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect } from 'react'
-import authService from '../api/authService'
+import authService from '../api/realAuthService'
 import { useToast } from '../components/ui/simple-toast'
 
 const AuthContext = createContext()
