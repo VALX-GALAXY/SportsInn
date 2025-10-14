@@ -202,27 +202,26 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
       
+      // Map club to academy since backend doesn't have club role
+      const mappedRole = role === 'club' ? 'academy' : role
+      
       const signupData = {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: role,
-        // Role-specific data
-        ...(role === 'Player' && {
+        role: mappedRole,
+        // Role-specific data - match backend field names
+        ...(mappedRole === 'player' && {
           age: formData.age,
-          playerRole: formData.playerRole
+          playingRole: formData.playerRole  // Backend expects 'playingRole'
         }),
-        ...(role === 'Academy' && {
+        ...(mappedRole === 'academy' && {
           location: formData.location,
           contactInfo: formData.contactInfo
         }),
-        ...(role === 'Club' && {
-          location: formData.location,
-          contactInfo: formData.contactInfo
-        }),
-        ...(role === 'Scout' && {
+        ...(mappedRole === 'scout' && {
           organization: formData.organization,
-          yearsOfExperience: formData.yearsOfExperience
+          experience: formData.yearsOfExperience  // Backend expects 'experience'
         })
       }
       

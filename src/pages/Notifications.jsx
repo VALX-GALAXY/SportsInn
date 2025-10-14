@@ -85,6 +85,7 @@ const dummyNotifications = [
     read: true,
     user: {
       name: 'Shanky',
+      
       avatar: 'https://i.pravatar.cc/150?img=78',
       role: 'Scout'
     },

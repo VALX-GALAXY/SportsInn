@@ -62,7 +62,7 @@ export default function Signup() {
     }
     
     // Role-specific validation
-    if (formData.role === 'Player') {
+    if (formData.role === 'player') {
       if (!formData.age) {
         newErrors.age = 'Age is required for players'
       } else if (isNaN(formData.age) || formData.age < 10 || formData.age > 50) {
@@ -73,7 +73,7 @@ export default function Signup() {
       }
     }
     
-    if (formData.role === 'Academy' || formData.role === 'Club') {
+    if (formData.role === 'academy' || formData.role === 'club') {
       if (!formData.location) {
         newErrors.location = 'Location is required'
       }
@@ -82,7 +82,7 @@ export default function Signup() {
       }
     }
     
-    if (formData.role === 'Scout') {
+    if (formData.role === 'scout') {
       if (!formData.organization) {
         newErrors.organization = 'Organization is required'
       }
@@ -174,10 +174,10 @@ export default function Signup() {
                   className={errors.role ? 'border-red-500' : ''}
                 >
                   <option value="">Select your role</option>
-                  <option value="Player">Player</option>
-                  <option value="Academy">Academy</option>
-                  <option value="Club">Club</option>
-                  <option value="Scout">Scout</option>
+                  <option value="player">Player</option>
+                  <option value="academy">Academy</option>
+                  <option value="club">Club</option>
+                  <option value="scout">Scout</option>
                 </Select>
                 {errors.role && (
                   <p className="text-sm text-red-500">{errors.role}</p>
@@ -201,7 +201,7 @@ export default function Signup() {
               </div>
               
               {/* Role-specific fields */}
-              {formData.role === 'Player' && (
+              {formData.role === 'player' && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="age">Age</Label>
@@ -240,7 +240,7 @@ export default function Signup() {
                 </>
               )}
               
-              {(formData.role === 'Academy' || formData.role === 'Club') && (
+              {(formData.role === 'academy' || formData.role === 'club') && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="location">Location</Label>
@@ -276,7 +276,7 @@ export default function Signup() {
                 </>
               )}
               
-              {formData.role === 'Scout' && (
+              {formData.role === 'scout' && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="organization">Organization</Label>
