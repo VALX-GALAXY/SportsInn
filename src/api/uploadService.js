@@ -123,6 +123,29 @@ class UploadService {
   async uploadPostImage(file) {
     return this.uploadImage(file, 'sportshub/posts')
   }
+
+  // Mock upload methods for feedService compatibility
+  async uploadImageMock(file) {
+    return this.mockUploadImage(file, 'sportshub/posts')
+  }
+
+  async uploadVideoMock(file) {
+    return new Promise((resolve) => {
+      // Simulate upload delay
+      setTimeout(() => {
+        // Create a mock URL using FileReader
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          resolve({
+            success: true,
+            url: e.target.result,
+            publicId: `mock_video_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          })
+        }
+        reader.readAsDataURL(file)
+      }, 1500) // Longer delay for video
+    })
+  }
 }
 
 export default new UploadService()

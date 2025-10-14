@@ -5,9 +5,21 @@ class TournamentService {
   async getTournaments(filters = {}) {
     try {
       // Try backend API first
-      const response = await axiosInstance.get('/tournaments', {
-        params: filters
+      const response = await axiosInstance.get('/api/tournaments', {
+        params: {
+          role: filters.role,
+          location: filters.location,
+          type: filters.type,
+          minFee: filters.minFee,
+          maxFee: filters.maxFee,
+          search: filters.search,
+          sortBy: filters.sortBy,
+          sortOrder: filters.sortOrder,
+          page: filters.page || 1,
+          limit: filters.limit || 20
+        }
       })
+      console.log('Tournament API response:', response.data)
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
@@ -20,7 +32,8 @@ class TournamentService {
   // Get tournament by ID
   async getTournament(tournamentId) {
     try {
-      const response = await axiosInstance.get(`/tournaments/${tournamentId}`)
+      const response = await axiosInstance.get(`/api/tournaments/${tournamentId}`)
+      console.log('Tournament details API response:', response.data)
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
@@ -32,7 +45,11 @@ class TournamentService {
   // Apply to tournament
   async applyToTournament(tournamentId, applicationData) {
     try {
-      const response = await axiosInstance.post(`/tournaments/${tournamentId}/apply`, applicationData)
+      const response = await axiosInstance.post(`/api/tournaments/apply`, {
+        tournamentId,
+        ...applicationData
+      })
+      console.log('Apply tournament API response:', response.data)
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
@@ -44,7 +61,8 @@ class TournamentService {
   // Get tournament application status
   async getApplicationStatus(tournamentId) {
     try {
-      const response = await axiosInstance.get(`/tournaments/${tournamentId}/application-status`)
+      const response = await axiosInstance.get(`/api/tournaments/${tournamentId}/application-status`)
+      console.log('Application status API response:', response.data)
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
@@ -56,7 +74,8 @@ class TournamentService {
   // Withdraw application
   async withdrawApplication(tournamentId) {
     try {
-      const response = await axiosInstance.delete(`/tournaments/${tournamentId}/application`)
+      const response = await axiosInstance.delete(`/api/tournaments/${tournamentId}/application`)
+      console.log('Withdraw application API response:', response.data)
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
@@ -68,7 +87,8 @@ class TournamentService {
   // Get user's tournament applications
   async getUserApplications() {
     try {
-      const response = await axiosInstance.get('/tournaments/applications')
+      const response = await axiosInstance.get('/api/tournaments/applications')
+      console.log('User applications API response:', response.data)
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
@@ -215,16 +235,24 @@ class TournamentService {
       )
     }
 
-    if (filters.minFee !== undefined) {
-      filteredTournaments = filteredTournaments.filter(t => t.entryFee >= filters.minFee)
+    if (filters.minFee !== undefined && filters.minFee !== '' && !isNaN(parseInt(filters.minFee))) {
+      filteredTournaments = filteredTournaments.filter(t => t.entryFee >= parseInt(filters.minFee))
     }
 
-    if (filters.maxFee !== undefined) {
-      filteredTournaments = filteredTournaments.filter(t => t.entryFee <= filters.maxFee)
+    if (filters.maxFee !== undefined && filters.maxFee !== '' && !isNaN(parseInt(filters.maxFee))) {
+      filteredTournaments = filteredTournaments.filter(t => t.entryFee <= parseInt(filters.maxFee))
     }
 
     if (filters.type && filters.type !== 'all') {
       filteredTournaments = filteredTournaments.filter(t => t.type === filters.type)
+    }
+
+    if (filters.search && filters.search !== '') {
+      filteredTournaments = filteredTournaments.filter(t => 
+        t.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+        t.description.toLowerCase().includes(filters.search.toLowerCase()) ||
+        t.location.toLowerCase().includes(filters.search.toLowerCase())
+      )
     }
 
     return {

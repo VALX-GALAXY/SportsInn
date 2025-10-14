@@ -32,6 +32,11 @@ class NotificationService {
       try {
         const response = await this.getNotifications(1, 5) // Get latest 5 notifications
         this.notifySubscribers(response.notifications)
+        
+        // Simulate new notifications occasionally
+        if (Math.random() < 0.3) { // 30% chance of new notification
+          this.simulateNewNotification()
+        }
       } catch (error) {
         console.error('Error polling notifications:', error)
       }
@@ -237,6 +242,67 @@ class NotificationService {
       success: true,
       message: 'All notifications marked as read'
     }
+  }
+
+  // Simulate new notification for polling
+  simulateNewNotification() {
+    const notificationTypes = [
+      {
+        type: 'tournament',
+        title: 'Tournament Update',
+        message: 'You were selected for XYZ Tournament!',
+        icon: '🏆'
+      },
+      {
+        type: 'like',
+        title: 'Post Liked',
+        message: 'Your recent post received 5 new likes',
+        icon: '❤️'
+      },
+      {
+        type: 'follow',
+        title: 'New Follower',
+        message: 'A scout started following your profile',
+        icon: '👥'
+      },
+      {
+        type: 'comment',
+        title: 'New Comment',
+        message: 'Someone commented on your post',
+        icon: '💬'
+      },
+      {
+        type: 'scout',
+        title: 'Scout Interest',
+        message: 'A talent scout has shown interest in your profile',
+        icon: '👁️'
+      },
+      {
+        type: 'academy',
+        title: 'Academy Invitation',
+        message: 'You have been invited to join a sports academy',
+        icon: '🎓'
+      }
+    ]
+
+    const randomType = notificationTypes[Math.floor(Math.random() * notificationTypes.length)]
+    const newNotification = {
+      id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type: randomType.type,
+      title: randomType.title,
+      message: randomType.message,
+      data: {
+        timestamp: new Date().toISOString()
+      },
+      isRead: false,
+      createdAt: new Date().toISOString(),
+      icon: randomType.icon
+    }
+
+    // Notify subscribers with the new notification
+    this.notifySubscribers([newNotification])
+    
+    return newNotification
   }
 }
 

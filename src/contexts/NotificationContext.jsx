@@ -71,8 +71,8 @@ export const NotificationProvider = ({ children }) => {
       // Load notifications from service
       loadNotifications()
 
-      // Start polling for new notifications
-      notificationService.startPolling(30000) // 30 seconds
+      // Start polling for new notifications (reduced interval for better UX)
+      notificationService.startPolling(15000) // 15 seconds for more responsive updates
 
       // Subscribe to polling updates
       const unsubscribe = notificationService.subscribe((newNotifications) => {
@@ -82,6 +82,16 @@ export const NotificationProvider = ({ children }) => {
             const newNotifs = newNotifications.filter(n => !existingIds.has(n.id))
             if (newNotifs.length > 0) {
               setUnreadCount(prev => prev + newNotifs.length)
+              
+              // Show toast for new notifications
+              newNotifs.forEach(notif => {
+                toast({
+                  title: notif.title,
+                  description: notif.message,
+                  variant: "default"
+                })
+              })
+              
               return [...newNotifs, ...prev]
             }
             return prev

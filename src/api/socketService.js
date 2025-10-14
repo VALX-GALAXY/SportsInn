@@ -86,31 +86,81 @@ class SocketService {
     console.log('Mock socket connected for user:', userId)
     this.isConnected = true
     
-    // Simulate receiving notifications
-    setTimeout(() => {
-      this.simulateNotification('like', {
-        id: 'notif_1',
+    // Simulate receiving notifications with more variety
+    const notificationTypes = [
+      {
+        type: 'tournament',
+        title: 'Tournament Selection',
+        message: 'You were selected for Summer Football Championship 2024!',
+        delay: 8000
+      },
+      {
         type: 'like',
-        message: 'Someone liked your post',
-        timestamp: new Date().toISOString(),
-        read: false
-      })
-    }, 5000)
-
-    setTimeout(() => {
-      this.simulateNotification('follow', {
-        id: 'notif_2',
+        title: 'Post Liked',
+        message: 'Your training post received 12 new likes',
+        delay: 15000
+      },
+      {
         type: 'follow',
-        message: 'Someone started following you',
-        timestamp: new Date().toISOString(),
-        read: false
-      })
-    }, 10000)
+        title: 'New Follower',
+        message: 'A talent scout started following your profile',
+        delay: 25000
+      },
+      {
+        type: 'comment',
+        title: 'New Comment',
+        message: 'Alex Johnson commented on your match post',
+        delay: 35000
+      },
+      {
+        type: 'scout',
+        title: 'Scout Interest',
+        message: 'Delhi Sports Academy has shown interest in your profile',
+        delay: 45000
+      },
+      {
+        type: 'academy',
+        title: 'Academy Invitation',
+        message: 'You have been invited to join Mumbai Cricket Academy',
+        delay: 55000
+      }
+    ]
+
+    // Schedule random notifications
+    notificationTypes.forEach(notif => {
+      setTimeout(() => {
+        this.simulateNotification(notif.type, {
+          id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          type: notif.type,
+          title: notif.title,
+          message: notif.message,
+          data: {
+            timestamp: new Date().toISOString()
+          },
+          isRead: false,
+          createdAt: new Date().toISOString(),
+          icon: this.getNotificationIcon(notif.type)
+        })
+      }, notif.delay)
+    })
 
     return {
       id: 'mock_socket_id',
       connected: true
     }
+  }
+
+  getNotificationIcon(type) {
+    const icons = {
+      'tournament': '🏆',
+      'like': '❤️',
+      'follow': '👥',
+      'comment': '💬',
+      'scout': '👁️',
+      'academy': '🎓',
+      'club': '🤝'
+    }
+    return icons[type] || '🔔'
   }
 
   simulateNotification(type, notification) {

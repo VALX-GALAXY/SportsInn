@@ -17,7 +17,10 @@ import {
   Heart,
   BarChart3,
   PieChart,
-  TrendingDown
+  TrendingDown,
+  Zap,
+  Target as TargetIcon,
+  TrendingUp as TrendingUpIcon
 } from 'lucide-react'
 import { 
   LineChart, 
@@ -32,47 +35,19 @@ import {
   Legend,
   PieChart as RechartsPieChart,
   Pie,
-  Cell
+  Cell,
+  AreaChart,
+  Area
 } from 'recharts'
 import { useAuth } from '../../contexts/AuthContext'
 import tournamentService from '../../api/tournamentService'
 import feedService from '../../api/feedService'
+import statsService from '../../api/statsService'
 import { DashboardStatsSkeleton } from '../../components/SkeletonLoaders'
 
 export default function PlayerDashboard() {
   const { user } = useAuth()
-  const [stats] = useState({
-    tournamentsApplied: 15,
-    acceptedPercentage: 75,
-    connectionsCount: 89,
-    totalMatches: 45,
-    winRate: 68,
-    currentRank: 15,
-    totalPoints: 1250,
-    averageRating: 4.2
-  })
-
-  // Chart data
-  const performanceData = [
-    { month: 'Jan', matches: 8, wins: 5, rating: 4.1 },
-    { month: 'Feb', matches: 12, wins: 8, rating: 4.3 },
-    { month: 'Mar', matches: 10, wins: 7, rating: 4.2 },
-    { month: 'Apr', matches: 15, wins: 10, rating: 4.4 },
-    { month: 'May', matches: 0, wins: 0, rating: 4.2 }
-  ]
-
-  const tournamentParticipation = [
-    { name: 'Won', value: 3, color: '#10B981' },
-    { name: 'Lost', value: 9, color: '#EF4444' },
-    { name: 'Pending', value: 2, color: '#F59E0B' }
-  ]
-
-  const connectionsData = [
-    { name: 'Players', value: 45, color: '#3B82F6' },
-    { name: 'Academies', value: 12, color: '#8B5CF6' },
-    { name: 'Clubs', value: 8, color: '#10B981' },
-    { name: 'Scouts', value: 24, color: '#F59E0B' }
-  ]
+  const [stats, setStats] = useState(null)
   const [tournamentInvites, setTournamentInvites] = useState([])
   const [recentPosts, setRecentPosts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -84,6 +59,12 @@ export default function PlayerDashboard() {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true)
+      
+      // Fetch player statistics
+      if (user?.id) {
+        const playerStats = await statsService.getPlayerStats(user.id)
+        setStats(playerStats)
+      }
       
       // Fetch tournament invites (mock data for now)
       try {
@@ -159,13 +140,13 @@ export default function PlayerDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Tournaments Applied</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.tournamentsApplied}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.tournamentsApplied || 0}</p>
                   <p className="text-xs text-green-600 dark:text-green-400 flex items-center mt-1">
                     <TrendingUp className="w-3 h-3 mr-1" />
                     +3 this month
@@ -183,14 +164,14 @@ export default function PlayerDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Accepted %</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.acceptedPercentage}%</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.acceptedPercentage || 0}%</p>
                   <p className="text-xs text-green-600 dark:text-green-400 flex items-center mt-1">
                     <TrendingUp className="w-3 h-3 mr-1" />
                     +5% from last month
                   </p>
                 </div>
                 <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900 rounded-full">
-                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
+                  <TargetIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
                 </div>
               </div>
             </CardContent>
@@ -200,8 +181,8 @@ export default function PlayerDashboard() {
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Connections Count</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.connectionsCount}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Connections</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.connectionsCount || 0}</p>
                   <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center mt-1">
                     <Users className="w-3 h-3 mr-1" />
                     Active network
@@ -209,6 +190,24 @@ export default function PlayerDashboard() {
                 </div>
                 <div className="p-2 sm:p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
                   <Users className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Win Rate</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.winRate || 0}%</p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center mt-1">
+                    <Zap className="w-3 h-3 mr-1" />
+                    Performance
+                  </p>
+                </div>
+                <div className="p-2 sm:p-3 bg-orange-100 dark:bg-orange-900 rounded-full">
+                  <Award className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
             </CardContent>
@@ -228,7 +227,7 @@ export default function PlayerDashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <RechartsPieChart>
                     <Pie
-                      data={tournamentParticipation}
+                      data={stats?.tournamentParticipation || []}
                       cx="50%"
                       cy="50%"
                       innerRadius={40}
@@ -236,7 +235,7 @@ export default function PlayerDashboard() {
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {tournamentParticipation.map((entry, index) => (
+                      {(stats?.tournamentParticipation || []).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -257,17 +256,43 @@ export default function PlayerDashboard() {
             <CardContent className="p-4 sm:p-6 pt-0">
               <div className="h-48 sm:h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={connectionsData}>
+                  <BarChart data={stats?.connectionsData || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
                     <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} />
                     <YAxis stroke="#9CA3AF" fontSize={12} />
                     <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                      {connectionsData.map((entry, index) => (
+                      {(stats?.connectionsData || []).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Bar>
                   </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Performance Chart */}
+        <div className="mb-8">
+          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+            <CardHeader className="p-4 sm:p-6 pb-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Performance Over Time</h2>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Monthly performance metrics and trends</p>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="h-64 sm:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={stats?.performanceData || []}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                    <XAxis dataKey="month" stroke="#9CA3AF" fontSize={12} />
+                    <YAxis stroke="#9CA3AF" fontSize={12} />
+                    <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                    <Legend />
+                    <Area type="monotone" dataKey="matches" stackId="1" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.6} />
+                    <Area type="monotone" dataKey="wins" stackId="2" stroke="#10B981" fill="#10B981" fillOpacity={0.6} />
+                    <Line type="monotone" dataKey="rating" stroke="#F59E0B" strokeWidth={3} />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>

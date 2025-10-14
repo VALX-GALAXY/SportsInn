@@ -57,13 +57,17 @@ export const AuthProvider = ({ children }) => {
         const storedUser = localStorage.getItem('user')
         const storedToken = localStorage.getItem('token')
         
+        console.log('AuthContext - Loading user from localStorage:', { storedUser, storedToken })
+        
         if (storedUser && storedToken) {
           const user = JSON.parse(storedUser)
+          console.log('AuthContext - Parsed user:', user)
           dispatch({
             type: 'LOGIN',
             payload: { user, token: storedToken }
           })
         } else {
+          console.log('AuthContext - No stored user or token found')
           dispatch({ type: 'SET_LOADING', payload: false })
         }
       } catch (error) {
@@ -173,28 +177,59 @@ export const AuthProvider = ({ children }) => {
   }
 
   // Mock Google login
-  const loginWithGoogle = () => {
-    // Simulate Google login with dummy data
-    const mockUser = {
-      id: 'google_' + Date.now(),
-      name: 'Google User',
-      email: 'user@gmail.com',
-      role: 'Player',
-      profilePicture: 'https://via.placeholder.com/150',
-      provider: 'google',
-      bio: '',
-      age: '',
-      playerRole: '',
-      location: '',
-      contactInfo: '',
-      organization: '',
-      yearsOfExperience: ''
+  const loginWithGoogle = async () => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true })
+      
+      // Simulate Google login with dummy data
+      const mockUser = {
+        id: 'google_' + Date.now(),
+        name: 'Google User',
+        email: 'user@gmail.com',
+        role: 'Player',
+        profilePicture: 'https://via.placeholder.com/150',
+        provider: 'google',
+        bio: '',
+        age: '',
+        playerRole: '',
+        location: '',
+        contactInfo: '',
+        organization: '',
+        yearsOfExperience: ''
+      }
+      
+      const mockToken = 'mock_jwt_token_' + Date.now()
+      
+      // Store auth data
+      authService.storeAuthData({
+        token: mockToken,
+        refreshToken: 'mock_refresh_token_' + Date.now(),
+        user: mockUser
+      })
+      
+      dispatch({
+        type: 'LOGIN',
+        payload: { user: mockUser, token: mockToken }
+      })
+      
+      toast({
+        title: "Google login successful",
+        description: `Welcome, ${mockUser.name}!`,
+        variant: "success"
+      })
+      
+      return mockUser
+    } catch (error) {
+      console.error('Google login error:', error)
+      toast({
+        title: "Google login failed",
+        description: error.message || "Failed to login with Google",
+        variant: "destructive"
+      })
+      throw error
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
     }
-    
-    const mockToken = 'mock_jwt_token_' + Date.now()
-    
-    login(mockUser, mockToken)
-    return mockUser
   }
 
   // Real API signup with role
@@ -203,7 +238,8 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'SET_LOADING', payload: true })
       
       // Map club to academy since backend doesn't have club role
-      const mappedRole = role === 'club' ? 'academy' : role
+      const mappedRole = role === 'club' ? 'Academy' : role
+      console.log('AuthContext - Signup with role:', { originalRole: role, mappedRole })
       
       const signupData = {
         name: formData.name,
@@ -211,21 +247,25 @@ export const AuthProvider = ({ children }) => {
         password: formData.password,
         role: mappedRole,
         // Role-specific data - match backend field names
-        ...(mappedRole === 'player' && {
+        ...(mappedRole === 'Player' && {
           age: formData.age,
           playingRole: formData.playerRole  // Backend expects 'playingRole'
         }),
-        ...(mappedRole === 'academy' && {
+        ...(mappedRole === 'Academy' && {
           location: formData.location,
           contactInfo: formData.contactInfo
         }),
-        ...(mappedRole === 'scout' && {
+        ...(mappedRole === 'Scout' && {
           organization: formData.organization,
           experience: formData.yearsOfExperience  // Backend expects 'experience'
         })
       }
       
+      console.log('AuthContext - Signup data:', signupData)
+      
       const authData = await authService.signup(signupData)
+      console.log('AuthContext - Signup response:', authData)
+      
       authService.storeAuthData(authData)
       
       dispatch({

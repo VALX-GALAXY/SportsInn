@@ -15,6 +15,7 @@ import Search from './pages/Search'
 import Messages from './pages/Messages'
 import Requests from './pages/Requests'
 import Tournaments from './pages/Tournaments'
+import TournamentDetails from './pages/TournamentDetails'
 import Dashboard from './pages/Dashboard'
 import PlayerDashboard from './pages/dashboard/PlayerDashboard'
 import AcademyDashboard from './pages/dashboard/AcademyDashboard'
@@ -134,6 +135,13 @@ function AppRoutes() {
         <AuthenticatedLayout>
           <ErrorBoundary>
             <Tournaments />
+          </ErrorBoundary>
+        </AuthenticatedLayout>
+      } />
+      <Route path="/tournaments/:id" element={
+        <AuthenticatedLayout>
+          <ErrorBoundary>
+            <TournamentDetails />
           </ErrorBoundary>
         </AuthenticatedLayout>
       } />

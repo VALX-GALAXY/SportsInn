@@ -17,7 +17,9 @@ import {
   Trophy,
   Eye,
   GraduationCap,
-  Handshake
+  Handshake,
+  RefreshCw,
+  Clock
 } from 'lucide-react'
 import { useToast } from '../components/ui/simple-toast'
 import { NotificationsSkeleton } from '../components/SkeletonLoaders'
@@ -112,6 +114,7 @@ const dummyNotifications = [
 export default function Notifications() {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [filter, setFilter] = useState('all') // 'all', 'unread', 'likes', 'follows', 'comments'
   const { toast } = useToast()
 
@@ -133,6 +136,49 @@ export default function Notifications() {
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const refreshNotifications = async () => {
+    try {
+      setIsRefreshing(true)
+      // Trigger a fresh load of notifications
+      await notificationService.getNotifications(1, 50)
+      toast({
+        title: "Notifications refreshed",
+        description: "Latest notifications loaded",
+        variant: "default"
+      })
+    } catch (error) {
+      console.error('Error refreshing notifications:', error)
+      toast({
+        title: "Failed to refresh",
+        description: "Unable to refresh notifications",
+        variant: "destructive"
+      })
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
+  const formatTimeAgo = (dateString) => {
+    const now = new Date()
+    const date = new Date(dateString)
+    const diffInSeconds = Math.floor((now - date) / 1000)
+
+    if (diffInSeconds < 60) {
+      return 'Just now'
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60)
+      return `${minutes}m ago`
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600)
+      return `${hours}h ago`
+    } else if (diffInSeconds < 604800) {
+      const days = Math.floor(diffInSeconds / 86400)
+      return `${days}d ago`
+    } else {
+      return date.toLocaleDateString()
     }
   }
 
@@ -231,23 +277,37 @@ export default function Notifications() {
               </p>
             </div>
             
-            {unreadCount > 0 && (
-              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+              {unreadCount > 0 && (
                 <Badge variant="destructive" className="px-2 py-1 text-xs sm:px-3 sm:py-1 sm:text-sm">
                   {unreadCount} unread
                 </Badge>
+              )}
+              <div className="flex items-center space-x-2">
                 <Button
-                  onClick={markAllAsRead}
+                  onClick={refreshNotifications}
                   variant="outline"
                   size="sm"
-                  className="flex items-center space-x-2 text-xs sm:text-sm w-full sm:w-auto"
+                  disabled={isRefreshing}
+                  className="flex items-center space-x-2 text-xs sm:text-sm"
                 >
-                  <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Mark all read</span>
-                  <span className="sm:hidden">Mark all</span>
+                  <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Refresh</span>
                 </Button>
+                {unreadCount > 0 && (
+                  <Button
+                    onClick={markAllAsRead}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center space-x-2 text-xs sm:text-sm"
+                  >
+                    <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Mark all read</span>
+                    <span className="sm:hidden">Mark all</span>
+                  </Button>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Filter Tabs */}
@@ -349,9 +409,12 @@ export default function Notifications() {
                             </div>
                           )}
 
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                            {new Date(notification.createdAt).toLocaleString()}
-                          </p>
+                          <div className="flex items-center space-x-1 mt-2">
+                            <Clock className="w-3 h-3 text-gray-400" />
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatTimeAgo(notification.createdAt)}
+                            </p>
+                          </div>
                         </div>
 
                         {/* Actions */}

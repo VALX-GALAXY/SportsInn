@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Home, Users, Eye, Edit, Save, X, UserPlus, UserMinus, Loader2, Trophy, Target, BarChart3, Star, TrendingUp, Calendar, Award, MailPlus, Mail, Upload, Image, Trash2, Plus, CheckCircle, AlertCircle } from 'lucide-react'
+import { User, Home, Users, Eye, Edit, Save, X, UserPlus, UserMinus, Loader2, Trophy, Target, BarChart3, Star, TrendingUp, Calendar, Award, MailPlus, Mail, Upload, Image, Trash2, Plus, CheckCircle, AlertCircle, Send, MessageSquare } from 'lucide-react'
 import requestService from '@/api/requestService'
 import { useToast } from '@/components/ui/simple-toast'
 import followService from '@/api/followService'
@@ -40,6 +40,11 @@ export default function Profile() {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadStatus, setUploadStatus] = useState('idle') // 'idle', 'uploading', 'success', 'error'
   
+  // Invite/Apply modal state
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [inviteMessage, setInviteMessage] = useState('')
+  const [isSendingInvite, setIsSendingInvite] = useState(false)
+  
   // Follow functionality state
   const [isFollowLoading, setIsFollowLoading] = useState(false)
   const [followStats, setFollowStats] = useState({
@@ -49,16 +54,69 @@ export default function Profile() {
   })
   const { toast } = useToast()
   const handleInviteOrApply = () => {
-    const currentUser = user
-    const target = { id: 'target_user', name: 'Target Profile' }
-    const isPlayer = currentUser?.role === 'Player'
-    const payload = {
-      fromUser: { id: currentUser.id, name: currentUser.name, role: currentUser.role },
-      toUser: target,
-      message: isPlayer ? 'Player application' : 'Invitation to player'
+    setShowInviteModal(true)
+  }
+
+  const handleSendInvite = async () => {
+    if (!inviteMessage.trim()) {
+      toast({
+        title: "Message required",
+        description: "Please enter a message for your invitation/application",
+        variant: "destructive"
+      })
+      return
     }
-    const record = isPlayer ? requestService.sendApplication(payload) : requestService.sendInvite(payload)
-    toast({ title: isPlayer ? 'Applied' : 'Invite sent', description: `Request ID: ${record.id}` })
+
+    setIsSendingInvite(true)
+    
+    try {
+      const currentUser = user
+      const target = { id: 'target_user', name: 'Target Profile' }
+      const isPlayer = currentUser?.role === 'Player' || currentUser?.role === 'player'
+      
+      const payload = {
+        fromUser: { 
+          id: currentUser.id, 
+          name: currentUser.name, 
+          role: currentUser.role,
+          email: currentUser.email 
+        },
+        toUser: target,
+        message: inviteMessage.trim(),
+        type: isPlayer ? 'application' : 'invitation',
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      }
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      const record = isPlayer ? requestService.sendApplication(payload) : requestService.sendInvite(payload)
+      
+      toast({
+        title: isPlayer ? "Application sent!" : "Invitation sent!",
+        description: `Your ${isPlayer ? 'application' : 'invitation'} has been sent successfully`,
+        variant: "default"
+      })
+      
+      setShowInviteModal(false)
+      setInviteMessage('')
+      
+    } catch (error) {
+      console.error('Error sending invite/application:', error)
+      toast({
+        title: "Error",
+        description: "Failed to send invitation/application. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsSendingInvite(false)
+    }
+  }
+
+  const handleCloseInviteModal = () => {
+    setShowInviteModal(false)
+    setInviteMessage('')
   }
 
   // Update form data when user data changes
@@ -862,8 +920,8 @@ export default function Profile() {
                     size="sm"
                     className="w-full sm:w-auto flex items-center justify-center"
                   >
-                    {user?.role === 'Player' ? <Mail className="w-4 h-4 mr-2" /> : <MailPlus className="w-4 h-4 mr-2" />}
-                    <span className="text-sm">{user?.role === 'Player' ? 'Apply' : 'Invite Player'}</span>
+                    {(user?.role === 'Player' || user?.role === 'player') ? <Mail className="w-4 h-4 mr-2" /> : <MailPlus className="w-4 h-4 mr-2" />}
+                    <span className="text-sm">{(user?.role === 'Player' || user?.role === 'player') ? 'Apply' : 'Invite Player'}</span>
                   </Button>
                 </div>
               </div>
@@ -1237,7 +1295,7 @@ export default function Profile() {
         </>
         )}
 
-        {activeTab === 'Performance' && user?.role === 'Player' && (
+        {activeTab === 'Performance' && (user?.role === 'Player' || user?.role === 'player') && (
           <Card className="mt-6">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -1311,7 +1369,7 @@ export default function Profile() {
           </Card>
         )}
 
-        {activeTab === 'Performance' && user?.role === 'Academy' && (
+        {activeTab === 'Performance' && (user?.role === 'Academy' || user?.role === 'academy') && (
           <Card className="mt-6">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -1385,7 +1443,7 @@ export default function Profile() {
           </Card>
         )}
 
-        {activeTab === 'Performance' && user?.role === 'Scout' && (
+        {activeTab === 'Performance' && (user?.role === 'Scout' || user?.role === 'scout') && (
           <Card className="mt-6">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -1459,7 +1517,7 @@ export default function Profile() {
           </Card>
         )}
 
-        {activeTab === 'Performance' && user?.role === 'Club' && (
+        {activeTab === 'Performance' && (user?.role === 'Club' || user?.role === 'club') && (
           <Card className="mt-6">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -1525,6 +1583,81 @@ export default function Profile() {
                       <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
                       <Legend />
                       <Bar dataKey="goals" fill="#10B981" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Fallback Performance tab for any role not specifically handled */}
+        {activeTab === 'Performance' && !['Player', 'Academy', 'Scout', 'Club', 'player', 'academy', 'scout', 'club'].includes(user?.role) && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <BarChart3 className="w-5 h-5 text-blue-500" />
+                <span>Performance Overview</span>
+              </CardTitle>
+              <CardDescription>Your performance metrics and statistics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Total Activities</p>
+                      <p className="text-2xl font-bold">42</p>
+                    </div>
+                    <Calendar className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Success Rate</p>
+                      <p className="text-2xl font-bold">85%</p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-90">Achievements</p>
+                      <p className="text-2xl font-bold">12</p>
+                    </div>
+                    <Trophy className="w-8 h-8 opacity-80" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Charts */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Monthly Performance</h4>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[{ month: 'Jan', score: 75 }, { month: 'Feb', score: 82 }, { month: 'Mar', score: 78 }, { month: 'Apr', score: 88 }, { month: 'May', score: 85 }] }>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                      <XAxis dataKey="month" stroke="#9CA3AF" />
+                      <YAxis stroke="#9CA3AF" />
+                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                      <Legend />
+                      <Line type="monotone" dataKey="score" stroke="#3B82F6" strokeWidth={2} dot={{ r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Activity Distribution</h4>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[{ category: 'Training', count: 15 }, { category: 'Matches', count: 8 }, { category: 'Events', count: 12 }, { category: 'Other', count: 7 }] }>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                      <XAxis dataKey="category" stroke="#9CA3AF" />
+                      <YAxis stroke="#9CA3AF" />
+                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                      <Legend />
+                      <Bar dataKey="count" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -1828,6 +1961,88 @@ export default function Profile() {
             </CardContent>
           </Card>
         )}
+
+        {/* Invite/Apply Modal */}
+        <AnimatePresence>
+          {showInviteModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              onClick={handleCloseInviteModal}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {user?.role === 'Player' || user?.role === 'player' ? 'Apply to Organization' : 'Invite Player'}
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCloseInviteModal}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="inviteMessage" className="text-sm font-medium">
+                      {user?.role === 'Player' || user?.role === 'player' ? 'Application Message' : 'Invitation Message'}
+                    </Label>
+                    <Textarea
+                      id="inviteMessage"
+                      value={inviteMessage}
+                      onChange={(e) => setInviteMessage(e.target.value)}
+                      placeholder={
+                        user?.role === 'Player' || user?.role === 'player' 
+                          ? "Tell them why you'd be a great fit for their organization..."
+                          : "Tell the player why they should join your organization..."
+                      }
+                      rows={4}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div className="flex space-x-3 pt-4">
+                    <Button
+                      onClick={handleSendInvite}
+                      disabled={isSendingInvite || !inviteMessage.trim()}
+                      className="flex-1"
+                    >
+                      {isSendingInvite ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          {user?.role === 'Player' || user?.role === 'player' ? 'Send Application' : 'Send Invitation'}
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleCloseInviteModal}
+                      disabled={isSendingInvite}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )

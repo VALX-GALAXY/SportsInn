@@ -140,6 +140,15 @@ const Navbar = ({ onMenuClick }) => {
                 <Search className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
               
+              {/* Create Post Button - Only for Player, Academy, Club roles */}
+              {(user?.role === 'Player' || user?.role === 'player' || 
+                user?.role === 'Academy' || user?.role === 'academy' || 
+                user?.role === 'Club' || user?.role === 'club') && (
+                <Link to="/feed" className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors" title="Create Post">
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                </Link>
+              )}
+              
               {/* Notifications */}
               <NotificationDropdown />
               

@@ -15,7 +15,10 @@ import {
   Clock,
   DollarSign,
   Target,
-  Award
+  Award,
+  GraduationCap,
+  TrendingDown,
+  Activity
 } from 'lucide-react'
 import { 
   BarChart, 
@@ -28,35 +31,20 @@ import {
   Legend,
   PieChart as RechartsPieChart,
   Pie,
-  Cell
+  Cell,
+  AreaChart,
+  Area,
+  LineChart,
+  Line
 } from 'recharts'
-// import { useAuth } from '../../contexts/AuthContext' // Not used
+import { useAuth } from '../../contexts/AuthContext'
 import tournamentService from '../../api/tournamentService'
 import feedService from '../../api/feedService'
+import statsService from '../../api/statsService'
 
 export default function AcademyDashboard() {
-  const [stats] = useState({
-    playersScouted: 89,
-    tournamentsHosted: 3,
-    totalStudents: 45,
-    successRate: 85
-  })
-
-  // Chart data
-  const scoutingData = [
-    { name: 'Jan', players: 12, tournaments: 1 },
-    { name: 'Feb', players: 18, tournaments: 0 },
-    { name: 'Mar', players: 15, tournaments: 1 },
-    { name: 'Apr', players: 22, tournaments: 1 },
-    { name: 'May', players: 19, tournaments: 0 }
-  ]
-
-  const tournamentParticipation = [
-    { name: 'Hosted', value: 3, color: '#10B981' },
-    { name: 'Participated', value: 7, color: '#3B82F6' },
-    { name: 'Upcoming', value: 2, color: '#F59E0B' }
-  ]
-
+  const { user } = useAuth()
+  const [stats, setStats] = useState(null)
   const [upcomingTournaments, setUpcomingTournaments] = useState([])
   const [scoutSuggestions, setScoutSuggestions] = useState([])
   const [recentPosts, setRecentPosts] = useState([])
@@ -69,6 +57,12 @@ export default function AcademyDashboard() {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true)
+      
+      // Fetch academy statistics
+      if (user?.id) {
+        const academyStats = await statsService.getAcademyStats(user.id)
+        setStats(academyStats)
+      }
       
       // Fetch upcoming tournaments
       try {
@@ -159,13 +153,13 @@ export default function AcademyDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Players Scouted</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.playersScouted}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.playersScouted || 0}</p>
                   <p className="text-xs text-green-600 dark:text-green-400 flex items-center mt-1">
                     <TrendingUp className="w-3 h-3 mr-1" />
                     +12 this month
@@ -183,7 +177,7 @@ export default function AcademyDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Tournaments Hosted</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.tournamentsHosted}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.tournamentsHosted || 0}</p>
                   <p className="text-xs text-green-600 dark:text-green-400 flex items-center mt-1">
                     <Trophy className="w-3 h-3 mr-1" />
                     +1 this month
@@ -191,6 +185,42 @@ export default function AcademyDashboard() {
                 </div>
                 <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900 rounded-full">
                   <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Total Students</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.totalStudents || 0}</p>
+                  <p className="text-xs text-purple-600 dark:text-purple-400 flex items-center mt-1">
+                    <GraduationCap className="w-3 h-3 mr-1" />
+                    Active enrollment
+                  </p>
+                </div>
+                <div className="p-2 sm:p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
+                  <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Success Rate</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.successRate || 0}%</p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center mt-1">
+                    <Target className="w-3 h-3 mr-1" />
+                    Performance
+                  </p>
+                </div>
+                <div className="p-2 sm:p-3 bg-orange-100 dark:bg-orange-900 rounded-full">
+                  <Target className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
             </CardContent>
@@ -210,7 +240,7 @@ export default function AcademyDashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <RechartsPieChart>
                     <Pie
-                      data={tournamentParticipation}
+                      data={stats?.tournamentParticipation || []}
                       cx="50%"
                       cy="50%"
                       innerRadius={40}
@@ -218,7 +248,7 @@ export default function AcademyDashboard() {
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {tournamentParticipation.map((entry, index) => (
+                      {(stats?.tournamentParticipation || []).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -239,7 +269,7 @@ export default function AcademyDashboard() {
             <CardContent className="p-4 sm:p-6 pt-0">
               <div className="h-48 sm:h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={scoutingData}>
+                  <BarChart data={stats?.scoutingData || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
                     <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} />
                     <YAxis stroke="#9CA3AF" fontSize={12} />
@@ -247,6 +277,34 @@ export default function AcademyDashboard() {
                     <Legend />
                     <Bar dataKey="players" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="tournaments" fill="#10B981" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Student Progress Chart */}
+        <div className="mb-8">
+          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+            <CardHeader className="p-4 sm:p-6 pb-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Student Progress Distribution</h2>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Breakdown of students by skill level</p>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="h-64 sm:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stats?.studentProgress || []}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                    <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} />
+                    <YAxis stroke="#9CA3AF" fontSize={12} />
+                    <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                    <Legend />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {(stats?.studentProgress || []).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>

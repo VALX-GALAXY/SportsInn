@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -16,7 +17,8 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-react'
 import tournamentService from '../api/tournamentService'
 import { useToast } from '../components/ui/simple-toast'
@@ -24,6 +26,7 @@ import { TournamentSkeleton } from '../components/SkeletonLoaders'
 import PageTransition, { StaggerContainer, StaggerItem } from '../components/PageTransition'
 
 export default function Tournaments() {
+  const navigate = useNavigate()
   const [tournaments, setTournaments] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [filters, setFilters] = useState({
@@ -46,21 +49,36 @@ export default function Tournaments() {
     additionalInfo: ''
   })
   const [isApplying, setIsApplying] = useState(false)
+  const [validationErrors, setValidationErrors] = useState({})
   const [applicationStatuses, setApplicationStatuses] = useState({})
   const { toast } = useToast()
 
+  // Debounced search effect
   useEffect(() => {
-    fetchTournaments()
-  }, [filters])
+    const timeoutId = setTimeout(() => {
+      fetchTournaments()
+    }, filters.search ? 500 : 0) // Debounce search by 500ms
+
+    return () => clearTimeout(timeoutId)
+  }, [filters.role, filters.location, filters.type, filters.minFee, filters.maxFee, filters.search, filters.sortBy, filters.sortOrder])
 
   const fetchTournaments = async () => {
     try {
       setIsLoading(true)
-      const response = await tournamentService.getTournaments(filters)
-      setTournaments(response.tournaments || [])
+      
+      // Validate filters before making the request
+      const safeFilters = {
+        ...filters,
+        minFee: filters.minFee && !isNaN(parseInt(filters.minFee)) ? parseInt(filters.minFee) : '',
+        maxFee: filters.maxFee && !isNaN(parseInt(filters.maxFee)) ? parseInt(filters.maxFee) : ''
+      }
+      
+      const response = await tournamentService.getTournaments(safeFilters)
+      const tournaments = response.tournaments || []
+      setTournaments(tournaments)
       
       // Load application statuses for each tournament
-      const statusPromises = (response.tournaments || []).map(async (tournament) => {
+      const statusPromises = tournaments.map(async (tournament) => {
         try {
           const status = await tournamentService.getApplicationStatus(tournament.id)
           return { tournamentId: tournament.id, status }
@@ -79,56 +97,127 @@ export default function Tournaments() {
       setApplicationStatuses(statusMap)
       
       // Apply sorting
-      const sortedTournaments = sortTournaments(response.tournaments || [], filters.sortBy, filters.sortOrder)
+      const sortedTournaments = sortTournaments(tournaments, filters.sortBy, filters.sortOrder)
       setTournaments(sortedTournaments)
     } catch (error) {
       console.error('Error fetching tournaments:', error)
       toast({
         title: "Error",
-        description: "Failed to load tournaments",
+        description: "Failed to load tournaments. Please try again.",
         variant: "destructive"
       })
+      // Set empty array to prevent further errors
+      setTournaments([])
     } finally {
       setIsLoading(false)
     }
   }
 
   const sortTournaments = (tournaments, sortBy, sortOrder) => {
-    return [...tournaments].sort((a, b) => {
-      let aValue, bValue
-      
-      switch (sortBy) {
-        case 'date':
-          aValue = new Date(a.startDate)
-          bValue = new Date(b.startDate)
-          break
-        case 'fee':
-          aValue = a.entryFee
-          bValue = b.entryFee
-          break
-        case 'prize':
-          aValue = a.prizePool
-          bValue = b.prizePool
-          break
-        case 'popularity':
-          aValue = a.registeredTeams / a.maxTeams
-          bValue = b.registeredTeams / b.maxTeams
-          break
-        default:
-          aValue = new Date(a.startDate)
-          bValue = new Date(b.startDate)
-      }
-      
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1
-      } else {
-        return aValue < bValue ? 1 : -1
-      }
-    })
+    if (!tournaments || !Array.isArray(tournaments)) {
+      return []
+    }
+    
+    try {
+      return [...tournaments].sort((a, b) => {
+        let aValue, bValue
+        
+        switch (sortBy) {
+          case 'date':
+            aValue = new Date(a.startDate)
+            bValue = new Date(b.startDate)
+            break
+          case 'fee':
+            aValue = a.entryFee || 0
+            bValue = b.entryFee || 0
+            break
+          case 'prize':
+            aValue = a.prizePool || 0
+            bValue = b.prizePool || 0
+            break
+          case 'popularity':
+            aValue = (a.registeredTeams || 0) / (a.maxTeams || 1)
+            bValue = (b.registeredTeams || 0) / (b.maxTeams || 1)
+            break
+          default:
+            aValue = new Date(a.startDate)
+            bValue = new Date(b.startDate)
+        }
+        
+        // Handle invalid dates
+        if (isNaN(aValue)) aValue = new Date(0)
+        if (isNaN(bValue)) bValue = new Date(0)
+        
+        if (sortOrder === 'asc') {
+          return aValue > bValue ? 1 : -1
+        } else {
+          return aValue < bValue ? 1 : -1
+        }
+      })
+    } catch (error) {
+      console.error('Error sorting tournaments:', error)
+      return tournaments // Return original array if sorting fails
+    }
+  }
+
+  // Validation functions
+  const validateForm = () => {
+    const errors = {}
+    
+    // Team name validation
+    if (!applicationData.teamName.trim()) {
+      errors.teamName = 'Team name is required'
+    } else if (applicationData.teamName.trim().length < 2) {
+      errors.teamName = 'Team name must be at least 2 characters'
+    }
+    
+    // Email validation
+    if (!applicationData.contactEmail.trim()) {
+      errors.contactEmail = 'Contact email is required'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(applicationData.contactEmail)) {
+      errors.contactEmail = 'Please enter a valid email address'
+    }
+    
+    // Phone validation
+    if (!applicationData.contactPhone.trim()) {
+      errors.contactPhone = 'Contact phone is required'
+    } else if (!/^[0-9+\-\s()]+$/.test(applicationData.contactPhone)) {
+      errors.contactPhone = 'Phone number can only contain numbers, +, -, (, ), and spaces'
+    } else if (applicationData.contactPhone.replace(/[^0-9]/g, '').length < 10) {
+      errors.contactPhone = 'Phone number must have at least 10 digits'
+    }
+    
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleInputChange = (field, value) => {
+    setApplicationData(prev => ({ ...prev, [field]: value }))
+    
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({ ...prev, [field]: '' }))
+    }
+  }
+
+  const handlePhoneChange = (value) => {
+    // Only allow numbers, +, -, (, ), and spaces
+    const sanitizedValue = value.replace(/[^0-9+\-\s()]/g, '')
+    handleInputChange('contactPhone', sanitizedValue)
   }
 
   const handleApply = async () => {
     if (!selectedTournament) return
+
+    // Validate form before submitting
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors in the form",
+        variant: "destructive"
+      })
+      return
+    }
 
     try {
       setIsApplying(true)
@@ -158,6 +247,7 @@ export default function Tournaments() {
         contactPhone: '',
         additionalInfo: ''
       })
+      setValidationErrors({})
     } catch (error) {
       console.error('Error applying to tournament:', error)
       toast({
@@ -318,6 +408,40 @@ export default function Tournaments() {
     }
   }
 
+  const getStatusBadge = (tournament) => {
+    const appStatus = applicationStatuses[tournament.id]?.status || 'not_applied'
+    
+    if (appStatus === 'applied') {
+      return (
+        <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 flex items-center space-x-1">
+          <CheckCircle className="w-3 h-3" />
+          <span>Applied</span>
+        </Badge>
+      )
+    } else if (appStatus === 'approved') {
+      return (
+        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 flex items-center space-x-1">
+          <CheckCircle className="w-3 h-3" />
+          <span>Selected</span>
+        </Badge>
+      )
+    } else if (appStatus === 'rejected') {
+      return (
+        <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 flex items-center space-x-1">
+          <XCircle className="w-3 h-3" />
+          <span>Rejected</span>
+        </Badge>
+      )
+    } else {
+      return (
+        <Badge className={`${getStatusColor(tournament.status)} flex items-center space-x-1`}>
+          {getStatusIcon(tournament.status)}
+          <span className="capitalize">{tournament.status}</span>
+        </Badge>
+      )
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -394,77 +518,218 @@ export default function Tournaments() {
 
               {/* Filter Toggle */}
               <Button
-                onClick={() => setShowFilters(!showFilters)}
+                onClick={() => {
+                  try {
+                    setShowFilters(!showFilters)
+                  } catch (error) {
+                    console.error('Error toggling filters:', error)
+                    toast({
+                      title: "Error",
+                      description: "Failed to toggle filters",
+                      variant: "destructive"
+                    })
+                  }
+                }}
                 variant="outline"
                 className="flex items-center space-x-2"
               >
                 <Filter className="w-4 h-4" />
                 <span>Filters</span>
               </Button>
+              
+              {/* Clear Filters */}
+              {(filters.role !== 'all' || filters.location !== 'all' || filters.type !== 'all' || 
+                filters.minFee !== '' || filters.maxFee !== '' || filters.search !== '') && (
+                <Button
+                  onClick={() => {
+                    setFilters({
+                      role: 'all',
+                      location: 'all',
+                      type: 'all',
+                      minFee: '',
+                      maxFee: '',
+                      search: '',
+                      sortBy: 'date',
+                      sortOrder: 'asc'
+                    })
+                  }}
+                  variant="outline"
+                  className="text-red-600 border-red-300 hover:bg-red-50"
+                >
+                  Clear All
+                </Button>
+              )}
             </div>
           </div>
 
           {/* Filter Options */}
           {showFilters && (
-            <Card className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Organizer Role
-                  </label>
-                  <select
-                    value={filters.role}
-                    onChange={(e) => setFilters(prev => ({ ...prev, role: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            <Card className="p-6">
+              <div className="space-y-6">
+                {/* Filter Header */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filters & Sorting</h3>
+                  <Button
+                    onClick={() => setShowFilters(false)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-500 hover:text-gray-700"
                   >
-                    <option value="all">All Roles</option>
-                    <option value="Club">Clubs</option>
-                    <option value="Academy">Academies</option>
-                    <option value="Player">Players</option>
-                    <option value="Scout">Scouts</option>
-                  </select>
+                    <X className="w-4 h-4" />
+                  </Button>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Sport Type
-                  </label>
-                  <select
-                    value={filters.type}
-                    onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="all">All Sports</option>
-                    <option value="Football">Football</option>
-                    <option value="Cricket">Cricket</option>
-                    <option value="Basketball">Basketball</option>
-                    <option value="Tennis">Tennis</option>
-                    <option value="Badminton">Badminton</option>
-                  </select>
+                {/* Filter Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {/* Organizer Role */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Organizer Role
+                    </label>
+                    <select
+                      value={filters.role}
+                      onChange={(e) => setFilters(prev => ({ ...prev, role: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Roles</option>
+                      <option value="Club">Clubs</option>
+                      <option value="Academy">Academies</option>
+                      <option value="Player">Players</option>
+                      <option value="Scout">Scouts</option>
+                    </select>
+                  </div>
+
+                  {/* Sport Type */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Sport Type
+                    </label>
+                    <select
+                      value={filters.type}
+                      onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Sports</option>
+                      <option value="Football">Football</option>
+                      <option value="Cricket">Cricket</option>
+                      <option value="Basketball">Basketball</option>
+                      <option value="Tennis">Tennis</option>
+                      <option value="Badminton">Badminton</option>
+                    </select>
+                  </div>
+
+                  {/* Location */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Location
+                    </label>
+                    <select
+                      value={filters.location}
+                      onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Locations</option>
+                      <option value="Mumbai">Mumbai</option>
+                      <option value="Delhi">Delhi</option>
+                      <option value="Bangalore">Bangalore</option>
+                      <option value="Chennai">Chennai</option>
+                      <option value="Pune">Pune</option>
+                      <option value="Hyderabad">Hyderabad</option>
+                    </select>
+                  </div>
+
+                  {/* Min Entry Fee */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Min Entry Fee (₹)
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={filters.minFee}
+                      onChange={(e) => setFilters(prev => ({ ...prev, minFee: e.target.value }))}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Max Entry Fee */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Max Entry Fee (₹)
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="10000"
+                      value={filters.maxFee}
+                      onChange={(e) => setFilters(prev => ({ ...prev, maxFee: e.target.value }))}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Sort By */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Sort By
+                    </label>
+                    <select
+                      value={filters.sortBy}
+                      onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="date">Start Date</option>
+                      <option value="fee">Entry Fee</option>
+                      <option value="prize">Prize Pool</option>
+                      <option value="popularity">Popularity</option>
+                    </select>
+                  </div>
+
+                  {/* Sort Order */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Sort Order
+                    </label>
+                    <select
+                      value={filters.sortOrder}
+                      onChange={(e) => setFilters(prev => ({ ...prev, sortOrder: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="asc">Ascending</option>
+                      <option value="desc">Descending</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Min Entry Fee
-                  </label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={filters.minFee}
-                    onChange={(e) => setFilters(prev => ({ ...prev, minFee: e.target.value }))}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Max Entry Fee
-                  </label>
-                  <Input
-                    type="number"
-                    placeholder="10000"
-                    value={filters.maxFee}
-                    onChange={(e) => setFilters(prev => ({ ...prev, maxFee: e.target.value }))}
-                  />
+                {/* Filter Actions */}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    {tournaments.length} tournament{tournaments.length !== 1 ? 's' : ''} found
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      onClick={() => {
+                        setFilters({
+                          role: 'all',
+                          location: 'all',
+                          type: 'all',
+                          minFee: '',
+                          maxFee: '',
+                          search: '',
+                          sortBy: 'date',
+                          sortOrder: 'asc'
+                        })
+                      }}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Reset Filters
+                    </Button>
+                    <Button
+                      onClick={() => setShowFilters(false)}
+                      size="sm"
+                    >
+                      Apply Filters
+                    </Button>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -475,7 +740,10 @@ export default function Tournaments() {
         <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tournaments.map((tournament) => (
             <StaggerItem key={tournament.id}>
-              <Card className="bg-white dark:bg-gray-800 shadow-sm border-0 hover:shadow-md transition-shadow">
+              <Card 
+                className="bg-white dark:bg-gray-800 shadow-sm border-0 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => navigate(`/tournaments/${tournament.id}`)}
+              >
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -483,10 +751,7 @@ export default function Tournaments() {
                       {tournament.title}
                     </h3>
                     <div className="flex items-center space-x-2 mb-2">
-                      <Badge className={`${getStatusColor(tournament.status)} flex items-center space-x-1`}>
-                        {getStatusIcon(tournament.status)}
-                        <span className="capitalize">{tournament.status}</span>
-                      </Badge>
+                      {getStatusBadge(tournament)}
                       <Badge variant="outline" className="text-xs">
                         {tournament.type}
                       </Badge>
@@ -506,33 +771,41 @@ export default function Tournaments() {
                 <div className="space-y-3">
                   {/* Location */}
                   <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                    <MapPin className="w-4 h-4" />
-                    <span>{tournament.location}</span>
+                    <MapPin className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{tournament.location}</span>
                   </div>
 
                   {/* Date */}
                   <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Calendar className="w-4 h-4" />
+                    <Calendar className="w-4 h-4 flex-shrink-0" />
                     <span>{formatDate(tournament.startDate)} - {formatDate(tournament.endDate)}</span>
                   </div>
 
                   {/* Team Size */}
                   <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Users className="w-4 h-4" />
-                    <span>{tournament.teamSize} players per team</span>
+                    <Users className="w-4 h-4 flex-shrink-0" />
+                    <span>{tournament.teamSize} {tournament.teamSize === 1 ? 'player' : 'players'} per team</span>
                   </div>
 
                   {/* Entry Fee */}
                   <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                    <DollarSign className="w-4 h-4" />
-                    <span>{formatCurrency(tournament.entryFee)}</span>
+                    <DollarSign className="w-4 h-4 flex-shrink-0" />
+                    <span className="font-medium text-green-600 dark:text-green-400">{formatCurrency(tournament.entryFee)}</span>
                   </div>
 
                   {/* Prize Pool */}
                   <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Trophy className="w-4 h-4" />
-                    <span>Prize: {formatCurrency(tournament.prizePool)}</span>
+                    <Trophy className="w-4 h-4 flex-shrink-0" />
+                    <span className="font-medium text-yellow-600 dark:text-yellow-400">Prize: {formatCurrency(tournament.prizePool)}</span>
                   </div>
+
+                  {/* Organizer */}
+                  {tournament.organizer && (
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                      <Star className="w-4 h-4 flex-shrink-0" />
+                      <span>Organized by {tournament.organizer.name}</span>
+                    </div>
+                  )}
 
                   {/* Registration Status */}
                   <div className="flex items-center justify-between text-sm">
@@ -553,7 +826,9 @@ export default function Tournaments() {
                   </p>
 
                   {/* Apply Button */}
-                  {getApplicationButton(tournament)}
+                  <div onClick={(e) => e.stopPropagation()}>
+                    {getApplicationButton(tournament)}
+                  </div>
                 </div>
               </CardContent>
               </Card>
@@ -574,16 +849,19 @@ export default function Tournaments() {
               Try adjusting your filters or check back later for new tournaments
             </p>
             <Button
-              onClick={() => setFilters({
-                role: 'all',
-                location: 'all',
-                type: 'all',
-                minFee: '',
-                maxFee: '',
-                search: '',
-                sortBy: 'date',
-                sortOrder: 'asc'
-              })}
+              onClick={() => {
+                setFilters({
+                  role: 'all',
+                  location: 'all',
+                  type: 'all',
+                  minFee: '',
+                  maxFee: '',
+                  search: '',
+                  sortBy: 'date',
+                  sortOrder: 'asc'
+                })
+                setShowFilters(false)
+              }}
               variant="outline"
             >
               Clear Filters
@@ -606,10 +884,13 @@ export default function Tournaments() {
                   </label>
                   <Input
                     value={applicationData.teamName}
-                    onChange={(e) => setApplicationData(prev => ({ ...prev, teamName: e.target.value }))}
+                    onChange={(e) => handleInputChange('teamName', e.target.value)}
                     placeholder="Enter your team name"
-                    required
+                    className={validationErrors.teamName ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
                   />
+                  {validationErrors.teamName && (
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.teamName}</p>
+                  )}
                 </div>
 
                 <div>
@@ -619,10 +900,13 @@ export default function Tournaments() {
                   <Input
                     type="email"
                     value={applicationData.contactEmail}
-                    onChange={(e) => setApplicationData(prev => ({ ...prev, contactEmail: e.target.value }))}
+                    onChange={(e) => handleInputChange('contactEmail', e.target.value)}
                     placeholder="Enter contact email"
-                    required
+                    className={validationErrors.contactEmail ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
                   />
+                  {validationErrors.contactEmail && (
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.contactEmail}</p>
+                  )}
                 </div>
 
                 <div>
@@ -632,10 +916,13 @@ export default function Tournaments() {
                   <Input
                     type="tel"
                     value={applicationData.contactPhone}
-                    onChange={(e) => setApplicationData(prev => ({ ...prev, contactPhone: e.target.value }))}
-                    placeholder="Enter contact phone"
-                    required
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    placeholder="Enter contact phone (e.g., +91 98765 43210)"
+                    className={validationErrors.contactPhone ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
                   />
+                  {validationErrors.contactPhone && (
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.contactPhone}</p>
+                  )}
                 </div>
 
                 <div>
@@ -674,7 +961,7 @@ export default function Tournaments() {
                 </Button>
                 <Button
                   onClick={handleApply}
-                  disabled={isApplying || !applicationData.teamName || !applicationData.contactEmail || !applicationData.contactPhone}
+                  disabled={isApplying}
                   className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
                 >
                   {isApplying ? (
