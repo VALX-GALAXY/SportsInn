@@ -370,8 +370,8 @@ export default function FeedSimple() {
               onClick={() => setFeedType('global')}
               className={`flex items-center space-x-2 transition-all duration-200 ${
                 feedType === 'global' 
-                  ? 'bg-blue-600 dark:bg-grey-700 shadow-sm' 
-                  : 'hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-400 dark:hover:bg-red-900/20 rounded-xl py-3 transition-all duration-200'
+                  ? 'bg-gradient-to-r from-blue-500 to-emerald-500 text-white shadow-sm' 
+                  : 'hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400'
               }`}
             >
               <Globe className="w-4 h-4" />
@@ -383,8 +383,8 @@ export default function FeedSimple() {
               onClick={() => setFeedType('personalized')}
               className={`flex items-center space-x-2 transition-all duration-200 ${
                 feedType === 'personalized' 
-                  ? 'bg-blue-600 dark:bg-gray-700 shadow-sm' 
-                  : 'hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-400 dark:hover:bg-red-900/20 rounded-xl py-3 transition-all duration-200'
+                  ? 'bg-gradient-to-r from-blue-500 to-emerald-500 text-white shadow-sm' 
+                  : 'hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400'
               }`}
             >
               <Users className="w-4 h-4" />
@@ -423,14 +423,14 @@ export default function FeedSimple() {
                 }}
                 variant="outline"
                 size="sm"
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 border-blue-200 hover:border-blue-300 dark:border-blue-700 dark:hover:border-blue-600"
               >
                 <span className="hidden sm:inline">Refresh Feed</span>
                 <span className="sm:hidden">Refresh</span>
               </Button>
               <Button
                 onClick={() => setShowCreateModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+                className="w-full sm:w-auto sportsin-gradient-button"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 <span className="hidden sm:inline">Create New Post</span>
@@ -482,7 +482,7 @@ export default function FeedSimple() {
         {/* Posts */}
         <div className="space-y-4">
           {filteredPosts.map((post, index) => (
-            <Card key={post.id} className="bg-white dark:bg-gray-800 shadow-sm border-0">
+            <Card key={post.id} className="sportsin-card sportsin-fade-in">
               <CardHeader className="p-4 sm:p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -804,7 +804,7 @@ export default function FeedSimple() {
                 <Button
                   onClick={handleCreatePost}
                   disabled={isCreating || !newPost.caption.trim()}
-                  className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+                  className="sportsin-gradient-button w-full sm:w-auto"
                 >
                   {isCreating ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />

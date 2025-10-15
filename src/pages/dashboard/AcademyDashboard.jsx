@@ -142,84 +142,97 @@ export default function AcademyDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Academy Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Manage your academy, students, and tournaments
-          </p>
+        {/* Hero Header */}
+        <div className="relative bg-gradient-to-r from-blue-500 to-emerald-500 rounded-2xl p-8 text-white overflow-hidden mb-8">
+          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="relative z-10">
+            <h1 className="text-3xl font-bold mb-2">
+              Academy Management Hub
+            </h1>
+            <p className="text-blue-100 mb-4">
+              Track your academy's performance and manage students
+            </p>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Users className="w-5 h-5" />
+                <span className="font-semibold">{stats?.playersScouted || 0} Players Scouted</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Trophy className="w-5 h-5" />
+                <span className="font-semibold">{stats?.tournamentsHosted || 0} Tournaments Hosted</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+          <Card className="sportsin-card sportsin-fade-in">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Players Scouted</p>
                   <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.playersScouted || 0}</p>
-                  <p className="text-xs text-green-600 dark:text-green-400 flex items-center mt-1">
-                    <TrendingUp className="w-3 h-3 mr-1" />
-                    +12 this month
-                  </p>
+                  <div className="flex items-center mt-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
+                    <span className="text-sm text-emerald-600 dark:text-emerald-400">+12%</span>
+                  </div>
                 </div>
-                <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+                <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
                   <Users className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+          <Card className="sportsin-card sportsin-fade-in">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Tournaments Hosted</p>
                   <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.tournamentsHosted || 0}</p>
-                  <p className="text-xs text-green-600 dark:text-green-400 flex items-center mt-1">
-                    <Trophy className="w-3 h-3 mr-1" />
-                    +1 this month
-                  </p>
+                  <div className="flex items-center mt-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
+                    <span className="text-sm text-emerald-600 dark:text-emerald-400">+8%</span>
+                  </div>
                 </div>
-                <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900 rounded-full">
+                <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
                   <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+          <Card className="sportsin-card sportsin-fade-in">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Total Students</p>
                   <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.totalStudents || 0}</p>
-                  <p className="text-xs text-purple-600 dark:text-purple-400 flex items-center mt-1">
-                    <GraduationCap className="w-3 h-3 mr-1" />
-                    Active enrollment
-                  </p>
+                  <div className="flex items-center mt-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
+                    <span className="text-sm text-emerald-600 dark:text-emerald-400">+15%</span>
+                  </div>
                 </div>
-                <div className="p-2 sm:p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
+                <div className="p-2 sm:p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
                   <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+          <Card className="sportsin-card sportsin-fade-in">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Success Rate</p>
                   <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.successRate || 0}%</p>
-                  <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center mt-1">
-                    <Target className="w-3 h-3 mr-1" />
-                    Performance
-                  </p>
+                  <div className="flex items-center mt-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
+                    <span className="text-sm text-emerald-600 dark:text-emerald-400">+5%</span>
+                  </div>
                 </div>
-                <div className="p-2 sm:p-3 bg-orange-100 dark:bg-orange-900 rounded-full">
+                <div className="p-2 sm:p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full">
                   <Target className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
@@ -230,7 +243,7 @@ export default function AcademyDashboard() {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-8">
           {/* Tournament Participation Pie Chart */}
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+          <Card className="sportsin-card sportsin-fade-in">
             <CardHeader className="p-4 sm:p-6 pb-4">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Tournament Participation</h2>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Hosted vs Participated breakdown</p>
@@ -252,7 +265,15 @@ export default function AcademyDashboard() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--tooltip-bg)', 
+                        border: '1px solid var(--tooltip-border)', 
+                        color: 'var(--tooltip-text)',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }} 
+                    />
                     <Legend />
                   </RechartsPieChart>
                 </ResponsiveContainer>
@@ -261,7 +282,7 @@ export default function AcademyDashboard() {
           </Card>
 
           {/* Players Scouted vs Tournaments Hosted Bar Chart */}
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+          <Card className="sportsin-card sportsin-fade-in">
             <CardHeader className="p-4 sm:p-6 pb-4">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Scouting vs Tournaments</h2>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Monthly scouting and tournament activity</p>
@@ -273,7 +294,15 @@ export default function AcademyDashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
                     <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} />
                     <YAxis stroke="#9CA3AF" fontSize={12} />
-                    <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--tooltip-bg)', 
+                        border: '1px solid var(--tooltip-border)', 
+                        color: 'var(--tooltip-text)',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }} 
+                    />
                     <Legend />
                     <Bar dataKey="players" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="tournaments" fill="#10B981" radius={[4, 4, 0, 0]} />

@@ -46,6 +46,21 @@
 
 @layer base {
   :root {
+    /* SportsIn Theme Variables */
+    --sportsin-primary: #3b82f6;      /* Blue */
+    --sportsin-secondary: #10b981;    /* Emerald */
+    --sportsin-accent: #ef4444;       /* Red for alerts */
+    --sportsin-gradient: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+    --sportsin-dark-bg: #1f2937;
+    --sportsin-dark-text: #f3f4f6;
+    --sportsin-glass-bg: rgba(255, 255, 255, 0.1);
+    --sportsin-glass-border: rgba(255, 255, 255, 0.2);
+    
+    /* Chart tooltip variables */
+    --tooltip-bg: #ffffff;
+    --tooltip-border: #e5e7eb;
+    --tooltip-text: #374151;
+    
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
@@ -72,6 +87,21 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem}
   .dark {
+    /* SportsIn Dark Theme Variables */
+    --sportsin-primary: #60a5fa;      /* Lighter blue for dark mode */
+    --sportsin-secondary: #34d399;    /* Lighter emerald for dark mode */
+    --sportsin-accent: #f87171;       /* Lighter red for dark mode */
+    --sportsin-gradient: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
+    --sportsin-dark-bg: #1f2937;
+    --sportsin-dark-text: #f3f4f6;
+    --sportsin-glass-bg: rgba(31, 41, 55, 0.1);
+    --sportsin-glass-border: rgba(31, 41, 55, 0.2);
+    
+    /* Chart tooltip variables for dark mode */
+    --tooltip-bg: #1f2937;
+    --tooltip-border: #374151;
+    --tooltip-text: #f3f4f6;
+    
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
     --card: 0 0% 3.9%;
@@ -463,4 +493,143 @@
   .desktop-text {
     @apply text-lg;
   }
+}
+
+/* Modern Glassmorphism Effects */
+.sportsin-glass {
+  background: var(--sportsin-glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--sportsin-glass-border);
+}
+
+/* Enhanced Card Styles */
+.sportsin-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.dark .sportsin-card {
+  background: rgba(31, 41, 55, 0.9);
+  border: 1px solid rgba(55, 65, 81, 0.2);
+}
+
+/* Hover Glow Effects */
+.sportsin-hover-glow {
+  transition: all 0.3s ease;
+}
+
+.sportsin-hover-glow:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Sport Motifs */
+.sportsin-cricket-pattern {
+  background-image: 
+    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+}
+
+.sportsin-energy-pattern {
+  background: linear-gradient(45deg, 
+    rgba(59, 130, 246, 0.05) 0%, 
+    rgba(16, 185, 129, 0.05) 50%, 
+    rgba(59, 130, 246, 0.05) 100%);
+}
+
+/* Interactive Elements */
+.sportsin-interactive {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.sportsin-interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Progress Bars */
+.sportsin-progress {
+  background: linear-gradient(90deg, var(--sportsin-primary), var(--sportsin-secondary));
+  height: 4px;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Confetti Animation */
+.sportsin-confetti {
+  position: relative;
+  overflow: hidden;
+}
+
+.sportsin-confetti::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    transparent 30%, 
+    rgba(59, 130, 246, 0.1) 50%, 
+    transparent 70%);
+  animation: confetti 2s ease-out;
+}
+
+@keyframes confetti {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* SportsIn Theme Colors */
+:root {
+  --sportsin-primary: #3b82f6;
+  --sportsin-secondary: #10b981;
+  --sportsin-accent: #ef4444;
+  --sportsin-gradient: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+  --sportsin-gradient-hover: linear-gradient(135deg, #2563eb 0%, #059669 100%);
+}
+
+/* Dark mode SportsIn theme */
+.dark {
+  --sportsin-primary: #60a5fa;
+  --sportsin-secondary: #34d399;
+  --sportsin-accent: #f87171;
+  --sportsin-gradient: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
+  --sportsin-gradient-hover: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+}
+
+/* SportsIn Gradient Button */
+.sportsin-gradient-button {
+  background: var(--sportsin-gradient);
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.25);
+  transition: all 0.3s ease;
+  transform: translateY(0);
+}
+
+.sportsin-gradient-button:hover {
+  background: var(--sportsin-gradient-hover);
+  box-shadow: 0 6px 20px 0 rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.sportsin-gradient-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px 0 rgba(59, 130, 246, 0.3);
+}
+
+.sportsin-gradient-button:disabled {
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
 }

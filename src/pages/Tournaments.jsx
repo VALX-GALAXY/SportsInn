@@ -464,14 +464,67 @@ export default function Tournaments() {
   return (
     <PageTransition className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Tournaments
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Discover and join exciting sports tournaments
-          </p>
+        {/* Hero Section */}
+        <div className="relative bg-gradient-to-r from-blue-500 to-emerald-500 rounded-2xl p-8 text-white overflow-hidden mb-8">
+          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold mb-4">
+              Discover Tournaments
+            </h1>
+            <p className="text-blue-100 mb-6 text-lg">
+              Join exciting sports tournaments and showcase your skills
+            </p>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center space-x-2">
+                <Trophy className="w-5 h-5" />
+                <span className="font-semibold">{tournaments.length} Active Tournaments</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Users className="w-5 h-5" />
+                <span className="font-semibold">Join Thousands of Players</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Interactive Filter Chips */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2 mb-4">
+            {[
+              { key: 'all', label: 'All Tournaments', count: tournaments.length },
+              { key: 'open', label: 'Open', count: tournaments.filter(t => t.status === 'open').length },
+              { key: 'cricket', label: 'Cricket', count: tournaments.filter(t => t.type === 'cricket').length },
+              { key: 'football', label: 'Football', count: tournaments.filter(t => t.type === 'football').length },
+              { key: 'basketball', label: 'Basketball', count: tournaments.filter(t => t.type === 'basketball').length }
+            ].map(({ key, label, count }) => (
+              <Button
+                key={key}
+                variant={filters.role === key || filters.type === key ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  if (key === 'all') {
+                    setFilters(prev => ({ ...prev, role: 'all', type: 'all' }))
+                  } else if (['open'].includes(key)) {
+                    setFilters(prev => ({ ...prev, role: key }))
+                  } else {
+                    setFilters(prev => ({ ...prev, type: key }))
+                  }
+                }}
+                className={`transition-all duration-200 ${
+                  filters.role === key || filters.type === key 
+                    ? 'bg-gradient-to-r from-blue-500 to-emerald-500 text-white shadow-sm' 
+                    : 'hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400'
+                }`}
+              >
+                {label}
+                {count > 0 && (
+                  <Badge variant="secondary" className="ml-2 px-2 py-0.5 text-xs">
+                    {count}
+                  </Badge>
+                )}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {/* Filters and Search */}
@@ -741,7 +794,7 @@ export default function Tournaments() {
           {tournaments.map((tournament) => (
             <StaggerItem key={tournament.id}>
               <Card 
-                className="bg-white dark:bg-gray-800 shadow-sm border-0 hover:shadow-md transition-shadow cursor-pointer"
+                className="sportsin-card sportsin-interactive sportsin-fade-in"
                 onClick={() => navigate(`/tournaments/${tournament.id}`)}
               >
               <CardHeader className="p-4 pb-2">

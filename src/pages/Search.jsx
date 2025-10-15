@@ -425,8 +425,8 @@ export default function Search() {
                       }}
                       className={`flex items-center space-x-2 transition-all duration-200 ${
                         activeFilter === key 
-                          ? 'bg-white dark:bg-gray-700 shadow-sm' 
-                          : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                          ? 'bg-gradient-to-r from-blue-500 to-emerald-500 text-white shadow-sm' 
+                          : 'hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400'
                       }`}
                     >
                       <span>{label}</span>
@@ -462,8 +462,8 @@ export default function Search() {
                 }}
                 className={`flex items-center space-x-2 transition-all duration-200 ${
                   activeFilter === key 
-                    ? 'bg-white dark:bg-gray-700 shadow-sm' 
-                    : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                    ? 'bg-gradient-to-r from-blue-500 to-emerald-500 text-white shadow-sm' 
+                    : 'hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400'
                 }`}
               >
                 <span>{label}</span>

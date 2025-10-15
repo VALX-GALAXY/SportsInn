@@ -158,68 +158,97 @@ export default function ScoutDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Scout Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Discover talent, connect with players, and track your scouting activities
-          </p>
+        {/* Hero Header */}
+        <div className="relative bg-gradient-to-r from-orange-500 to-pink-500 rounded-2xl p-8 text-white overflow-hidden mb-8">
+          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="relative z-10">
+            <h1 className="text-3xl font-bold mb-2">
+              Talent Discovery Hub
+            </h1>
+            <p className="text-orange-100 mb-4">
+              Discover talent, connect with players, and track your scouting activities
+            </p>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Users className="w-5 h-5" />
+                <span className="font-semibold">{stats.playersScouted} Players Scouted</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Target className="w-5 h-5" />
+                <span className="font-semibold">{stats.successfulPlacements} Successful Placements</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+          <Card className="sportsin-card sportsin-fade-in">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Players Scouted</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.playersScouted}</p>
+                  <div className="flex items-center mt-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
+                    <span className="text-sm text-emerald-600 dark:text-emerald-400">+25%</span>
+                  </div>
                 </div>
-                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
                   <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+          <Card className="sportsin-card sportsin-fade-in">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Successful Placements</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.successfulPlacements}</p>
+                  <div className="flex items-center mt-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
+                    <span className="text-sm text-emerald-600 dark:text-emerald-400">+40%</span>
+                  </div>
                 </div>
-                <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
+                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
                   <Target className="w-6 h-6 text-green-600 dark:text-green-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+          <Card className="sportsin-card sportsin-fade-in">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Connections</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.activeConnections}</p>
+                  <div className="flex items-center mt-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
+                    <span className="text-sm text-emerald-600 dark:text-emerald-400">+12%</span>
+                  </div>
                 </div>
-                <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
+                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
                   <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+          <Card className="sportsin-card sportsin-fade-in">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Earnings</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.totalEarnings)}</p>
+                  <div className="flex items-center mt-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
+                    <span className="text-sm text-emerald-600 dark:text-emerald-400">+35%</span>
+                  </div>
                 </div>
-                <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-full">
+                <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full">
                   <DollarSign className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>

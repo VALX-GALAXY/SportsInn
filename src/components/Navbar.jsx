@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
+import { Input } from '../components/ui/input'
 import { Moon, Sun, User, LogOut, Home, Users, Eye, Menu, X, Bell, Search, MessageCircle, Inbox, Plus } from 'lucide-react'
 import requestService from '@/api/requestService'
 import NotificationDropdown from './NotificationDropdown'
@@ -14,6 +15,8 @@ const Navbar = ({ onMenuClick }) => {
   const navigate = useNavigate()
   const [theme, setTheme] = useState('light')
   const [requestsCount, setRequestsCount] = useState(0)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
 
   // Load theme from localStorage
   useEffect(() => {
@@ -39,6 +42,26 @@ const Navbar = ({ onMenuClick }) => {
   const handleLogout = () => {
     logout()
     navigate('/login')
+  }
+
+  const handleSearch = (e) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      setSearchQuery('')
+      setShowSearch(false)
+    }
+  }
+
+  const handleSearchClick = () => {
+    setShowSearch(!showSearch)
+    if (!showSearch) {
+      // Focus search input after state update
+      setTimeout(() => {
+        const searchInput = document.getElementById('navbar-search')
+        if (searchInput) searchInput.focus()
+      }, 100)
+    }
   }
 
 
@@ -78,8 +101,8 @@ const Navbar = ({ onMenuClick }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link to="/" className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-                SportsHub
+              <Link to="/" className="text-xl font-bold bg-gradient-to-r from-blue-500 to-emerald-500 dark:from-blue-400 dark:to-emerald-400 bg-clip-text text-transparent">
+                SportsIn
               </Link>
             </div>
             <div className="flex items-center space-x-4">
@@ -92,10 +115,10 @@ const Navbar = ({ onMenuClick }) => {
                 {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
               </Button>
               <Link to="/login">
-                <Button className="sportshub-button" variant="outline">Login</Button>
+                <Button className="sportsin-gradient-button" variant="outline">Login</Button>
               </Link>
               <Link to="/signup">
-                <Button className="sportshub-button">Sign Up</Button>
+                <Button className="sportsin-gradient-button">Sign Up</Button>
               </Link>
             </div>
           </div>
@@ -110,22 +133,22 @@ const Navbar = ({ onMenuClick }) => {
         <div className="flex items-center justify-between h-16">
           {/* Left side - Logo and Desktop Navigation */}
           <div className="flex items-center space-x-4">
-            <Link to="/" className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent flex-shrink-0">
-              SportsHub
+            <Link to="/" className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-500 to-emerald-500 dark:from-blue-400 dark:to-emerald-400 bg-clip-text text-transparent flex-shrink-0">
+              SportsIn
             </Link>
             
             {/* Desktop Navigation Links */}
             <div className="hidden lg:flex items-center space-x-4">
-              <Link to="/dashboard" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors px-2 py-1 text-sm">
+              <Link to="/dashboard" className="text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors px-2 py-1 text-sm">
                 Dashboard
               </Link>
-              <Link to="/profile" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors px-2 py-1 text-sm">
+              <Link to="/profile" className="text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors px-2 py-1 text-sm">
                 Profile
               </Link>
-              <Link to="/feed" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors px-2 py-1 text-sm">
+              <Link to="/feed" className="text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors px-2 py-1 text-sm">
                 Feed
               </Link>
-              <Link to="/tournaments" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors px-2 py-1 text-sm">
+              <Link to="/tournaments" className="text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors px-2 py-1 text-sm">
                 Tournaments
               </Link>
             </div>
@@ -136,15 +159,19 @@ const Navbar = ({ onMenuClick }) => {
             {/* Mobile Navigation Icons - Always visible */}
             <div className="flex items-center space-x-1">
               {/* Search */}
-              <Link to="/search" className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+              <button 
+                onClick={handleSearchClick}
+                className="p-2 text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
+                title="Search"
+              >
                 <Search className="w-4 h-4 sm:w-5 sm:h-5" />
-              </Link>
+              </button>
               
               {/* Create Post Button - Only for Player, Academy, Club roles */}
               {(user?.role === 'Player' || user?.role === 'player' || 
                 user?.role === 'Academy' || user?.role === 'academy' || 
                 user?.role === 'Club' || user?.role === 'club') && (
-                <Link to="/feed" className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors" title="Create Post">
+                <Link to="/feed" className="p-2 text-blue-500 hover:text-emerald-500 dark:text-blue-400 dark:hover:text-emerald-400 transition-colors" title="Create Post">
                   <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Link>
               )}
@@ -153,12 +180,12 @@ const Navbar = ({ onMenuClick }) => {
               <NotificationDropdown />
               
               {/* Messages */}
-              <Link to="/messages" className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+              <Link to="/messages" className="p-2 text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors">
                 <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
               
               {/* Requests */}
-              <Link to="/requests" className="relative p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
+              <Link to="/requests" className="relative p-2 text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors">
                 <Inbox className="w-4 h-4 sm:w-5 sm:h-5" />
                 {requestsCount > 0 && (
                   <Badge variant="secondary" className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-xs">
@@ -167,6 +194,37 @@ const Navbar = ({ onMenuClick }) => {
                 )}
               </Link>
             </div>
+            
+            {/* Search Bar */}
+            {showSearch && (
+              <div className="absolute top-full left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-50">
+                <form onSubmit={handleSearch} className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <Search className="w-4 h-4 text-gray-400" />
+                    <Input
+                      id="navbar-search"
+                      type="text"
+                      placeholder="Search players, academies, clubs, tournaments..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="flex-1"
+                      autoFocus
+                    />
+                    <Button type="submit" size="sm" className="sportsin-gradient-button">
+                      Search
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setShowSearch(false)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
             
             {/* Theme Toggle */}
             <Button

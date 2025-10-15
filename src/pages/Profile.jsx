@@ -7,12 +7,13 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Home, Users, Eye, Edit, Save, X, UserPlus, UserMinus, Loader2, Trophy, Target, BarChart3, Star, TrendingUp, Calendar, Award, MailPlus, Mail, Upload, Image, Trash2, Plus, CheckCircle, AlertCircle, Send, MessageSquare } from 'lucide-react'
+import { User, Home, Users, Eye, Edit, Save, X, UserPlus, UserMinus, Loader2, Trophy, Target, BarChart3, Star, TrendingUp, Calendar, Award, MailPlus, Mail, Upload, Image, Trash2, Plus, CheckCircle, AlertCircle, Send, MessageSquare, ChevronLeft, ChevronRight, QrCode, Share2 } from 'lucide-react'
 import requestService from '@/api/requestService'
 import { useToast } from '@/components/ui/simple-toast'
 import followService from '@/api/followService'
 import uploadService from '@/api/uploadService'
 import { motion, AnimatePresence } from 'framer-motion'
+import QRCode from 'qrcode'
 
 export default function Profile() {
   const { user, updateUser, isAuthenticated } = useAuth()
@@ -52,6 +53,19 @@ export default function Profile() {
     following: 0,
     isFollowing: false
   })
+  
+  // Gallery carousel state
+  const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0)
+  const [showGalleryModal, setShowGalleryModal] = useState(false)
+  
+  // Inline validation state
+  const [editingField, setEditingField] = useState(null)
+  const [fieldValidation, setFieldValidation] = useState({})
+  
+  // QR code state
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('')
+  const [isGeneratingQR, setIsGeneratingQR] = useState(false)
   const { toast } = useToast()
   const handleInviteOrApply = () => {
     setShowInviteModal(true)
@@ -222,6 +236,151 @@ export default function Profile() {
     
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
+  }
+
+  // Inline validation functions
+  const validateField = (fieldName, value) => {
+    let isValid = true
+    let message = ''
+
+    switch (fieldName) {
+      case 'username':
+        if (!value.trim()) {
+          isValid = false
+          message = 'Username is required'
+        } else if (value.trim().length < 3) {
+          isValid = false
+          message = 'Username must be at least 3 characters'
+        } else if (!/^[a-zA-Z0-9_]+$/.test(value.trim())) {
+          isValid = false
+          message = 'Username can only contain letters, numbers, and underscores'
+        }
+        break
+      case 'bio':
+        if (!value.trim()) {
+          isValid = false
+          message = 'Bio is required'
+        } else if (value.length > 500) {
+          isValid = false
+          message = 'Bio must be less than 500 characters'
+        }
+        break
+      case 'email':
+        if (!value.trim()) {
+          isValid = false
+          message = 'Email is required'
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          isValid = false
+          message = 'Please enter a valid email address'
+        }
+        break
+      case 'phone':
+        if (!value.trim()) {
+          isValid = false
+          message = 'Phone number is required'
+        } else if (!/^[\d\s\-\+\(\)]+$/.test(value)) {
+          isValid = false
+          message = 'Please enter a valid phone number'
+        }
+        break
+    }
+
+    setFieldValidation(prev => ({
+      ...prev,
+      [fieldName]: { isValid, message }
+    }))
+
+    return isValid
+  }
+
+  const handleFieldEdit = (fieldName) => {
+    setEditingField(fieldName)
+  }
+
+  const handleFieldSave = (fieldName) => {
+    const value = formData[fieldName]
+    if (validateField(fieldName, value)) {
+      setEditingField(null)
+      // Save the field value here
+      updateUser({ [fieldName]: value })
+      toast({
+        title: "Success",
+        description: `${fieldName} updated successfully!`,
+        variant: "default"
+      })
+    }
+  }
+
+  const handleFieldCancel = () => {
+    setEditingField(null)
+    setFieldValidation({})
+  }
+
+  // Gallery carousel functions
+  const nextGalleryImage = () => {
+    setCurrentGalleryIndex((prev) => 
+      prev === galleryImages.length - 1 ? 0 : prev + 1
+    )
+  }
+
+  const prevGalleryImage = () => {
+    setCurrentGalleryIndex((prev) => 
+      prev === 0 ? galleryImages.length - 1 : prev - 1
+    )
+  }
+
+  const openGalleryModal = (index = 0) => {
+    setCurrentGalleryIndex(index)
+    setShowGalleryModal(true)
+  }
+
+  const handleRemoveGalleryImage = (index) => {
+    const newGallery = galleryImages.filter((_, i) => i !== index)
+    setGalleryImages(newGallery)
+    updateUser({ galleryImages: newGallery })
+    
+    if (currentGalleryIndex >= newGallery.length) {
+      setCurrentGalleryIndex(Math.max(0, newGallery.length - 1))
+    }
+    
+    toast({
+      title: "Success",
+      description: "Image removed from gallery",
+      variant: "default"
+    })
+  }
+
+  // QR code generation function
+  const generateQRCode = async (profileUrl) => {
+    try {
+      setIsGeneratingQR(true)
+      const qrCodeDataUrl = await QRCode.toDataURL(profileUrl, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        },
+        errorCorrectionLevel: 'M'
+      })
+      setQrCodeDataUrl(qrCodeDataUrl)
+    } catch (error) {
+      console.error('Error generating QR code:', error)
+      toast({
+        title: "Error",
+        description: "Failed to generate QR code",
+        variant: "destructive"
+      })
+    } finally {
+      setIsGeneratingQR(false)
+    }
+  }
+
+  // Generate QR code when share modal opens
+  const handleShareProfile = () => {
+    const profileUrl = `${window.location.origin}/profile/${user?.id}`
+    generateQRCode(profileUrl)
+    setShowShareModal(true)
   }
 
   const handleSubmit = (e) => {
@@ -484,33 +643,6 @@ export default function Profile() {
     }
   }
 
-  const handleRemoveGalleryImage = async (imageId) => {
-    const imageToRemove = galleryImages.find(img => img.id === imageId)
-    if (!imageToRemove) return
-    
-    try {
-      // Delete from Cloudinary
-      await uploadService.deleteImage(imageToRemove.publicId)
-      
-      // Update local state
-      const updatedGallery = galleryImages.filter(img => img.id !== imageId)
-      setGalleryImages(updatedGallery)
-      updateUser({ galleryImages: updatedGallery })
-      
-      toast({
-        title: "Success",
-        description: "Image removed from gallery",
-        variant: "default"
-      })
-    } catch (error) {
-      console.error('Error removing image:', error)
-      toast({
-        title: "Error",
-        description: "Failed to remove image. Please try again.",
-        variant: "destructive"
-      })
-    }
-  }
 
   const getRoleIcon = (role) => {
     switch (role) {
@@ -546,7 +678,7 @@ export default function Profile() {
     switch (user?.role) {
       case 'Player':
         return (
-          <Card>
+          <Card className="sportsin-card sportsin-fade-in">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center space-x-2">
@@ -630,7 +762,7 @@ export default function Profile() {
       case 'Academy':
       case 'Club':
         return (
-          <Card>
+          <Card className="sportsin-card sportsin-fade-in">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center space-x-2">
@@ -706,7 +838,7 @@ export default function Profile() {
       
       case 'Scout':
         return (
-          <Card>
+          <Card className="sportsin-card sportsin-fade-in">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center space-x-2">
@@ -818,7 +950,7 @@ export default function Profile() {
         )}
 
         {/* Profile Header */}
-        <Card className="mb-8 bg-white dark:bg-gray-800 border-0 shadow-lg">
+        <Card className="mb-8 sportsin-card sportsin-fade-in">
           <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
               <div className="relative flex-shrink-0">
@@ -894,7 +1026,7 @@ export default function Profile() {
                     className={`w-full sm:w-auto transition-all duration-200 ${
                       followStats.isFollowing 
                         ? 'border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900' 
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'sportsin-gradient-button'
                     }`}
                   >
                     {isFollowLoading ? (
@@ -918,7 +1050,7 @@ export default function Profile() {
                     onClick={handleInviteOrApply}
                     variant="outline"
                     size="sm"
-                    className="w-full sm:w-auto flex items-center justify-center"
+                    className="w-full sm:w-auto flex items-center justify-center sportsin-gradient-button"
                   >
                     {(user?.role === 'Player' || user?.role === 'player') ? <Mail className="w-4 h-4 mr-2" /> : <MailPlus className="w-4 h-4 mr-2" />}
                     <span className="text-sm">{(user?.role === 'Player' || user?.role === 'player') ? 'Apply' : 'Invite Player'}</span>
@@ -929,6 +1061,62 @@ export default function Profile() {
           </CardContent>
         </Card>
 
+        {/* Gallery Carousel */}
+        {galleryImages.length > 0 && (
+          <Card className="mb-6 sportsin-card sportsin-fade-in">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Gallery</span>
+                <Button
+                  onClick={handleShareProfile}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center space-x-2 sportsin-gradient-button"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Share Profile</span>
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-4 overflow-x-auto pb-2">
+                {galleryImages.map((image, index) => (
+                  <div
+                    key={index}
+                    className="relative flex-shrink-0 cursor-pointer group"
+                    onClick={() => openGalleryModal(index)}
+                  >
+                    <img
+                      src={image}
+                      alt={`Gallery ${index + 1}`}
+                      className="w-20 h-20 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-lg hover:scale-105 transition-transform duration-200"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-full transition-all duration-200 flex items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <Eye className="w-4 h-4 text-white" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Share Profile Button */}
+        {galleryImages.length === 0 && (
+          <div className="mb-6 flex justify-center">
+            <Button
+              onClick={handleShareProfile}
+              variant="outline"
+              className="flex items-center space-x-2 sportsin-gradient-button"
+            >
+              <Share2 className="w-4 h-4" />
+              <span>Share Profile</span>
+            </Button>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="mt-6">
           <div className="flex space-x-1 sm:space-x-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full">
@@ -938,7 +1126,7 @@ export default function Profile() {
                 variant={activeTab === tab ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 sm:flex-none transition-all duration-200 text-xs sm:text-sm ${activeTab === tab ? 'bg-blue-600 dark:bg-gray-700 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                className={`flex-1 sm:flex-none transition-all duration-200 text-xs sm:text-sm ${activeTab === tab ? 'bg-gradient-to-r from-blue-500 to-emerald-500 text-white shadow-sm' : 'hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400'}`}
               >
                 {tab}
               </Button>
@@ -952,7 +1140,7 @@ export default function Profile() {
           {renderRoleSpecificFields()}
 
           {/* Basic Profile Information */}
-          <Card className="mt-6">
+          <Card className="mt-6 sportsin-card sportsin-fade-in">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Basic Information</CardTitle>
@@ -1108,13 +1296,120 @@ export default function Profile() {
                   transition={{ duration: 0.3 }}
                   className="space-y-4"
                 >
-                <div>
-                  <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Username</Label>
-                  <p className="text-lg text-gray-900 dark:text-white">{user?.name || 'Not specified'}</p>
+                <div className="group">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Username</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleFieldEdit('username')}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {editingField === 'username' ? (
+                    <div className="space-y-2">
+                      <Input
+                        value={formData.username}
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, username: e.target.value }))
+                          validateField('username', e.target.value)
+                        }}
+                        className={`${fieldValidation.username?.isValid === false ? 'border-red-500' : fieldValidation.username?.isValid === true ? 'border-green-500' : ''}`}
+                      />
+                      {fieldValidation.username && (
+                        <div className="flex items-center space-x-2">
+                          {fieldValidation.username.isValid ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <AlertCircle className="w-4 h-4 text-red-500" />
+                          )}
+                          <span className={`text-sm ${fieldValidation.username.isValid ? 'text-green-600' : 'text-red-600'}`}>
+                            {fieldValidation.username.message}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleFieldSave('username')}
+                          disabled={!fieldValidation.username?.isValid}
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          Save
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleFieldCancel}
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-lg text-gray-900 dark:text-white">{user?.name || 'Not specified'}</p>
+                  )}
                 </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Bio</Label>
-                  <p className="text-lg text-gray-900 dark:text-white">{user?.bio || 'No bio available'}</p>
+                <div className="group">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Bio</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleFieldEdit('bio')}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {editingField === 'bio' ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={formData.bio}
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, bio: e.target.value }))
+                          validateField('bio', e.target.value)
+                        }}
+                        rows={3}
+                        className={`${fieldValidation.bio?.isValid === false ? 'border-red-500' : fieldValidation.bio?.isValid === true ? 'border-green-500' : ''}`}
+                      />
+                      {fieldValidation.bio && (
+                        <div className="flex items-center space-x-2">
+                          {fieldValidation.bio.isValid ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <AlertCircle className="w-4 h-4 text-red-500" />
+                          )}
+                          <span className={`text-sm ${fieldValidation.bio.isValid ? 'text-green-600' : 'text-red-600'}`}>
+                            {fieldValidation.bio.message}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleFieldSave('bio')}
+                          disabled={!fieldValidation.bio?.isValid}
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          Save
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleFieldCancel}
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-lg text-gray-900 dark:text-white">{user?.bio || 'No bio available'}</p>
+                  )}
                 </div>
                 {user?.profilePicture && (
                   <div>
@@ -1296,7 +1591,7 @@ export default function Profile() {
         )}
 
         {activeTab === 'Performance' && (user?.role === 'Player' || user?.role === 'player') && (
-          <Card className="mt-6">
+          <Card className="mt-6 sportsin-card sportsin-fade-in">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Trophy className="w-5 h-5 text-yellow-500" />
@@ -1370,7 +1665,7 @@ export default function Profile() {
         )}
 
         {activeTab === 'Performance' && (user?.role === 'Academy' || user?.role === 'academy') && (
-          <Card className="mt-6">
+          <Card className="mt-6 sportsin-card sportsin-fade-in">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <BarChart3 className="w-5 h-5 text-blue-500" />
@@ -1444,7 +1739,7 @@ export default function Profile() {
         )}
 
         {activeTab === 'Performance' && (user?.role === 'Scout' || user?.role === 'scout') && (
-          <Card className="mt-6">
+          <Card className="mt-6 sportsin-card sportsin-fade-in">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Eye className="w-5 h-5 text-purple-500" />
@@ -1518,7 +1813,7 @@ export default function Profile() {
         )}
 
         {activeTab === 'Performance' && (user?.role === 'Club' || user?.role === 'club') && (
-          <Card className="mt-6">
+          <Card className="mt-6 sportsin-card sportsin-fade-in">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Users className="w-5 h-5 text-green-500" />
@@ -1593,7 +1888,7 @@ export default function Profile() {
 
         {/* Fallback Performance tab for any role not specifically handled */}
         {activeTab === 'Performance' && !['Player', 'Academy', 'Scout', 'Club', 'player', 'academy', 'scout', 'club'].includes(user?.role) && (
-          <Card className="mt-6">
+          <Card className="mt-6 sportsin-card sportsin-fade-in">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <BarChart3 className="w-5 h-5 text-blue-500" />
@@ -1668,7 +1963,7 @@ export default function Profile() {
 
         {/* Role-Based Dashboard Sections */}
         {user?.role === 'Player' && (
-          <Card className="mt-6">
+          <Card className="mt-6 sportsin-card sportsin-fade-in">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Trophy className="w-5 h-5 text-yellow-500" />
@@ -1732,7 +2027,7 @@ export default function Profile() {
         )}
 
         {user?.role === 'Academy' && (
-          <Card className="mt-6">
+          <Card className="mt-6 sportsin-card sportsin-fade-in">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Users className="w-5 h-5 text-blue-500" />
@@ -1803,7 +2098,7 @@ export default function Profile() {
         )}
 
         {user?.role === 'Club' && (
-          <Card className="mt-6">
+          <Card className="mt-6 sportsin-card sportsin-fade-in">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Users className="w-5 h-5 text-green-500" />
@@ -1883,7 +2178,7 @@ export default function Profile() {
         )}
 
         {user?.role === 'Scout' && (
-          <Card className="mt-6">
+          <Card className="mt-6 sportsin-card sportsin-fade-in">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Eye className="w-5 h-5 text-purple-500" />
@@ -2036,6 +2331,219 @@ export default function Profile() {
                       disabled={isSendingInvite}
                     >
                       Cancel
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Gallery Modal */}
+        <AnimatePresence>
+          {showGalleryModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              onClick={() => setShowGalleryModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl max-h-[90vh] w-full overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="relative">
+                  <img
+                    src={galleryImages[currentGalleryIndex]}
+                    alt={`Gallery ${currentGalleryIndex + 1}`}
+                    className="w-full h-96 object-cover"
+                  />
+                  <Button
+                    onClick={() => setShowGalleryModal(false)}
+                    className="absolute top-4 right-4 bg-black bg-opacity-50 hover:bg-opacity-70 text-white"
+                    size="sm"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                  {galleryImages.length > 1 && (
+                    <>
+                      <Button
+                        onClick={prevGalleryImage}
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white"
+                        size="sm"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        onClick={nextGalleryImage}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white"
+                        size="sm"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Gallery Image {currentGalleryIndex + 1} of {galleryImages.length}</h3>
+                    <Button
+                      onClick={() => handleRemoveGalleryImage(currentGalleryIndex)}
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Remove
+                    </Button>
+                  </div>
+                  <div className="flex space-x-2 overflow-x-auto">
+                    {galleryImages.map((image, index) => (
+                      <img
+                        key={index}
+                        src={image}
+                        alt={`Thumbnail ${index + 1}`}
+                        className={`w-16 h-16 object-cover rounded cursor-pointer border-2 ${
+                          index === currentGalleryIndex ? 'border-blue-500' : 'border-gray-200'
+                        }`}
+                        onClick={() => setCurrentGalleryIndex(index)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Share Profile Modal with QR Code */}
+        <AnimatePresence>
+          {showShareModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              onClick={() => setShowShareModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <QrCode className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">Share Profile</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    Share your profile with others using the QR code or link below
+                  </p>
+                  
+                  {/* QR Code Display */}
+                  <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-8 mb-6 flex items-center justify-center">
+                    {isGeneratingQR ? (
+                      <div className="text-center">
+                        <Loader2 className="w-8 h-8 text-gray-400 mx-auto mb-2 animate-spin" />
+                        <p className="text-sm text-gray-500">Generating QR Code...</p>
+                      </div>
+                    ) : qrCodeDataUrl ? (
+                      <div className="text-center">
+                        <img
+                          src={qrCodeDataUrl}
+                          alt="Profile QR Code"
+                          className="w-48 h-48 mx-auto mb-2 rounded-lg shadow-lg"
+                        />
+                        <p className="text-sm text-gray-500">Scan to view profile</p>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <QrCode className="w-16 h-16 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500">QR Code</p>
+                        <p className="text-xs text-gray-400">Click to generate</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Profile Link */}
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Profile Link:</p>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        value={`${window.location.origin}/profile/${user?.id}`}
+                        readOnly
+                        className="text-sm"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/profile/${user?.id}`)
+                          toast({
+                            title: "Copied!",
+                            description: "Profile link copied to clipboard",
+                            variant: "default"
+                          })
+                        }}
+                      >
+                        Copy
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Regenerate QR Code Button */}
+                  {qrCodeDataUrl && (
+                    <div className="mb-6">
+                      <Button
+                        onClick={() => {
+                          const profileUrl = `${window.location.origin}/profile/${user?.id}`
+                          generateQRCode(profileUrl)
+                        }}
+                        variant="outline"
+                        className="w-full"
+                        disabled={isGeneratingQR}
+                      >
+                        {isGeneratingQR ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Regenerating...
+                          </>
+                        ) : (
+                          <>
+                            <QrCode className="w-4 h-4 mr-2" />
+                            Regenerate QR Code
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                  
+                  <div className="flex space-x-3">
+                    <Button
+                      onClick={() => setShowShareModal(false)}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Close
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/profile/${user?.id}`)
+                        toast({
+                          title: "Copied!",
+                          description: "Profile link copied to clipboard",
+                          variant: "default"
+                        })
+                      }}
+                      className="flex-1"
+                    >
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Copy Link
                     </Button>
                   </div>
                 </div>

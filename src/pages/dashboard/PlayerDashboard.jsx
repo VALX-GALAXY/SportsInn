@@ -129,20 +129,33 @@ export default function PlayerDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Welcome back, {user?.name}!
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Here's your player dashboard with stats, invites, and recent activity
-          </p>
+        {/* Hero Header */}
+        <div className="relative bg-gradient-to-r from-blue-500 to-emerald-500 rounded-2xl p-8 text-white overflow-hidden mb-8">
+          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="relative z-10">
+            <h1 className="text-3xl font-bold mb-2">
+              Your Stats Overview
+            </h1>
+            <p className="text-blue-100 mb-4">
+              Track your performance and achievements
+            </p>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Trophy className="w-5 h-5" />
+                <span className="font-semibold">{stats?.tournamentsApplied || 0} Tournaments Applied</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Target className="w-5 h-5" />
+                <span className="font-semibold">{stats?.acceptanceRate || 0}% Success Rate</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
-            <CardContent className="p-4 sm:p-6">
+          <Card className="sportsin-card sportsin-fade-in">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Tournaments Applied</p>
@@ -159,8 +172,8 @@ export default function PlayerDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
-            <CardContent className="p-4 sm:p-6">
+          <Card className="sportsin-card sportsin-fade-in">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Accepted %</p>
@@ -177,8 +190,8 @@ export default function PlayerDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
-            <CardContent className="p-4 sm:p-6">
+          <Card className="sportsin-card sportsin-fade-in">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Connections</p>
@@ -195,8 +208,8 @@ export default function PlayerDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
-            <CardContent className="p-4 sm:p-6">
+          <Card className="sportsin-card sportsin-fade-in">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Win Rate</p>
@@ -217,12 +230,12 @@ export default function PlayerDashboard() {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-8">
           {/* Tournament Participation Pie Chart */}
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
-            <CardHeader className="p-4 sm:p-6 pb-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Tournament Participation</h2>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Applied vs Accepted breakdown</p>
+          <Card className="sportsin-card sportsin-fade-in">
+            <CardHeader className="p-6 pb-4">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Tournament Participation</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Applied vs Accepted breakdown</p>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-0">
+            <CardContent className="p-6 pt-0">
               <div className="h-48 sm:h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <RechartsPieChart>
@@ -239,7 +252,19 @@ export default function PlayerDashboard() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--tooltip-bg)', 
+                        border: '1px solid var(--tooltip-border)', 
+                        color: 'var(--tooltip-text)',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}
+                      formatter={(value, name) => [value, name]}
+                      labelFormatter={(label) => `${label}:`}
+                    />
                     <Legend />
                   </RechartsPieChart>
                 </ResponsiveContainer>
@@ -248,19 +273,31 @@ export default function PlayerDashboard() {
           </Card>
 
           {/* Connections vs Interactions Bar Chart */}
-          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
-            <CardHeader className="p-4 sm:p-6 pb-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Connections vs Interactions</h2>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Network activity breakdown</p>
+          <Card className="sportsin-card sportsin-fade-in">
+            <CardHeader className="p-6 pb-4">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Connections vs Interactions</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Network activity breakdown</p>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-0">
+            <CardContent className="p-6 pt-0">
               <div className="h-48 sm:h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={stats?.connectionsData || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
                     <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} />
                     <YAxis stroke="#9CA3AF" fontSize={12} />
-                    <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--tooltip-bg)', 
+                        border: '1px solid var(--tooltip-border)', 
+                        color: 'var(--tooltip-text)',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}
+                      formatter={(value, name) => [value, name]}
+                      labelFormatter={(label) => `${label}:`}
+                    />
                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                       {(stats?.connectionsData || []).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -287,7 +324,19 @@ export default function PlayerDashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
                     <XAxis dataKey="month" stroke="#9CA3AF" fontSize={12} />
                     <YAxis stroke="#9CA3AF" fontSize={12} />
-                    <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--tooltip-bg)', 
+                        border: '1px solid var(--tooltip-border)', 
+                        color: 'var(--tooltip-text)',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}
+                      formatter={(value, name) => [value, name]}
+                      labelFormatter={(label) => `${label}:`}
+                    />
                     <Legend />
                     <Area type="monotone" dataKey="matches" stackId="1" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.6} />
                     <Area type="monotone" dataKey="wins" stackId="2" stroke="#10B981" fill="#10B981" fillOpacity={0.6} />
