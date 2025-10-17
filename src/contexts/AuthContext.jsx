@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect } from 'react'
-import authService from '../api/realAuthService'
+import authService from '../api/authService'
 import { useToast } from '../components/ui/simple-toast'
 
 const AuthContext = createContext()
@@ -245,19 +245,19 @@ export const AuthProvider = ({ children }) => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: mappedRole,
-        // Role-specific data - match backend field names
-        ...(mappedRole === 'Player' && {
-          age: formData.age,
-          playingRole: formData.playerRole  // Backend expects 'playingRole'
+        role: mappedRole.toLowerCase(), // Backend expects lowercase role
+        // Role-specific data - match backend field names exactly
+        ...(mappedRole.toLowerCase() === 'player' && {
+          age: formData.age || '25', // Provide default if empty
+          playingRole: formData.playerRole || 'All-rounder' // Provide default if empty
         }),
-        ...(mappedRole === 'Academy' && {
-          location: formData.location,
-          contactInfo: formData.contactInfo
+        ...(mappedRole.toLowerCase() === 'academy' && {
+          location: formData.location || 'Not specified',
+          contactInfo: formData.contactInfo || 'Not provided'
         }),
-        ...(mappedRole === 'Scout' && {
-          organization: formData.organization,
-          experience: formData.yearsOfExperience  // Backend expects 'experience'
+        ...(mappedRole.toLowerCase() === 'scout' && {
+          organization: formData.organization || 'Independent',
+          experience: formData.yearsOfExperience || '0'
         })
       }
       

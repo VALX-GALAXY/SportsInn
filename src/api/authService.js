@@ -37,15 +37,21 @@ class AuthService {
     try {
       // Try backend API first
       const response = await axiosInstance.post('/api/auth/login', credentials)
-      const { user, token, refreshToken } = response.data
+      const { data } = response.data  // Backend returns { success: true, data: { accessToken, refreshToken, user }, message: "..." }
+      const { accessToken, refreshToken, user } = data
       
       // Store auth data
-      localStorage.setItem('token', token)
+      localStorage.setItem('token', accessToken)
       localStorage.setItem('refreshToken', refreshToken)
       localStorage.setItem('user', JSON.stringify(user))
       
-      return { user, token, refreshToken }
+      return { user, token: accessToken, refreshToken }
     } catch (error) {
+      // Check if it's a backend error with a message
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message)
+      }
+      
       console.warn('Backend API unavailable, using mock data:', error.message)
       
       // Fallback to mock implementation
@@ -87,15 +93,27 @@ class AuthService {
     try {
       // Try backend API first
       const response = await axiosInstance.post('/api/auth/signup', userData)
-      const { user, token, refreshToken } = response.data
+      const { data: user } = response.data  
+      
+      // Backend signup doesn't return tokens, so we need to login to get them
+      const loginResponse = await axiosInstance.post('/api/auth/login', {
+        email: userData.email,
+        password: userData.password
+      })
+      const { accessToken, refreshToken } = loginResponse.data
       
       // Store auth data
-      localStorage.setItem('token', token)
+      localStorage.setItem('token', accessToken)
       localStorage.setItem('refreshToken', refreshToken)
       localStorage.setItem('user', JSON.stringify(user))
       
-      return { user, token, refreshToken }
+      return { user, token: accessToken, refreshToken }
     } catch (error) {
+      // Check if it's a backend error with a message
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message)
+      }
+      
       console.warn('Backend API unavailable, using mock data:', error.message)
       
       // Fallback to mock implementation
