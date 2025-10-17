@@ -1,4 +1,6 @@
-// Mock Auth Service - Frontend Only
+import axiosInstance from './axiosInstance'
+
+// Enhanced Auth Service with Backend Integration
 class AuthService {
   // Mock users database with compression
   getUsers() {
@@ -33,7 +35,20 @@ class AuthService {
 
   async login(credentials) {
     try {
-      // Simulate API delay
+      // Try backend API first
+      const response = await axiosInstance.post('/api/auth/login', credentials)
+      const { user, token, refreshToken } = response.data
+      
+      // Store auth data
+      localStorage.setItem('token', token)
+      localStorage.setItem('refreshToken', refreshToken)
+      localStorage.setItem('user', JSON.stringify(user))
+      
+      return { user, token, refreshToken }
+    } catch (error) {
+      console.warn('Backend API unavailable, using mock data:', error.message)
+      
+      // Fallback to mock implementation
       await new Promise(resolve => setTimeout(resolve, 1000))
       
       const users = this.getUsers()
@@ -65,14 +80,25 @@ class AuthService {
         token,
         refreshToken
       }
-    } catch (error) {
-      throw new Error(error.message || 'Login failed')
     }
   }
 
   async signup(userData) {
     try {
-      // Simulate API delay
+      // Try backend API first
+      const response = await axiosInstance.post('/api/auth/signup', userData)
+      const { user, token, refreshToken } = response.data
+      
+      // Store auth data
+      localStorage.setItem('token', token)
+      localStorage.setItem('refreshToken', refreshToken)
+      localStorage.setItem('user', JSON.stringify(user))
+      
+      return { user, token, refreshToken }
+    } catch (error) {
+      console.warn('Backend API unavailable, using mock data:', error.message)
+      
+      // Fallback to mock implementation
       await new Promise(resolve => setTimeout(resolve, 1000))
       
       const users = this.getUsers()
@@ -116,14 +142,25 @@ class AuthService {
         token,
         refreshToken
       }
-    } catch (error) {
-      throw new Error(error.message || 'Signup failed')
     }
   }
 
   async googleLogin(googleData) {
     try {
-      // Simulate API delay
+      // Try backend API first
+      const response = await axiosInstance.post('/api/auth/google', googleData)
+      const { user, token, refreshToken } = response.data
+      
+      // Store auth data
+      localStorage.setItem('token', token)
+      localStorage.setItem('refreshToken', refreshToken)
+      localStorage.setItem('user', JSON.stringify(user))
+      
+      return { user, token, refreshToken }
+    } catch (error) {
+      console.warn('Backend API unavailable, using mock data:', error.message)
+      
+      // Fallback to mock implementation
       await new Promise(resolve => setTimeout(resolve, 1000))
       
       const users = this.getUsers()
@@ -164,8 +201,6 @@ class AuthService {
         token,
         refreshToken
       }
-    } catch (error) {
-      throw new Error(error.message || 'Google login failed')
     }
   }
 
@@ -176,7 +211,18 @@ class AuthService {
         throw new Error('No refresh token available')
       }
       
-      // Simulate API delay
+      // Try backend API first
+      const response = await axiosInstance.post('/api/auth/refresh', { refreshToken })
+      const { token, refreshToken: newRefreshToken } = response.data
+      
+      localStorage.setItem('token', token)
+      localStorage.setItem('refreshToken', newRefreshToken)
+      
+      return { token, refreshToken: newRefreshToken }
+    } catch (error) {
+      console.warn('Backend API unavailable, using mock data:', error.message)
+      
+      // Fallback to mock implementation
       await new Promise(resolve => setTimeout(resolve, 500))
       
       const user = JSON.parse(localStorage.getItem('user'))
@@ -188,15 +234,13 @@ class AuthService {
       localStorage.setItem('token', newToken)
       
       return { token: newToken }
-    } catch (error) {
-      throw new Error(error.message || 'Token refresh failed')
     }
   }
 
   async logout() {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Try backend API first
+      await axiosInstance.post('/api/auth/logout')
       
       // Clear local storage
       localStorage.removeItem('token')
@@ -205,7 +249,17 @@ class AuthService {
       
       return { message: 'Logged out successfully' }
     } catch (error) {
-      throw new Error(error.message || 'Logout failed')
+      console.warn('Backend API unavailable, using mock data:', error.message)
+      
+      // Fallback to mock implementation
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // Clear local storage
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+      
+      return { message: 'Logged out successfully' }
     }
   }
 
@@ -224,7 +278,19 @@ class AuthService {
 
   async updateProfile(userData) {
     try {
-      // Simulate API delay
+      // Try backend API first
+      const currentUser = JSON.parse(localStorage.getItem('user'))
+      const response = await axiosInstance.put(`/api/profile/${currentUser.id}`, userData)
+      const updatedUser = response.data
+      
+      // Update stored user data
+      localStorage.setItem('user', JSON.stringify(updatedUser))
+      
+      return updatedUser
+    } catch (error) {
+      console.warn('Backend API unavailable, using mock data:', error.message)
+      
+      // Fallback to mock implementation
       await new Promise(resolve => setTimeout(resolve, 1000))
       
       const users = this.getUsers()
@@ -250,8 +316,6 @@ class AuthService {
       localStorage.setItem('user', JSON.stringify(updatedUser))
       
       return updatedUser
-    } catch (error) {
-      throw new Error(error.message || 'Profile update failed')
     }
   }
 

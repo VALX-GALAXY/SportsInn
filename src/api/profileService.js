@@ -118,7 +118,7 @@ class ProfileService {
   // Follow/Unfollow user
   async followUser(userId) {
     try {
-      const response = await axiosInstance.post(`/api/profile/${userId}/follow`)
+      const response = await axiosInstance.post(`/api/users/${userId}/follow`)
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
@@ -135,7 +135,7 @@ class ProfileService {
 
   async unfollowUser(userId) {
     try {
-      const response = await axiosInstance.delete(`/api/profile/${userId}/follow`)
+      const response = await axiosInstance.delete(`/api/users/${userId}/follow`)
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
@@ -153,7 +153,7 @@ class ProfileService {
   // Get user's followers
   async getFollowers(userId, page = 1, limit = 20) {
     try {
-      const response = await axiosInstance.get(`/api/profile/${userId}/followers`, {
+      const response = await axiosInstance.get(`/api/users/${userId}/followers`, {
         params: { page, limit }
       })
       return response.data
@@ -191,7 +191,7 @@ class ProfileService {
   // Get user's following
   async getFollowing(userId, page = 1, limit = 20) {
     try {
-      const response = await axiosInstance.get(`/api/profile/${userId}/following`, {
+      const response = await axiosInstance.get(`/api/users/${userId}/following`, {
         params: { page, limit }
       })
       return response.data
@@ -222,7 +222,7 @@ class ProfileService {
   // Get user's stats
   async getUserStats(userId) {
     try {
-      const response = await axiosInstance.get(`/api/profile/${userId}/stats`)
+      const response = await axiosInstance.get(`/api/users/${userId}/stats`)
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
@@ -243,7 +243,7 @@ class ProfileService {
   // Search users
   async searchUsers(query, page = 1, limit = 20) {
     try {
-      const response = await axiosInstance.get('/api/profile/search', {
+      const response = await axiosInstance.get('/api/users/search', {
         params: { query, page, limit }
       })
       return response.data
