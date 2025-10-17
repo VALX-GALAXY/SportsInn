@@ -10,7 +10,7 @@ class NotificationService {
   async getNotifications(page = 1, limit = 20) {
     try {
       // Try backend API first
-      const response = await axiosInstance.get('/notifications', {
+      const response = await axiosInstance.get('/api/notifications', {
         params: { page, limit }
       })
       return response.data
@@ -65,7 +65,7 @@ class NotificationService {
   // Mark notification as read
   async markAsRead(notificationId) {
     try {
-      const response = await axiosInstance.patch(`/notifications/${notificationId}/read`)
+      const response = await axiosInstance.put(`/api/notifications/read/${notificationId}`)
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
@@ -77,8 +77,10 @@ class NotificationService {
   // Mark all notifications as read
   async markAllAsRead() {
     try {
-      const response = await axiosInstance.patch('/notifications/read-all')
-      return response.data
+      // Since backend doesn't have /read-all endpoint, we'll use mock for now
+      console.warn('Backend API missing /read-all endpoint, using mock data')
+      await new Promise(resolve => setTimeout(resolve, 300))
+      return this.mockMarkAllAsRead()
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       await new Promise(resolve => setTimeout(resolve, 300))
@@ -89,8 +91,10 @@ class NotificationService {
   // Get unread count
   async getUnreadCount() {
     try {
-      const response = await axiosInstance.get('/notifications/unread-count')
-      return response.data.count
+      // Since backend doesn't have /unread-count endpoint, we'll use mock for now
+      console.warn('Backend API missing /unread-count endpoint, using mock data')
+      await new Promise(resolve => setTimeout(resolve, 200))
+      return this.getMockUnreadCount()
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       await new Promise(resolve => setTimeout(resolve, 200))

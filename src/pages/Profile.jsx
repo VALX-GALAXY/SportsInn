@@ -12,6 +12,7 @@ import requestService from '@/api/requestService'
 import { useToast } from '@/components/ui/simple-toast'
 import followService from '@/api/followService'
 import uploadService from '@/api/uploadService'
+import profileService from '@/api/profileService'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'qrcode'
 
@@ -383,7 +384,7 @@ export default function Profile() {
     setShowShareModal(true)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (validateForm()) {
       console.log('Profile form data:', {
@@ -391,29 +392,44 @@ export default function Profile() {
         profilePicture: formData.profilePicture ? 'Image file selected' : 'No image'
       })
       
-      // Prepare update data
-      const updateData = {
-        name: formData.username,
-        bio: formData.bio,
-        ...(formData.profilePicture && { profilePicture: imagePreview }),
-        // Role-specific updates
-        ...(formData.age && { age: formData.age }),
-        ...(formData.playerRole && { playerRole: formData.playerRole }),
-        ...(formData.location && { location: formData.location }),
-        ...(formData.contactInfo && { contactInfo: formData.contactInfo }),
-        ...(formData.organization && { organization: formData.organization }),
-        ...(formData.yearsOfExperience && { yearsOfExperience: formData.yearsOfExperience })
+      try {
+        // Prepare update data
+        const updateData = {
+          name: formData.username,
+          bio: formData.bio,
+          ...(formData.profilePicture && { profilePicture: imagePreview }),
+          // Role-specific updates
+          ...(formData.age && { age: formData.age }),
+          ...(formData.playerRole && { playerRole: formData.playerRole }),
+          ...(formData.location && { location: formData.location }),
+          ...(formData.contactInfo && { contactInfo: formData.contactInfo }),
+          ...(formData.organization && { organization: formData.organization }),
+          ...(formData.yearsOfExperience && { yearsOfExperience: formData.yearsOfExperience })
+        }
+        
+        // Update user data using profile service
+        const updatedUser = await profileService.updateProfile(user.id, updateData)
+        
+        // Update local user context
+        updateUser(updatedUser)
+        setIsSubmitted(true)
+        setEditingSection(null)
+        
+        // Clear the success message after 3 seconds
+        setTimeout(() => {
+          setIsSubmitted(false)
+        }, 3000)
+      } catch (error) {
+        console.error('Error updating profile:', error)
+        // Fallback to local update
+        updateUser(updateData)
+        setIsSubmitted(true)
+        setEditingSection(null)
+        
+        setTimeout(() => {
+          setIsSubmitted(false)
+        }, 3000)
       }
-      
-      // Update user data
-      updateUser(updateData)
-      setIsSubmitted(true)
-      setEditingSection(null)
-      
-      // Clear the success message after 3 seconds
-      setTimeout(() => {
-        setIsSubmitted(false)
-      }, 3000)
     }
   }
 

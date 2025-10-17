@@ -228,7 +228,7 @@ class FeedService {
   async getFeed(page = 1, limit = 10) {
     try {
       // Try backend API first
-      const response = await axiosInstance.get('/feed', {
+      const response = await axiosInstance.get('/api/feed', {
         params: { page, limit }
       })
       return response.data
@@ -253,7 +253,7 @@ class FeedService {
   async getPersonalizedFeed(page = 1, limit = 10) {
     try {
       // Try backend API first
-      const response = await axiosInstance.get('/feed/personalized', {
+      const response = await axiosInstance.get('/api/feed/personalized', {
         params: { page, limit }
       })
       return response.data
@@ -289,7 +289,7 @@ class FeedService {
         formData.append('video', postData.video)
       }
       
-      const response = await axiosInstance.post('/posts', formData, {
+      const response = await axiosInstance.post('/api/feed', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -374,7 +374,7 @@ class FeedService {
   async likePost(postId) {
     try {
       // Try backend API first
-      const response = await axiosInstance.post(`/posts/${postId}/like`)
+      const response = await axiosInstance.post(`/api/feed/${postId}/like`)
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
@@ -404,7 +404,7 @@ class FeedService {
   async getComments(postId) {
     try {
       // Try backend API first
-      const response = await axiosInstance.get(`/posts/${postId}/comments`)
+      const response = await axiosInstance.get(`/api/feed/${postId}/comments`)
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
@@ -419,7 +419,7 @@ class FeedService {
   async addComment(postId, commentData) {
     try {
       // Try backend API first
-      const response = await axiosInstance.post(`/posts/${postId}/comments`, commentData)
+      const response = await axiosInstance.post(`/api/feed/${postId}/comment`, commentData)
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
