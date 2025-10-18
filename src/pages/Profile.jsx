@@ -17,7 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'qrcode'
 
 export default function Profile() {
-  const { user, updateUser, isAuthenticated } = useAuth()
+  const { user, updateUser, reloadUser, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('About') // About | Performance
   const [formData, setFormData] = useState({
@@ -157,6 +157,47 @@ export default function Profile() {
     if (user) {
       loadFollowStats()
     }
+  }, [user])
+
+  // Load user profile data when component mounts
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (user && (user._id || user.id)) {
+        try {
+          const userId = user._id || user.id
+          const profileData = await profileService.getProfile(userId)
+          
+          if (profileData) {
+            // Update form data with fresh profile data
+            setFormData({
+              username: profileData.name || '',
+              bio: profileData.bio || '',
+              profilePicture: profileData.profilePic || profileData.profilePicture || null,
+              age: profileData.age || '',
+              playerRole: profileData.playerRole || '',
+              location: profileData.location || '',
+              contactInfo: profileData.contactInfo || '',
+              organization: profileData.organization || '',
+              yearsOfExperience: profileData.yearsOfExperience || ''
+            })
+            
+            // Update gallery images
+            if (profileData.galleryImages) {
+              setGalleryImages(profileData.galleryImages)
+            }
+            
+            // Update image preview
+            if (profileData.profilePic || profileData.profilePicture) {
+              setImagePreview(profileData.profilePic || profileData.profilePicture)
+            }
+          }
+        } catch (error) {
+          console.error('Error loading user profile:', error)
+        }
+      }
+    }
+
+    loadUserProfile()
   }, [user])
 
   const loadFollowStats = async () => {
@@ -335,20 +376,34 @@ export default function Profile() {
     setShowGalleryModal(true)
   }
 
-  const handleRemoveGalleryImage = (index) => {
-    const newGallery = galleryImages.filter((_, i) => i !== index)
-    setGalleryImages(newGallery)
-    updateUser({ galleryImages: newGallery })
-    
-    if (currentGalleryIndex >= newGallery.length) {
-      setCurrentGalleryIndex(Math.max(0, newGallery.length - 1))
+  const handleRemoveGalleryImage = async (imageId) => {
+    try {
+      const userId = user._id || user.id
+      if (!userId) {
+        throw new Error('User ID not found')
+      }
+      
+      const updatedUser = await profileService.removeFromGallery(userId, imageId)
+      setGalleryImages(updatedUser.galleryImages || [])
+      updateUser(updatedUser)
+      
+      if (currentGalleryIndex >= (updatedUser.galleryImages || []).length) {
+        setCurrentGalleryIndex(Math.max(0, (updatedUser.galleryImages || []).length - 1))
+      }
+      
+      toast({
+        title: "Success",
+        description: "Image removed from gallery",
+        variant: "default"
+      })
+    } catch (error) {
+      console.error('Error removing gallery image:', error)
+      toast({
+        title: "Error",
+        description: "Failed to remove image from gallery",
+        variant: "destructive"
+      })
     }
-    
-    toast({
-      title: "Success",
-      description: "Image removed from gallery",
-      variant: "default"
-    })
   }
 
   // QR code generation function
@@ -392,12 +447,48 @@ export default function Profile() {
         profilePicture: formData.profilePicture ? 'Image file selected' : 'No image'
       })
       
+      // Check if user is authenticated and has valid user object
+      if (!user) {
+        console.error('No user found in context')
+        toast({
+          title: "Error",
+          description: "User not found. Please log in again.",
+          variant: "destructive"
+        })
+        return
+      }
+      
+      // Check if user object is corrupted (contains API response structure)
+      if (user.success !== undefined || user.data !== undefined || user.message !== undefined) {
+        console.error('User object appears to be corrupted with API response structure')
+        console.log('Corrupted user object:', user)
+        
+        // Try to reload user from localStorage using AuthContext
+        const reloadedUser = reloadUser()
+        if (reloadedUser && (reloadedUser._id || reloadedUser.id)) {
+          console.log('Successfully reloaded user:', reloadedUser)
+          toast({
+            title: "User data reloaded",
+            description: "Please try updating your profile again.",
+            variant: "default"
+          })
+          return // Retry the operation
+        }
+        
+        toast({
+          title: "Error",
+          description: "User data corrupted. Please log in again.",
+          variant: "destructive"
+        })
+        return
+      }
+      
       try {
         // Prepare update data
         const updateData = {
           name: formData.username,
           bio: formData.bio,
-          ...(formData.profilePicture && { profilePicture: imagePreview }),
+          ...(imagePreview && { profilePic: imagePreview }),
           // Role-specific updates
           ...(formData.age && { age: formData.age }),
           ...(formData.playerRole && { playerRole: formData.playerRole }),
@@ -407,10 +498,25 @@ export default function Profile() {
           ...(formData.yearsOfExperience && { yearsOfExperience: formData.yearsOfExperience })
         }
         
-        // Update user data using profile service
-        const updatedUser = await profileService.updateProfile(user.id, updateData)
+        // Debug: Log user object to see its structure
+        console.log('User object:', user)
+        console.log('User keys:', Object.keys(user || {}))
+        console.log('User._id:', user?._id)
+        console.log('User.id:', user?.id)
         
-        // Update local user context
+        // Update user data using profile service
+        // Handle both _id (from backend) and id (from mock data)
+        const userId = user?._id || user?.id
+        if (!userId) {
+          console.error('User object:', user)
+          console.error('Available user properties:', Object.keys(user || {}))
+          throw new Error('User ID not found. Available properties: ' + Object.keys(user || {}).join(', '))
+        }
+        
+        console.log('Using user ID:', userId)
+        const updatedUser = await profileService.updateProfile(userId, updateData)
+        
+        // Update local user context with the returned user data
         updateUser(updatedUser)
         setIsSubmitted(true)
         setEditingSection(null)
@@ -421,8 +527,29 @@ export default function Profile() {
         }, 3000)
       } catch (error) {
         console.error('Error updating profile:', error)
-        // Fallback to local update
-        updateUser(updateData)
+        
+        // Show error message to user
+        toast({
+          title: "Update failed",
+          description: error.message || "Failed to update profile. Using local update.",
+          variant: "destructive"
+        })
+        
+        // Fallback to local update using AuthContext
+        const fallbackData = {
+          name: formData.username,
+          bio: formData.bio,
+          ...(imagePreview && { profilePic: imagePreview }),
+          ...(formData.age && { age: formData.age }),
+          ...(formData.playerRole && { playerRole: formData.playerRole }),
+          ...(formData.location && { location: formData.location }),
+          ...(formData.contactInfo && { contactInfo: formData.contactInfo }),
+          ...(formData.organization && { organization: formData.organization }),
+          ...(formData.yearsOfExperience && { yearsOfExperience: formData.yearsOfExperience })
+        }
+        
+        // Use AuthContext updateUser function directly
+        updateUser(fallbackData)
         setIsSubmitted(true)
         setEditingSection(null)
         
@@ -508,13 +635,24 @@ export default function Profile() {
       }, 200)
       
       try {
-        // Upload image to Cloudinary
-        const uploadResult = await uploadService.uploadProfilePicture(file)
+        // Check if user object is corrupted
+        if (user.success !== undefined || user.data !== undefined || user.message !== undefined) {
+          console.error('User object corrupted during image upload')
+          throw new Error('User data corrupted. Please refresh the page.')
+        }
+        
+        // Upload image using profile service
+        const userId = user._id || user.id
+        if (!userId) {
+          throw new Error('User ID not found')
+        }
+        
+        const uploadResult = await profileService.uploadProfilePicture(userId, file)
         
         if (uploadResult.success) {
           setUploadProgress(100)
           setImagePreview(uploadResult.url)
-          updateUser({ profilePicture: uploadResult.url })
+          updateUser({ profilePic: uploadResult.url })
           setUploadStatus('success')
           
           toast({
@@ -622,9 +760,20 @@ export default function Profile() {
           publicId: uploadResult.publicIds[index]
         }))
         
-        const updatedGallery = [...galleryImages, ...newImages]
-        setGalleryImages(updatedGallery)
-        updateUser({ galleryImages: updatedGallery })
+        // Use profile service to add images to gallery
+        const userId = user._id || user.id
+        if (!userId) {
+          throw new Error('User ID not found')
+        }
+        
+        // Add all images at once to avoid duplicates
+        const updatedUser = await profileService.updateGallery(userId, [
+          ...galleryImages,
+          ...newImages
+        ])
+        
+        setGalleryImages(updatedUser.galleryImages || [])
+        updateUser(updatedUser)
         setUploadStatus('success')
         
         toast({
@@ -1103,7 +1252,7 @@ export default function Profile() {
                     onClick={() => openGalleryModal(index)}
                   >
                     <img
-                      src={image}
+                      src={image?.url || image}
                       alt={`Gallery ${index + 1}`}
                       className="w-20 h-20 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-lg hover:scale-105 transition-transform duration-200"
                     />
@@ -2374,7 +2523,7 @@ export default function Profile() {
               >
                 <div className="relative">
                   <img
-                    src={galleryImages[currentGalleryIndex]}
+                    src={galleryImages[currentGalleryIndex]?.url || galleryImages[currentGalleryIndex]}
                     alt={`Gallery ${currentGalleryIndex + 1}`}
                     className="w-full h-96 object-cover"
                   />
@@ -2421,7 +2570,7 @@ export default function Profile() {
                     {galleryImages.map((image, index) => (
                       <img
                         key={index}
-                        src={image}
+                        src={image?.url || image}
                         alt={`Thumbnail ${index + 1}`}
                         className={`w-16 h-16 object-cover rounded cursor-pointer border-2 ${
                           index === currentGalleryIndex ? 'border-blue-500' : 'border-gray-200'

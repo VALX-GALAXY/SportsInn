@@ -130,8 +130,28 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Update user function with real API
+  // Update user function - handles both API calls and local updates
   const updateUser = async (userData) => {
+    // If userData is already a complete user object (from API response), use it directly
+    if (userData._id || userData.id) {
+      console.log('Updating user with complete user object:', userData)
+      localStorage.setItem('user', JSON.stringify(userData))
+      
+      dispatch({
+        type: 'UPDATE_USER',
+        payload: userData
+      })
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully",
+        variant: "success"
+      })
+      
+      return userData
+    }
+    
+    // If userData is partial update data, try API first, then fallback to local
     try {
       const updatedUser = await authService.updateProfile(userData)
       localStorage.setItem('user', JSON.stringify(updatedUser))
@@ -150,13 +170,48 @@ export const AuthProvider = ({ children }) => {
       return updatedUser
     } catch (error) {
       console.error('Error updating user data:', error)
-      toast({
-        title: "Update failed",
-        description: error.message || "Failed to update profile",
-        variant: "destructive"
+      
+      // Fallback: Update user data locally without API call
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+      const updatedUser = { ...currentUser, ...userData }
+      localStorage.setItem('user', JSON.stringify(updatedUser))
+      
+      dispatch({
+        type: 'UPDATE_USER',
+        payload: updatedUser
       })
-      throw error
+      
+      toast({
+        title: "Profile updated locally",
+        description: "Your profile has been updated (offline mode)",
+        variant: "default"
+      })
+      
+      return updatedUser
     }
+  }
+
+  // Clear corrupted user state and reload from localStorage
+  const reloadUser = () => {
+    try {
+      const storedUser = localStorage.getItem('user')
+      const storedToken = localStorage.getItem('token')
+      
+      if (storedUser && storedToken) {
+        const user = JSON.parse(storedUser)
+        console.log('Reloading user from localStorage:', user)
+        
+        dispatch({
+          type: 'LOGIN',
+          payload: { user, token: storedToken }
+        })
+        
+        return user
+      }
+    } catch (error) {
+      console.error('Error reloading user:', error)
+    }
+    return null
   }
 
   // Check if user exists by email
@@ -298,6 +353,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     updateUser,
+    reloadUser,
     loginWithGoogle,
     signupWithRole,
     getUserByEmail

@@ -1,41 +1,10 @@
 import axiosInstance from './axiosInstance'
 
-// Enhanced Auth Service with Backend Integration
+// Auth Service with Backend Integration Only
 class AuthService {
-  // Mock users database with compression
-  getUsers() {
-    try {
-      const users = localStorage.getItem('sportshub_users')
-      return users ? JSON.parse(users) : []
-    } catch (error) {
-      console.error('Error parsing users data:', error)
-      // Clear corrupted data
-      localStorage.removeItem('sportshub_users')
-      return []
-    }
-  }
-
-  saveUsers(users) {
-    try {
-      // Limit users to prevent storage overflow
-      const limitedUsers = users.slice(-100) // Keep only last 100 users
-      localStorage.setItem('sportshub_users', JSON.stringify(limitedUsers))
-    } catch (error) {
-      console.error('Error saving users data:', error)
-      // If still too large, clear and start fresh
-      localStorage.removeItem('sportshub_users')
-      localStorage.setItem('sportshub_users', JSON.stringify(users.slice(-10)))
-    }
-  }
-
-  // Generate mock JWT token
-  generateToken(user) {
-    return `mock_jwt_${user.id}_${Date.now()}`
-  }
 
   async login(credentials) {
     try {
-      // Try backend API first
       const response = await axiosInstance.post('/api/auth/login', credentials)
       const { data } = response.data  // Backend returns { success: true, data: { accessToken, refreshToken, user }, message: "..." }
       const { accessToken, refreshToken, user } = data
@@ -52,46 +21,18 @@ class AuthService {
         throw new Error(error.response.data.message)
       }
       
-      console.warn('Backend API unavailable, using mock data:', error.message)
-      
-      // Fallback to mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      const users = this.getUsers()
-      const user = users.find(u => 
-        u.email === credentials.email && u.password === credentials.password
-      )
-      
-      if (!user) {
-        throw new Error('Invalid email or password')
+      // If backend is not running, throw a clear error
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('Backend server is not running. Please start the server and try again.')
       }
-
-      const token = this.generateToken(user)
-      const refreshToken = `mock_refresh_${user.id}_${Date.now()}`
       
-      // Store auth data
-      localStorage.setItem('token', token)
-      localStorage.setItem('refreshToken', refreshToken)
-      localStorage.setItem('user', JSON.stringify(user))
-      
-      return {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          avatar: user.avatar,
-          verified: user.verified
-        },
-        token,
-        refreshToken
-      }
+      // For other errors, throw the original error
+      throw error
     }
   }
 
   async signup(userData) {
     try {
-      // Try backend API first
       const response = await axiosInstance.post('/api/auth/signup', userData)
       const { data: user } = response.data  
       
@@ -114,58 +55,18 @@ class AuthService {
         throw new Error(error.response.data.message)
       }
       
-      console.warn('Backend API unavailable, using mock data:', error.message)
-      
-      // Fallback to mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      const users = this.getUsers()
-      
-      // Check if user already exists
-      if (users.find(u => u.email === userData.email)) {
-        throw new Error('User already exists')
+      // If backend is not running, throw a clear error
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('Backend server is not running. Please start the server and try again.')
       }
-
-      const newUser = {
-        id: `user_${Date.now()}`,
-        name: userData.name,
-        email: userData.email,
-        password: userData.password, // In real app, this would be hashed
-        role: userData.role,
-        avatar: null,
-        verified: false,
-        createdAt: new Date().toISOString()
-      }
-
-      users.push(newUser)
-      this.saveUsers(users)
-
-      const token = this.generateToken(newUser)
-      const refreshToken = `mock_refresh_${newUser.id}_${Date.now()}`
       
-      // Store auth data
-      localStorage.setItem('token', token)
-      localStorage.setItem('refreshToken', refreshToken)
-      localStorage.setItem('user', JSON.stringify(newUser))
-      
-      return {
-        user: {
-          id: newUser.id,
-          name: newUser.name,
-          email: newUser.email,
-          role: newUser.role,
-          avatar: newUser.avatar,
-          verified: newUser.verified
-        },
-        token,
-        refreshToken
-      }
+      // For other errors, throw the original error
+      throw error
     }
   }
 
   async googleLogin(googleData) {
     try {
-      // Try backend API first
       const response = await axiosInstance.post('/api/auth/google', googleData)
       const { user, token, refreshToken } = response.data
       
@@ -176,49 +77,18 @@ class AuthService {
       
       return { user, token, refreshToken }
     } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
-      
-      // Fallback to mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      const users = this.getUsers()
-      let user = users.find(u => u.email === googleData.email)
-      
-      if (!user) {
-        // Create new user for Google login
-        user = {
-          id: `user_${Date.now()}`,
-          name: googleData.name,
-          email: googleData.email,
-          role: 'Player', // Default role
-          avatar: googleData.picture,
-          verified: true,
-          createdAt: new Date().toISOString()
-        }
-        users.push(user)
-        this.saveUsers(users)
+      // Check if it's a backend error with a message
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message)
       }
-
-      const token = this.generateToken(user)
-      const refreshToken = `mock_refresh_${user.id}_${Date.now()}`
       
-      // Store auth data
-      localStorage.setItem('token', token)
-      localStorage.setItem('refreshToken', refreshToken)
-      localStorage.setItem('user', JSON.stringify(user))
-      
-      return {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          avatar: user.avatar,
-          verified: user.verified
-        },
-        token,
-        refreshToken
+      // If backend is not running, throw a clear error
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('Backend server is not running. Please start the server and try again.')
       }
+      
+      // For other errors, throw the original error
+      throw error
     }
   }
 
@@ -229,7 +99,6 @@ class AuthService {
         throw new Error('No refresh token available')
       }
       
-      // Try backend API first
       const response = await axiosInstance.post('/api/auth/refresh', { refreshToken })
       const { token, refreshToken: newRefreshToken } = response.data
       
@@ -238,26 +107,18 @@ class AuthService {
       
       return { token, refreshToken: newRefreshToken }
     } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
-      
-      // Fallback to mock implementation
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      const user = JSON.parse(localStorage.getItem('user'))
-      if (!user) {
-        throw new Error('No user data available')
+      // If backend is not running, throw a clear error
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('Backend server is not running. Please start the server and try again.')
       }
-
-      const newToken = this.generateToken(user)
-      localStorage.setItem('token', newToken)
       
-      return { token: newToken }
+      // For other errors, throw the original error
+      throw error
     }
   }
 
   async logout() {
     try {
-      // Try backend API first
       await axiosInstance.post('/api/auth/logout')
       
       // Clear local storage
@@ -267,16 +128,18 @@ class AuthService {
       
       return { message: 'Logged out successfully' }
     } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
-      
-      // Fallback to mock implementation
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // Clear local storage
+      // Even if backend logout fails, clear local storage
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
       
+      // If backend is not running, still allow logout but show warning
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        console.warn('Backend server is not running, but user has been logged out locally.')
+        return { message: 'Logged out successfully (local only)' }
+      }
+      
+      // For other errors, still allow logout
       return { message: 'Logged out successfully' }
     }
   }
@@ -296,44 +159,28 @@ class AuthService {
 
   async updateProfile(userData) {
     try {
-      // Try backend API first
       const currentUser = JSON.parse(localStorage.getItem('user'))
-      const response = await axiosInstance.put(`/api/profile/${currentUser.id}`, userData)
-      const updatedUser = response.data
+      // Handle both _id (from backend) and id (from mock data)
+      const userId = currentUser._id || currentUser.id
+      if (!userId) {
+        throw new Error('User ID not found')
+      }
+      
+      const response = await axiosInstance.put(`/api/profile/${userId}`, userData)
+      const updatedUser = response.data.data
       
       // Update stored user data
       localStorage.setItem('user', JSON.stringify(updatedUser))
       
       return updatedUser
     } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
-      
-      // Fallback to mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      const users = this.getUsers()
-      const currentUser = JSON.parse(localStorage.getItem('user'))
-      
-      const userIndex = users.findIndex(u => u.id === currentUser.id)
-      if (userIndex === -1) {
-        throw new Error('User not found')
+      // If backend is not running, throw a clear error
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('Backend server is not running. Please start the server and try again.')
       }
-
-      // Update user data
-      users[userIndex] = {
-        ...users[userIndex],
-        ...userData,
-        id: currentUser.id, // Keep original ID
-        email: currentUser.email // Keep original email
-      }
-
-      this.saveUsers(users)
       
-      // Update stored user data
-      const updatedUser = users[userIndex]
-      localStorage.setItem('user', JSON.stringify(updatedUser))
-      
-      return updatedUser
+      // For other errors, throw the original error
+      throw error
     }
   }
 
@@ -361,19 +208,9 @@ class AuthService {
 
   // Clear all app data (for debugging)
   clearAllData() {
-    localStorage.removeItem('sportshub_users')
-    localStorage.removeItem('sportshub_feed')
-    localStorage.removeItem('sportshub_follows')
     localStorage.removeItem('token')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
-    
-    // Clear all comment data
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('sportshub_comments_')) {
-        localStorage.removeItem(key)
-      }
-    })
   }
 }
 
