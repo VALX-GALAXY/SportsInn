@@ -119,7 +119,10 @@ class AuthService {
 
   async logout() {
     try {
-      await axiosInstance.post('/api/auth/logout')
+      const refreshToken = localStorage.getItem('refreshToken')
+      console.log('authService.logout - RefreshToken:', refreshToken ? 'Present' : 'Missing')
+      
+      await axiosInstance.post('/api/auth/logout', { refreshToken })
       
       // Clear local storage
       localStorage.removeItem('token')
@@ -128,6 +131,8 @@ class AuthService {
       
       return { message: 'Logged out successfully' }
     } catch (error) {
+      console.error('authService.logout - Error:', error)
+      
       // Even if backend logout fails, clear local storage
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')

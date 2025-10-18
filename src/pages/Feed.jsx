@@ -481,22 +481,24 @@ export default function FeedSimple() {
 
         {/* Posts */}
         <div className="space-y-4">
-          {filteredPosts.map((post, index) => (
+          {filteredPosts.map((post, index) => {
+            console.log('Feed.jsx - Post data:', post);
+            return (
             <Card key={post.id} className="sportsin-card sportsin-fade-in">
               <CardHeader className="p-4 sm:p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
                       <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                        {post.author.name.charAt(0)}
+                        {post.author?.name?.charAt(0) || '?'}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                        {post.author.name}
+                        {post.author?.name || 'Unknown User'}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                        {post.author.role} • {new Date(post.timestamp).toLocaleDateString()}
+                        {post.author?.role || 'Unknown'} • {new Date(post.timestamp).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -666,7 +668,8 @@ export default function FeedSimple() {
                 )}
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
           
           {/* Infinite Scroll Trigger */}
           {filteredPosts.length > 0 && (

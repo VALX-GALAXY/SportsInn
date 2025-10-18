@@ -227,10 +227,13 @@ class FeedService {
 
   async getFeed(page = 1, limit = 10) {
     try {
-      // Try backend API first
+      console.log('FeedService.getFeed called with:', { page, limit })
+      
       const response = await axiosInstance.get('/api/feed', {
         params: { page, limit }
       })
+      
+      console.log('Backend getFeed response:', response.data)
       
       // Transform backend posts to match frontend structure
       const transformedPosts = (response.data.data || []).map(post => ({
@@ -261,20 +264,17 @@ class FeedService {
         hasMore: response.data.hasMore
       }
     } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
-      // Fallback to mock data
-      await new Promise(resolve => setTimeout(resolve, 800))
+      console.error('FeedService.getFeed error:', error)
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
       
-      const feed = this.getFeedData()
-      const startIndex = (page - 1) * limit
-      const endIndex = startIndex + limit
-      
-      return {
-        posts: feed.slice(startIndex, endIndex),
-        total: feed.length,
-        page,
-        limit
+      // If backend is not running, throw a clear error
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('Backend server is not running. Please start the server and try again.')
       }
+      
+      // For other errors, throw the original error
+      throw error
     }
   }
 
@@ -312,12 +312,14 @@ class FeedService {
 
   async createPost(postData) {
     try {
-      // Try backend API first
+      console.log('FeedService.createPost called with:', postData)
+      
       let mediaUrl = null
       let mediaType = null
       
       // Handle media upload if files are provided
       if (postData.image && postData.image instanceof File) {
+        console.log('Uploading image to backend...')
         const formData = new FormData()
         formData.append('media', postData.image)
         const uploadResponse = await axiosInstance.post('/api/feed/upload', formData, {
@@ -325,7 +327,9 @@ class FeedService {
         })
         mediaUrl = uploadResponse.data.data.url
         mediaType = uploadResponse.data.data.type
+        console.log('Image upload successful:', { mediaUrl, mediaType })
       } else if (postData.video && postData.video instanceof File) {
+        console.log('Uploading video to backend...')
         const formData = new FormData()
         formData.append('media', postData.video)
         const uploadResponse = await axiosInstance.post('/api/feed/upload', formData, {
@@ -333,13 +337,17 @@ class FeedService {
         })
         mediaUrl = uploadResponse.data.data.url
         mediaType = uploadResponse.data.data.type
+        console.log('Video upload successful:', { mediaUrl, mediaType })
       }
       
+      console.log('Creating post with data:', { caption: postData.caption, mediaUrl, mediaType })
       const response = await axiosInstance.post('/api/feed', {
         caption: postData.caption,
         mediaUrl,
         mediaType
       })
+      
+      console.log('Backend create post response:', response.data)
       
       // Transform backend response to match frontend structure
       const post = response.data.data
@@ -363,111 +371,44 @@ class FeedService {
         liked: false
       }
     } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
+      console.error('FeedService.createPost error:', error)
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
       
-      // Fallback to mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // If backend is not running, throw a clear error
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('Backend server is not running. Please start the server and try again.')
+      }
       
-      const user = JSON.parse(localStorage.getItem('user'))
-      if (!user) {
-        throw new Error('User not authenticated')
-      }
-
-      let uploadedImage = null
-      let uploadedVideo = null
-
-      // Handle file uploads if files are provided
-      console.log('feedService - postData:', postData)
-      console.log('feedService - uploadService methods:', Object.getOwnPropertyNames(uploadService))
-      
-      if (postData.image && typeof postData.image === 'object' && postData.image instanceof File) {
-        try {
-          console.log('feedService - uploading image:', postData.image)
-          uploadedImage = await uploadService.uploadImageMock(postData.image)
-          console.log('feedService - image upload result:', uploadedImage)
-        } catch (error) {
-          console.error('Error uploading image:', error)
-          throw new Error('Failed to upload image')
-        }
-      } else if (postData.image) {
-        uploadedImage = { url: postData.image }
-      }
-
-      if (postData.video && typeof postData.video === 'object' && postData.video instanceof File) {
-        try {
-          console.log('feedService - uploading video:', postData.video)
-          uploadedVideo = await uploadService.uploadVideoMock(postData.video)
-          console.log('feedService - video upload result:', uploadedVideo)
-        } catch (error) {
-          console.error('Error uploading video:', error)
-          throw new Error('Failed to upload video')
-        }
-      } else if (postData.video) {
-        uploadedVideo = { url: postData.video }
-      }
-
-      const newPost = {
-        id: `post_${Date.now()}`,
-        author: {
-          id: user.id,
-          name: user.name,
-          avatar: user.avatar,
-          role: user.role
-        },
-        caption: postData.caption,
-        image: uploadedImage?.url || postData.image,
-        video: uploadedVideo?.url || postData.video,
-        fileType: postData.fileType,
-        timestamp: new Date().toISOString(),
-        stats: {
-          likes: 0,
-          comments: 0,
-          shares: 0
-        },
-        liked: false
-      }
-
-      // Clean up old media before adding new post
-      this.cleanupOldMedia()
-
-      const feed = this.getFeedData()
-      feed.unshift(newPost) // Add to beginning
-      this.saveFeedData(feed)
-      
-      return newPost
+      // For other errors, throw the original error
+      throw error
     }
   }
 
   async likePost(postId) {
     try {
-      // Try backend API first
+      console.log('FeedService.likePost called with:', postId)
+      
       const response = await axiosInstance.post(`/api/feed/${postId}/toggle-like`)
+      
+      console.log('Backend likePost response:', response.data)
+      
       return {
         likesCount: response.data.data.likesCount,
         liked: response.data.data.likesCount > 0 // This would need to be determined by checking if current user liked
       }
     } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
-      // Fallback to mock implementation
-      await new Promise(resolve => setTimeout(resolve, 500))
+      console.error('FeedService.likePost error:', error)
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
       
-      const feed = this.getFeedData()
-      const post = feed.find(p => p.id === postId)
+      // If backend is not running, throw a clear error
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('Backend server is not running. Please start the server and try again.')
+      }
       
-      if (!post) {
-        throw new Error('Post not found')
-      }
-
-      if (post.liked) {
-        post.stats.likes--
-        post.liked = false
-      } else {
-        post.stats.likes++
-        post.liked = true
-      }
-
-      this.saveFeedData(feed)
-      return post
+      // For other errors, throw the original error
+      throw error
     }
   }
 
@@ -500,8 +441,11 @@ class FeedService {
 
   async addComment(postId, commentData) {
     try {
-      // Try backend API first
+      console.log('FeedService.addComment called with:', { postId, commentData })
+      
       const response = await axiosInstance.post(`/api/feed/${postId}/comment`, commentData)
+      
+      console.log('Backend addComment response:', response.data)
       
       // Transform backend comment to match frontend structure
       const comment = response.data.data
@@ -517,40 +461,17 @@ class FeedService {
         timestamp: comment.createdAt
       }
     } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
-      // Fallback to mock implementation
-      await new Promise(resolve => setTimeout(resolve, 500))
+      console.error('FeedService.addComment error:', error)
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
       
-      const user = JSON.parse(localStorage.getItem('user'))
-      if (!user) {
-        throw new Error('User not authenticated')
-      }
-
-      const newComment = {
-        id: `comment_${Date.now()}`,
-        postId,
-        author: {
-          id: user.id,
-          name: user.name,
-          avatar: user.avatar
-        },
-        text: commentData.text,
-        timestamp: new Date().toISOString()
-      }
-
-      const comments = await this.getComments(postId)
-      comments.push(newComment)
-      localStorage.setItem(`sportshub_comments_${postId}`, JSON.stringify(comments))
-
-      // Update post comment count
-      const feed = this.getFeedData()
-      const post = feed.find(p => p.id === postId)
-      if (post) {
-        post.stats.comments++
-        this.saveFeedData(feed)
+      // If backend is not running, throw a clear error
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('Backend server is not running. Please start the server and try again.')
       }
       
-      return newComment
+      // For other errors, throw the original error
+      throw error
     }
   }
 
