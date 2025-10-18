@@ -1,6 +1,19 @@
 const Post = require("../models/postModel");
 const User = require("../models/userModel");
 const Notification = require("../models/notificationModel");
+const redisClient = require("../utils/redisClient");
+const DEFAULT_TTL = Number(process.env.FEED_CACHE_TTL) || 30;
+
+async function invalidateFeedCache() {
+  if (!redisClient) return;
+  try {
+    // if Redis supports KEYS in your environment; in prod you'd use a proper pattern or track keys
+    const keys = await redisClient.keys("feed:*");
+    if (keys.length) await redisClient.del(keys);
+  } catch (err) {
+    console.warn("Redis invalidate error:", err.message || err);
+  }
+}
 
 // Cloudinary
 const cloudinary = require("cloudinary").v2;
@@ -45,40 +58,66 @@ async function createPost(user, body) {
     likes: []
   });
   await post.save();
+  invalidateFeedCache();
   return post;
 }
 
 async function getFeed(filters = {}, page = 1, limit = 10) {
-  const q = {};
-  // apply filters
-  if (filters.role) q.role = filters.role;
-  if (filters.type) {
-    // type: 'image'|'video'|'text'
-    if (filters.type === 'text') q.mediaUrl = { $in: [null, ''] };
-    else if (filters.type === 'image') q.mediaType = 'image';
-    else if (filters.type === 'video') q.mediaType = 'video';
+  const role = filters.role || "";
+  const type = filters.type || "";
+  const key = `feed:role=${role}:type=${type}:page=${page}:limit=${limit}`;
+
+  // try cache
+  if (redisClient) {
+    try {
+      const cached = await redisClient.get(key);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (err) {
+      // log, but continue to DB
+      console.warn("Redis read error:", err.message || err);
+    }
   }
 
-  // pagination
+  // build mongo query
+  const q = {};
+  if (filters.role) q.role = filters.role;
+  if (filters.type) {
+    if (filters.type === "text") q.mediaUrl = { $in: [null, ""] };
+    else if (filters.type === "image") q.mediaType = "image";
+    else if (filters.type === "video") q.mediaType = "video";
+  }
+
   const skip = (Math.max(1, page) - 1) * Math.max(1, limit);
   const docs = await Post.find(q)
-    .populate('authorId', 'name role')
-    .sort({ createdAt: -1 }) // latest first
+    .populate("authorId", "name role profilePic")
+    .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(Number(limit) + 1); // fetch one extra to check hasMore
+    .limit(Number(limit) + 1);
 
-  // determine hasMore, nextPage
   const hasMore = docs.length > limit;
   const paged = hasMore ? docs.slice(0, limit) : docs;
-
   const nextPage = hasMore ? page + 1 : null;
-  return {
+
+  const result = {
     page,
     limit: Number(limit),
     hasMore,
     nextPage,
     data: paged
   };
+
+  // write cache
+  if (redisClient) {
+    try {
+      await redisClient.setEx(key, DEFAULT_TTL, JSON.stringify(result));
+    } catch (err) {
+      console.warn("Redis write error:", err.message || err);
+    }
+  }
+
+  return result;
 }
 
 async function likePost(user, postId, io) {
@@ -88,6 +127,7 @@ async function likePost(user, postId, io) {
   // add if not already liked
   if (!post.likes.includes(user._id)) {
     post.likes.push(user._id);
+    invalidateFeedCache();
     await post.save();
 
     // create notification
@@ -138,6 +178,7 @@ async function deletePost(user, postId) {
   if (String(post.authorId) !== String(user._id)) throw new Error("Not allowed");
 
   await post.deleteOne();
+  invalidateFeedCache();
   return { success: true };
 }
 
@@ -167,6 +208,7 @@ async function addComment(user, postId, text, io) {
 
   const comment = { userId: user._id, text, createdAt: new Date() };  
   post.comments.push(comment);
+  invalidateFeedCache();
   await post.save();
 
   // notification to author

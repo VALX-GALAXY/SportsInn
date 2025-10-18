@@ -6,6 +6,8 @@ const userSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   role: { type: String, enum: ["player", "academy", "scout", "admin"], required: true },
   isAdmin: { type: Boolean, default: false },
+  gallery: { type: [String], default: [] },
+  profilePic: { type: String, default: "" },
 
   // Role-specific fields
   age: Number,

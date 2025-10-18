@@ -24,6 +24,11 @@ router.put("/:id", authMiddleware, profileController.updateProfile);
 router.post("/:id/picture", authMiddleware, upload.single("profilePic"), profileController.uploadProfilePicture);
 router.get("/:id/posts", authMiddleware, feedController.getPostsByUser);
 
+router.get("/:id/gallery", authMiddleware, profileController.getGallery);
+router.post("/:id/gallery", authMiddleware, upload.single("file"), profileController.addGalleryImage);
+router.delete("/:id/gallery", authMiddleware, profileController.removeGalleryImage);
+
+
 // Convenience endpoints for frontend to get/update current user
 router.get("/", authMiddleware, async (req, res, next) => {
   try {
