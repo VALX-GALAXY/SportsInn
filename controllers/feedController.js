@@ -83,6 +83,16 @@ async function getPersonalizedFeed(req, res) {
   }
 };
 
+async function getPostsByUser(req, res, next) {
+  try {
+    const userId = req.params.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const posts = await feedService.getPostsByUser(userId, page, limit);
+    res.json({ success: true, data: posts, page, limit });
+  } catch (err) { next(err); }
+}
+
 async function addComment(req, res) {
   try {
     const io = req.app.get("io");
@@ -112,6 +122,7 @@ module.exports = {
   toggleLike,
   deletePost,
   getPersonalizedFeed,
+  getPostsByUser,
   addComment,
   getComments
 };

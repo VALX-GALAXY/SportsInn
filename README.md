@@ -1,38 +1,94 @@
-# 🏏 Cricket Social Platform API
+# 🏏 SportsIn - Backend (Updated)
 
-A Node.js + Express + MongoDB backend that allows players, academies, and scouts to connect, share posts, follow each other, chat, and get real-time notifications.
+A Node.js + Express + MongoDB backend enabling players, academies, clubs, and scouts to connect, share posts, chat, apply to tournaments, follow each other, and receive real‑time notifications.
 
-This project progressed across multiple days — authentication, role-aware profiles, feeds, media uploads, sockets, chat, and now **Day 8 updates: a full tournament system and bug fixes for the notification system.**
+This backend is now live-ready with strict CORS + Helmet security, Cloudinary upload integration for profile pictures, and all notification/profile missing APIs implemented.
 
 ---
 
 ## 🚀 Features
 
-- **User Authentication:** Signup & login with JWT (access + refresh tokens)
-- **Admin Panel:** Admin signup/login + moderation endpoints
-- **Role-based Profiles:** Player / Academy / Scout
-- **Social Feed:** Create posts, like/unlike, comment, personalized feed
-- **Media Uploads:** Cloudinary + multer (local fallback)
-- **Follow System:** Follow/unfollow + follower lists
-- **Real-time:** Notifications & chat via Socket.IO
-- **Private Messaging:** Store + real-time message delivery
-- **Search API:** Filter by role, age, location, name (in-memory filters)
-- **Player Stats (Mock):** Basic match/runs/wickets fields
-- **Applications / Invites:** Apply & accept/reject flow
-- **Moderation / Reports:** Submit & admin review
-- **Role Dashboards:** For academies/scouts
-- **Day 7:** Message read endpoint + conversation pagination fixes
-- **Day 8:** Tournament System (creation, listing, application) + Bug fixes for notifications related to tournament applications
+* JWT Auth (Access + Refresh)
+* Role-based: Player / Academy / Scout / Admin
+* Feed: Create, like, comment, personalized feed
+* Real-time chat + notifications via Socket.IO
+* Media uploads (Cloudinary + fallback)
+* Follow system
+* Tournament module
+* Applications / Invites
+* Reports & moderation (admin)
+* Profile picture upload endpoint **(New)**
+* Get profile posts endpoint **(New)**
+* Notification unread-count endpoint **(New)**
+* Mark-all-read endpoint **(New)**
 
 ---
+
+## 🔧 Environment Variables
+
+```env
+PORT=3000
+MONGO_URI=mongodb://127.0.0.1:27017/project1db
+ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+JWT_SECRET=your_access_secret
+JWT_REFRESH_SECRET=your_refresh_secret
+BASE_URL=http://localhost:3000
+CLOUDINARY_CLOUD_NAME=xxx
+CLOUDINARY_API_KEY=xxx
+CLOUDINARY_API_SECRET=xxx
+```
+
+---
+
+## ✅ New API Endpoints
+
+### 📌 Profile
+
+#### Upload Profile Picture
+
+```bash
+curl -X POST http://localhost:3000/api/profile/<userId>/picture \
+  -H "Authorization: Bearer <access_token>" \
+  -F "profilePic=@/path/to/image.jpg"
+```
+
+#### Get Posts by User (Profile Posts)
+
+```bash
+curl -X GET "http://localhost:3000/api/profile/<userId>/posts?page=1&limit=10" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+### 🔔 Notifications
+
+#### Get Unread Count
+
+```bash
+curl -X GET http://localhost:3000/api/notifications/unread-count \
+  -H "Authorization: Bearer <access_token>"
+```
+
+#### Mark All as Read
+
+```bash
+curl -X PATCH http://localhost:3000/api/notifications/read-all \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+(Full README continues...)
+
 
 ## ⚡ Setup Instructions
 
 ### 1. Clone Repository
 
 ```bash
-git clone <repo_url>
-cd <project_folder>
+git clone git@github.com:VALX-GALAXY/project-1.git
+cd day2-auth
 ```
 
 ### 2. Install Dependencies
@@ -46,15 +102,24 @@ npm install
 Create a `.env` file at the root:
 
 ```env
+PORT=3000
 MONGO_URI=mongodb://127.0.0.1:27017/project1db
+
+# CORS: comma-separated allowed origins (frontend dev address)
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+
+# JWT secrets (already present)
 JWT_SECRET=your_jwt_secret
 JWT_REFRESH_SECRET=your_refresh_secret
+
+# Base URL (used for local upload fallback)
 BASE_URL=http://localhost:3000
 
-# Optional Cloudinary (if used)
-CLOUDINARY_CLOUD_NAME=...
-CLOUDINARY_API_KEY=...
-CLOUDINARY_API_SECRET=...
+# (Optional) Cloudinary
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
 ```
 
 ### 4. Start MongoDB

@@ -3,7 +3,9 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
+const helmet = require("helmet");
 require("dotenv").config();
+const PORT = process.env.PORT || 3000;
 
 // Route imports
 const authRoutes = require("./routes/authRoutes");
@@ -28,16 +30,34 @@ const User = require("./models/userModel");
 
 // Express app setup
 const app = express();
-app.use(cors());
+
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:5173").split(",");
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // allow requests with no origin (curl, mobile apps, server-to-server)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+      return callback(new Error("CORS: Not allowed by origin"));
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(generalLimiter);
 
 // serve uploaded files (local fallback)
 app.use("/uploads", express.static("uploads"));
 
+// apply secure headers
+app.use(helmet());
+
 // Rate Limiter
 app.use("/api/auth", authLimiter);
 
+// health check
+app.get("/api/health", (req, res) => res.json({ success: true, message: "ok" }));
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -52,6 +72,9 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use("/api/tournaments", tournamentRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/upload/profile', uploadRoutes);
+app.use('/api/upload/post', uploadRoutes);
+app.use('/api/upload/gallery', uploadRoutes);
 
 // Error Handler
 app.use(errorHandler);
@@ -99,6 +122,6 @@ app.set("io", io);
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log("✅ MongoDB connected");
-    app.listen(3000, () => console.log("🚀 Server running on http://localhost:3000"));
+    app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
   })
   .catch(err => console.error("❌ DB connection error:", err));

@@ -152,6 +152,15 @@ async function getPersonalizedFeed(userId) {
   return posts;
 }
 
+async function getPostsByUser(userId, page = 1, limit = 10) {
+  const skip = (Math.max(1, page) - 1) * Math.max(1, limit);
+  const docs = await Post.find({ authorId: userId })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(Number(limit));
+  return docs;
+}
+
 async function addComment(user, postId, text, io) {
   const post = await Post.findById(postId);
   if (!post) throw new Error("Post not found");
@@ -193,6 +202,7 @@ module.exports = {
   toggleLike,
   deletePost,
   getPersonalizedFeed,
+  getPostsByUser,
   addComment,
   getComments
 };

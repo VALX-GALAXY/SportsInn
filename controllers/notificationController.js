@@ -29,4 +29,20 @@ async function markOneRead(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { getNotifications, markOneRead };
+async function markAllRead(req, res, next) {
+  try {
+    const userId = req.user._id;
+    const result = await Notification.updateMany({ userId, isRead: false }, { $set: { isRead: true }});
+    res.json({ success: true, data: { modifiedCount: result.modifiedCount || result.nModified || 0 }, message: "All notifications marked as read" });
+  } catch (err) { next(err); }
+}
+
+async function getUnreadCount(req, res, next) {
+  try {
+    const userId = req.user._id;
+    const count = await Notification.countDocuments({ userId, isRead: false });
+    res.json({ success: true, data: { unreadCount: count } });
+  } catch (err) { next(err); }
+}
+
+module.exports = { getNotifications, markOneRead, markAllRead, getUnreadCount };
