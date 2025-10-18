@@ -231,7 +231,35 @@ class FeedService {
       const response = await axiosInstance.get('/api/feed', {
         params: { page, limit }
       })
-      return response.data
+      
+      // Transform backend posts to match frontend structure
+      const transformedPosts = (response.data.data || []).map(post => ({
+        id: post._id,
+        author: {
+          id: post.authorId._id,
+          name: post.authorId.name,
+          avatar: post.authorId.profilePic || null,
+          role: post.authorId.role
+        },
+        caption: post.caption,
+        image: post.mediaType === 'image' ? post.mediaUrl : null,
+        video: post.mediaType === 'video' ? post.mediaUrl : null,
+        timestamp: post.createdAt,
+        stats: {
+          likes: post.likes?.length || 0,
+          comments: post.comments?.length || 0,
+          shares: 0 // Backend doesn't track shares yet
+        },
+        liked: post.likes?.includes(post.authorId._id) || false
+      }))
+      
+      return {
+        posts: transformedPosts,
+        total: transformedPosts.length,
+        page: response.data.page,
+        limit: response.data.limit,
+        hasMore: response.data.hasMore
+      }
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       // Fallback to mock data
@@ -256,7 +284,13 @@ class FeedService {
       const response = await axiosInstance.get('/api/feed/personalized', {
         params: { page, limit }
       })
-      return response.data
+      // Transform backend response to match frontend expectations
+      return {
+        posts: response.data.data || [],
+        total: response.data.data?.length || 0,
+        page: response.data.page,
+        limit: response.data.limit
+      }
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       // Fallback to mock data
@@ -279,22 +313,55 @@ class FeedService {
   async createPost(postData) {
     try {
       // Try backend API first
-      const formData = new FormData()
-      formData.append('caption', postData.caption)
+      let mediaUrl = null
+      let mediaType = null
       
+      // Handle media upload if files are provided
       if (postData.image && postData.image instanceof File) {
-        formData.append('image', postData.image)
-      }
-      if (postData.video && postData.video instanceof File) {
-        formData.append('video', postData.video)
+        const formData = new FormData()
+        formData.append('media', postData.image)
+        const uploadResponse = await axiosInstance.post('/api/feed/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        mediaUrl = uploadResponse.data.data.url
+        mediaType = uploadResponse.data.data.type
+      } else if (postData.video && postData.video instanceof File) {
+        const formData = new FormData()
+        formData.append('media', postData.video)
+        const uploadResponse = await axiosInstance.post('/api/feed/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        mediaUrl = uploadResponse.data.data.url
+        mediaType = uploadResponse.data.data.type
       }
       
-      const response = await axiosInstance.post('/api/feed', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+      const response = await axiosInstance.post('/api/feed', {
+        caption: postData.caption,
+        mediaUrl,
+        mediaType
       })
-      return response.data
+      
+      // Transform backend response to match frontend structure
+      const post = response.data.data
+      return {
+        id: post._id,
+        author: {
+          id: post.authorId._id,
+          name: post.authorId.name,
+          avatar: post.authorId.profilePic || null,
+          role: post.authorId.role
+        },
+        caption: post.caption,
+        image: post.mediaType === 'image' ? post.mediaUrl : null,
+        video: post.mediaType === 'video' ? post.mediaUrl : null,
+        timestamp: post.createdAt,
+        stats: {
+          likes: post.likes?.length || 0,
+          comments: post.comments?.length || 0,
+          shares: 0
+        },
+        liked: false
+      }
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       
@@ -374,8 +441,11 @@ class FeedService {
   async likePost(postId) {
     try {
       // Try backend API first
-      const response = await axiosInstance.post(`/api/feed/${postId}/like`)
-      return response.data
+      const response = await axiosInstance.post(`/api/feed/${postId}/toggle-like`)
+      return {
+        likesCount: response.data.data.likesCount,
+        liked: response.data.data.likesCount > 0 // This would need to be determined by checking if current user liked
+      }
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       // Fallback to mock implementation
@@ -405,7 +475,19 @@ class FeedService {
     try {
       // Try backend API first
       const response = await axiosInstance.get(`/api/feed/${postId}/comments`)
-      return response.data
+      
+      // Transform backend comments to match frontend structure
+      return (response.data.data || []).map(comment => ({
+        id: comment._id,
+        postId: postId,
+        author: {
+          id: comment.userId._id,
+          name: comment.userId.name,
+          avatar: comment.userId.profilePic || null
+        },
+        text: comment.text,
+        timestamp: comment.createdAt
+      }))
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       // Fallback to mock implementation
@@ -420,7 +502,20 @@ class FeedService {
     try {
       // Try backend API first
       const response = await axiosInstance.post(`/api/feed/${postId}/comment`, commentData)
-      return response.data
+      
+      // Transform backend comment to match frontend structure
+      const comment = response.data.data
+      return {
+        id: comment._id,
+        postId: postId,
+        author: {
+          id: comment.userId._id,
+          name: comment.userId.name,
+          avatar: comment.userId.profilePic || null
+        },
+        text: comment.text,
+        timestamp: comment.createdAt
+      }
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       // Fallback to mock implementation

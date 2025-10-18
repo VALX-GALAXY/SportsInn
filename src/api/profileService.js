@@ -5,7 +5,7 @@ class ProfileService {
   async getProfile(userId) {
     try {
       const response = await axiosInstance.get(`/api/profile/${userId}`)
-      return response.data
+      return response.data.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       // Fallback to mock data from localStorage
@@ -18,7 +18,7 @@ class ProfileService {
   async updateProfile(userId, profileData) {
     try {
       const response = await axiosInstance.put(`/api/profile/${userId}`, profileData)
-      return response.data
+      return response.data.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       // Fallback to mock implementation
@@ -55,18 +55,17 @@ class ProfileService {
     }
   }
 
-  // Upload profile picture
+  // Upload profile picture - using updateProfile with profilePic field
   async uploadProfilePicture(userId, file) {
     try {
-      const formData = new FormData()
-      formData.append('profilePicture', file)
+      // Since backend doesn't have dedicated upload endpoint, we'll use the updateProfile endpoint
+      // First convert file to base64 or upload to a service, then update profile
+      const base64String = await this.fileToBase64(file)
       
-      const response = await axiosInstance.post(`/api/profile/${userId}/picture`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+      const response = await axiosInstance.put(`/api/profile/${userId}`, {
+        profilePic: base64String
       })
-      return response.data
+      return response.data.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       // Fallback to mock implementation
@@ -87,13 +86,35 @@ class ProfileService {
     }
   }
 
-  // Get user's posts
+  // Helper function to convert file to base64
+  fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = error => reject(error)
+    })
+  }
+
+  // Get user's posts - using feed endpoint with author filter
   async getUserPosts(userId, page = 1, limit = 10) {
     try {
-      const response = await axiosInstance.get(`/api/profile/${userId}/posts`, {
+      // Backend doesn't have dedicated user posts endpoint, so we'll use the feed endpoint
+      // and filter on frontend or use a different approach
+      const response = await axiosInstance.get('/api/feed', {
         params: { page, limit }
       })
-      return response.data
+      
+      // Filter posts by author (this would be better done on backend)
+      const allPosts = response.data.data || []
+      const userPosts = allPosts.filter(post => post.authorId._id === userId)
+      
+      return {
+        posts: userPosts,
+        total: userPosts.length,
+        page,
+        limit
+      }
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       // Fallback to mock implementation
