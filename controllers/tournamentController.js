@@ -27,7 +27,7 @@ async function getTournament(req, res, next) {
 
 async function applyTournament(req, res, next) {
   try {
-    const doc = await tournamentService.applyTournament(req.user, req.body.tournamentId || req.params.id);
+    const doc = await tournamentService.applyTournament(req.user,  req.params.id || req.body.tournamentId);
     res.json({ success: true, data: doc, message: 'Applied successfully' });
   } catch (err) { next(err); }
 }

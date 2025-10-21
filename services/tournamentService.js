@@ -1,5 +1,6 @@
 const Tournament = require("../models/tournamentModel");
 const Notification = require("../models/notificationModel");
+const User = require("../models/userModel");
 
 // Simple in-memory cache for listing tournaments
 const cache = new Map();
