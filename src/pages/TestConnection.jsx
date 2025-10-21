@@ -1,174 +1,278 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader } from '../components/ui/card'
 import { Button } from '../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
-import { Input } from '../components/ui/input'
-import { Label } from '../components/ui/label'
+import { Badge } from '../components/ui/badge'
+import { 
+  CheckCircle, 
+  XCircle, 
+  Loader2, 
+  Server, 
+  Database, 
+  Wifi, 
+  WifiOff,
+  RefreshCw
+} from 'lucide-react'
 import { useToast } from '../components/ui/simple-toast'
-import authService from '../api/realAuthService'
 
 export default function TestConnection() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [testResults, setTestResults] = useState([])
+  const [connectionStatus, setConnectionStatus] = useState({
+    backend: 'checking',
+    database: 'checking',
+    api: 'checking'
+  })
+  const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
 
-  const addResult = (test, status, message) => {
-    setTestResults(prev => [...prev, { test, status, message, timestamp: new Date().toLocaleTimeString() }])
-  }
-
-  const testBackendConnection = async () => {
+  const testConnections = async () => {
     setIsLoading(true)
-    setTestResults([])
-    
+    setConnectionStatus({
+      backend: 'checking',
+      database: 'checking',
+      api: 'checking'
+    })
+
     try {
-      // Test 1: Check if backend is running
-      addResult('Backend Server', 'testing', 'Checking if backend is running...')
-      const response = await fetch('http://localhost:3000/api/auth/test')
-      if (response.ok) {
-        addResult('Backend Server', 'success', 'Backend is running on port 3000')
-      } else {
-        addResult('Backend Server', 'error', 'Backend not responding')
-        return
-      }
-
-      // Test 2: Test signup
-      addResult('User Signup', 'testing', 'Testing user signup...')
-      const signupData = {
-        name: 'Test User',
-        email: `test${Date.now()}@test.com`,
-        password: '123456',
-        role: 'player',
-        age: 21,
-        playingRole: 'batsman'
-      }
-      
-      const signupResult = await authService.signup(signupData)
-      addResult('User Signup', 'success', `User created: ${signupResult.user.name} (${signupResult.user.email})`)
-
-      // Test 3: Test login
-      addResult('User Login', 'testing', 'Testing user login...')
-      const loginResult = await authService.login({
-        email: signupData.email,
-        password: signupData.password
-      })
-      addResult('User Login', 'success', `Login successful: ${loginResult.user.name}`)
-
-      // Test 4: Check localStorage
-      addResult('Local Storage', 'testing', 'Checking localStorage...')
-      const storedUser = localStorage.getItem('user')
-      const storedToken = localStorage.getItem('token')
-      
-      if (storedUser && storedToken) {
-        const user = JSON.parse(storedUser)
-        addResult('Local Storage', 'success', `User stored: ${user.name} (${user.email})`)
-      } else {
-        addResult('Local Storage', 'error', 'No user data in localStorage')
-      }
-
-      // Test 5: Test protected route
-      addResult('Protected Route', 'testing', 'Testing protected API call...')
-      const feedResponse = await fetch('http://localhost:3000/api/feed', {
+      // Test backend connection
+      const backendResponse = await fetch('http://localhost:3000/api/health', {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${storedToken}`,
           'Content-Type': 'application/json'
         }
       })
       
-      if (feedResponse.ok) {
-        addResult('Protected Route', 'success', 'Protected route accessible')
+      if (backendResponse.ok) {
+        setConnectionStatus(prev => ({ ...prev, backend: 'connected' }))
       } else {
-        addResult('Protected Route', 'error', 'Protected route failed')
+        setConnectionStatus(prev => ({ ...prev, backend: 'error' }))
       }
-
-      toast({
-        title: "All tests passed!",
-        description: "Frontend-Backend connection is working perfectly!",
-        variant: "success"
-      })
-
     } catch (error) {
-      addResult('Error', 'error', error.message)
-      toast({
-        title: "Test failed",
-        description: error.message,
-        variant: "destructive"
+      console.error('Backend connection error:', error)
+      setConnectionStatus(prev => ({ ...prev, backend: 'error' }))
+    }
+
+    try {
+      // Test database connection (through backend)
+      const dbResponse = await fetch('http://localhost:3000/api/test-db', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       })
-    } finally {
-      setIsLoading(false)
+      
+      if (dbResponse.ok) {
+        setConnectionStatus(prev => ({ ...prev, database: 'connected' }))
+      } else {
+        setConnectionStatus(prev => ({ ...prev, database: 'error' }))
+      }
+    } catch (error) {
+      console.error('Database connection error:', error)
+      setConnectionStatus(prev => ({ ...prev, database: 'error' }))
+    }
+
+    try {
+      // Test API endpoints
+      const apiResponse = await fetch('http://localhost:3000/api/tournaments', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (apiResponse.ok) {
+        setConnectionStatus(prev => ({ ...prev, api: 'connected' }))
+      } else {
+        setConnectionStatus(prev => ({ ...prev, api: 'error' }))
+      }
+    } catch (error) {
+      console.error('API connection error:', error)
+      setConnectionStatus(prev => ({ ...prev, api: 'error' }))
+    }
+
+    setIsLoading(false)
+  }
+
+  useEffect(() => {
+    testConnections()
+  }, [])
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'connected':
+        return <CheckCircle className="w-5 h-5 text-green-500" />
+      case 'error':
+        return <XCircle className="w-5 h-5 text-red-500" />
+      case 'checking':
+        return <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+      default:
+        return <WifiOff className="w-5 h-5 text-gray-400" />
     }
   }
 
-  const clearLocalStorage = () => {
-    localStorage.clear()
-    setTestResults([])
-    toast({
-      title: "LocalStorage cleared",
-      description: "All stored data has been removed",
-      variant: "default"
-    })
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'connected':
+        return <Badge className="bg-green-100 text-green-800">Connected</Badge>
+      case 'error':
+        return <Badge variant="destructive">Error</Badge>
+      case 'checking':
+        return <Badge className="bg-blue-100 text-blue-800">Checking...</Badge>
+      default:
+        return <Badge variant="outline">Unknown</Badge>
+    }
   }
 
+  const allConnected = Object.values(connectionStatus).every(status => status === 'connected')
+  const hasErrors = Object.values(connectionStatus).some(status => status === 'error')
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          Connection Test
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Test the connection status of backend services and database
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Backend Connection */}
         <Card>
-          <CardHeader>
-            <CardTitle>🔗 Frontend-Backend Connection Test</CardTitle>
-            <CardDescription>
-              Test the connection between frontend (port 5173) and backend (port 3000)
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex gap-4">
-              <Button 
-                onClick={testBackendConnection} 
-                disabled={isLoading}
-                className="flex-1"
-              >
-                {isLoading ? 'Testing...' : 'Run Connection Test'}
-              </Button>
-              <Button 
-                onClick={clearLocalStorage} 
-                variant="outline"
-                className="flex-1"
-              >
-                Clear LocalStorage
-              </Button>
-            </div>
-
-            {testResults.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold">Test Results:</h3>
-                {testResults.map((result, index) => (
-                  <div 
-                    key={index} 
-                    className={`p-3 rounded-lg border ${
-                      result.status === 'success' ? 'bg-green-50 border-green-200' :
-                      result.status === 'error' ? 'bg-red-50 border-red-200' :
-                      'bg-yellow-50 border-yellow-200'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{result.test}</span>
-                      <span className="text-sm text-gray-500">{result.timestamp}</span>
-                    </div>
-                    <p className="text-sm mt-1">{result.message}</p>
-                  </div>
-                ))}
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Server className="w-5 h-5 text-blue-500" />
+                <h3 className="font-semibold">Backend Server</h3>
               </div>
-            )}
-
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-blue-900 mb-2">What this test does:</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Checks if backend is running on port 3000</li>
-                <li>• Tests user signup with real backend API</li>
-                <li>• Tests user login with real backend API</li>
-                <li>• Verifies data is stored in browser localStorage</li>
-                <li>• Tests protected API routes with JWT token</li>
-              </ul>
+              {getStatusIcon(connectionStatus.backend)}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Express.js server running on port 3000
+              </p>
+              {getStatusBadge(connectionStatus.backend)}
             </div>
           </CardContent>
         </Card>
+
+        {/* Database Connection */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Database className="w-5 h-5 text-green-500" />
+                <h3 className="font-semibold">Database</h3>
+              </div>
+              {getStatusIcon(connectionStatus.database)}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                MongoDB connection status
+              </p>
+              {getStatusBadge(connectionStatus.database)}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* API Endpoints */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Wifi className="w-5 h-5 text-purple-500" />
+                <h3 className="font-semibold">API Endpoints</h3>
+              </div>
+              {getStatusIcon(connectionStatus.api)}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                REST API endpoints availability
+              </p>
+              {getStatusBadge(connectionStatus.api)}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Overall Status */}
+      <Card className="mb-6">
+        <CardHeader>
+          <h3 className="text-lg font-semibold">Overall Status</h3>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center space-x-4">
+            {allConnected ? (
+              <>
+                <CheckCircle className="w-6 h-6 text-green-500" />
+                <div>
+                  <p className="font-medium text-green-700 dark:text-green-400">
+                    All systems operational
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Backend, database, and API are all connected and working properly.
+                  </p>
+                </div>
+              </>
+            ) : hasErrors ? (
+              <>
+                <XCircle className="w-6 h-6 text-red-500" />
+                <div>
+                  <p className="font-medium text-red-700 dark:text-red-400">
+                    Connection issues detected
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Some services are not responding. Check the individual status cards above.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                <div>
+                  <p className="font-medium text-blue-700 dark:text-blue-400">
+                    Testing connections...
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Please wait while we check all service connections.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Action Buttons */}
+      <div className="flex space-x-4">
+        <Button 
+          onClick={testConnections}
+          disabled={isLoading}
+          className="flex items-center space-x-2"
+        >
+          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          <span>Refresh Status</span>
+        </Button>
+        
+        {hasErrors && (
+          <Button 
+            variant="outline"
+            onClick={() => {
+              toast({
+                title: "Troubleshooting Tips",
+                description: "Make sure the backend server is running on port 3000 and MongoDB is connected.",
+                variant: "default"
+              })
+            }}
+          >
+            Get Help
+          </Button>
+        )}
       </div>
     </div>
   )

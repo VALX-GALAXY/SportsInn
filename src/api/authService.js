@@ -67,16 +67,81 @@ class AuthService {
 
   async googleLogin(googleData) {
     try {
-      const response = await axiosInstance.post('/api/auth/google', googleData)
-      const { user, token, refreshToken } = response.data
+      console.log('authService.googleLogin - Starting Google login with data:', googleData)
       
-      // Store auth data
-      localStorage.setItem('token', token)
-      localStorage.setItem('refreshToken', refreshToken)
-      localStorage.setItem('user', JSON.stringify(user))
+      // First, try to login with existing user (if they have Google OAuth enabled)
+      try {
+        console.log('authService.googleLogin - Attempting login for existing user...')
+        
+        const loginResponse = await axiosInstance.post('/api/auth/login', {
+          email: googleData.email,
+          password: 'google_oauth_user' // Special password for Google users
+        })
+        
+        console.log('authService.googleLogin - Existing user login successful')
+        const { user, token, refreshToken } = loginResponse.data.data
+        
+        // Store auth data
+        localStorage.setItem('token', token)
+        localStorage.setItem('refreshToken', refreshToken)
+        localStorage.setItem('user', JSON.stringify(user))
+        
+        return { user, token, refreshToken }
+        
+      } catch (loginError) {
+        console.log('authService.googleLogin - Login failed, checking if user exists with regular password...')
+        
+        // If login fails, it could be because:
+        // 1. User doesn't exist (we'll create them)
+        // 2. User exists but has a regular password (we'll show error)
+        
+        // Try to determine if user exists by attempting signup
+        try {
+          console.log('authService.googleLogin - Attempting to create new user...')
+          
+          const signupResponse = await axiosInstance.post('/api/auth/signup', {
+            name: googleData.name,
+            email: googleData.email,
+            password: 'google_oauth_user', // Special password for Google users
+            role: 'player', // Default role for Google users
+            age: 25, // Default age
+            playingRole: 'All-rounder' // Default playing role
+          })
+          
+          console.log('authService.googleLogin - New user created successfully')
+          const { user } = signupResponse.data.data
+          
+          // Now login with the newly created user
+          const loginResponse = await axiosInstance.post('/api/auth/login', {
+            email: googleData.email,
+            password: 'google_oauth_user'
+          })
+          
+          const { token, refreshToken } = loginResponse.data.data
+          
+          // Store auth data
+          localStorage.setItem('token', token)
+          localStorage.setItem('refreshToken', refreshToken)
+          localStorage.setItem('user', JSON.stringify(user))
+          
+          return { user, token, refreshToken }
+          
+        } catch (signupError) {
+          console.log('authService.googleLogin - Signup failed, user likely exists with regular password')
+          
+          // If signup fails with "Email already exists", user has regular account
+          if (signupError.response?.data?.message?.includes('Email already exists')) {
+            throw new Error(`An account with email ${googleData.email} already exists. Please use your regular password to login, or contact support to link your Google account.`)
+          }
+          
+          // For other signup errors, re-throw
+          throw signupError
+        }
+      }
       
-      return { user, token, refreshToken }
     } catch (error) {
+      console.error('authService.googleLogin - Error:', error)
+      
       // Check if it's a backend error with a message
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message)

@@ -9,7 +9,6 @@ import {
   MapPin, 
   Users, 
   Calendar, 
-  DollarSign, 
   Filter, 
   Search, 
   Loader2,
@@ -18,23 +17,30 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  X
+  X,
+  Plus
 } from 'lucide-react'
 import tournamentService from '../api/tournamentService'
 import { useToast } from '../components/ui/simple-toast'
 import { TournamentSkeleton } from '../components/SkeletonLoaders'
 import PageTransition, { StaggerContainer, StaggerItem } from '../components/PageTransition'
+import TournamentCarousel from '../components/TournamentCarousel'
+import TournamentFilters from '../components/TournamentFilters'
+import QuickApplyButton from '../components/QuickApplyButton'
+import ConfettiAnimation from '../components/ConfettiAnimation'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Tournaments() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [tournaments, setTournaments] = useState([])
+  const [featuredTournaments, setFeaturedTournaments] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [filters, setFilters] = useState({
-    role: 'all',
-    location: 'all',
+    status: 'all',
     type: 'all',
-    minFee: '',
-    maxFee: '',
+    location: 'all',
+    feeRange: 'all',
     search: '',
     sortBy: 'date', // date, fee, prize, popularity
     sortOrder: 'asc' // asc, desc
@@ -51,6 +57,8 @@ export default function Tournaments() {
   const [isApplying, setIsApplying] = useState(false)
   const [validationErrors, setValidationErrors] = useState({})
   const [applicationStatuses, setApplicationStatuses] = useState({})
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [confettiTournament, setConfettiTournament] = useState(null)
   const { toast } = useToast()
 
   // Debounced search effect
@@ -60,7 +68,7 @@ export default function Tournaments() {
     }, filters.search ? 500 : 0) // Debounce search by 500ms
 
     return () => clearTimeout(timeoutId)
-  }, [filters.role, filters.location, filters.type, filters.minFee, filters.maxFee, filters.search, filters.sortBy, filters.sortOrder])
+  }, [filters.status, filters.type, filters.location, filters.feeRange, filters.search, filters.sortBy, filters.sortOrder])
 
   const fetchTournaments = async () => {
     try {
@@ -69,13 +77,16 @@ export default function Tournaments() {
       // Validate filters before making the request
       const safeFilters = {
         ...filters,
-        minFee: filters.minFee && !isNaN(parseInt(filters.minFee)) ? parseInt(filters.minFee) : '',
-        maxFee: filters.maxFee && !isNaN(parseInt(filters.maxFee)) ? parseInt(filters.maxFee) : ''
+        minFee: filters.feeRange === 'low' ? 0 : filters.feeRange === 'medium' ? 1000 : filters.feeRange === 'high' ? 5000 : '',
+        maxFee: filters.feeRange === 'low' ? 1000 : filters.feeRange === 'medium' ? 5000 : ''
       }
       
       const response = await tournamentService.getTournaments(safeFilters)
       const tournaments = response.tournaments || []
       setTournaments(tournaments)
+      
+      // Set featured tournaments (first 3 tournaments)
+      setFeaturedTournaments(tournaments.slice(0, 3))
       
       // Load application statuses for each tournament
       const statusPromises = tournaments.map(async (tournament) => {
@@ -111,6 +122,17 @@ export default function Tournaments() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Handle confetti animation
+  const handleApplicationSuccess = (tournament) => {
+    setConfettiTournament(tournament)
+    setShowConfetti(true)
+  }
+
+  const handleConfettiComplete = () => {
+    setShowConfetti(false)
+    setConfettiTournament(null)
   }
 
   const sortTournaments = (tournaments, sortBy, sortOrder) => {
@@ -465,329 +487,59 @@ export default function Tournaments() {
     <PageTransition className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         {/* Hero Section */}
-        <div className="relative bg-gradient-to-r from-blue-500 to-emerald-500 rounded-2xl p-8 text-white overflow-hidden mb-8">
+        <div className="relative bg-gradient-to-r from-blue-500 via-green-500 to-blue-600 rounded-xl p-6 text-white overflow-hidden mb-6 shadow-lg">
           <div className="absolute inset-0 bg-black/10"></div>
           <div className="relative z-10">
-            <h1 className="text-4xl font-bold mb-4">
+            <h1 className="text-3xl font-bold mb-3 font-sans">
               Discover Tournaments
             </h1>
-            <p className="text-blue-100 mb-6 text-lg">
+            <p className="text-blue-100 mb-4 text-lg font-medium">
               Join exciting sports tournaments and showcase your skills
             </p>
             <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center space-x-2">
-                <Trophy className="w-5 h-5" />
+              <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2">
+                <Trophy className="w-5 h-5 text-yellow-300" />
                 <span className="font-semibold">{tournaments.length} Active Tournaments</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <Users className="w-5 h-5" />
+              <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2">
+                <Users className="w-5 h-5 text-green-300" />
                 <span className="font-semibold">Join Thousands of Players</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Interactive Filter Chips */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-2 mb-4">
-            {[
-              { key: 'all', label: 'All Tournaments', count: tournaments.length },
-              { key: 'open', label: 'Open', count: tournaments.filter(t => t.status === 'open').length },
-              { key: 'cricket', label: 'Cricket', count: tournaments.filter(t => t.type === 'cricket').length },
-              { key: 'football', label: 'Football', count: tournaments.filter(t => t.type === 'football').length },
-              { key: 'basketball', label: 'Basketball', count: tournaments.filter(t => t.type === 'basketball').length }
-            ].map(({ key, label, count }) => (
-              <Button
-                key={key}
-                variant={filters.role === key || filters.type === key ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  if (key === 'all') {
-                    setFilters(prev => ({ ...prev, role: 'all', type: 'all' }))
-                  } else if (['open'].includes(key)) {
-                    setFilters(prev => ({ ...prev, role: key }))
-                  } else {
-                    setFilters(prev => ({ ...prev, type: key }))
-                  }
-                }}
-                className={`transition-all duration-200 ${
-                  filters.role === key || filters.type === key 
-                    ? 'bg-gradient-to-r from-blue-500 to-emerald-500 text-white shadow-sm' 
-                    : 'hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400'
-                }`}
-              >
-                {label}
-                {count > 0 && (
-                  <Badge variant="secondary" className="ml-2 px-2 py-0.5 text-xs">
-                    {count}
-                  </Badge>
-                )}
-              </Button>
-            ))}
+        {/* Featured Tournaments Carousel */}
+        {featuredTournaments.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-green-500 rounded-xl">
+                <Star className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white font-sans">
+                Featured Tournaments
+              </h2>
+            </div>
+            <TournamentCarousel 
+              tournaments={featuredTournaments}
+              onTournamentClick={(tournament) => navigate(`/tournaments/${tournament.id}`)}
+            />
           </div>
+        )}
+
+        {/* Filters Section */}
+        <div className="mb-8">
+          <TournamentFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            onSearch={(search) => setFilters(prev => ({ ...prev, search }))}
+            isExpanded={showFilters}
+            onToggleExpanded={() => setShowFilters(!showFilters)}
+          />
         </div>
 
-        {/* Filters and Search */}
-        <div className="mb-6 space-y-4">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search tournaments..."
-                value={filters.search}
-                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                className="pl-10"
-              />
-            </div>
 
-            {/* Sort and Filter Controls */}
-            <div className="flex items-center space-x-4">
-              {/* Sort Dropdown */}
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sort by:</label>
-                <select
-                  value={filters.sortBy}
-                  onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value }))}
-                  className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="date">Date</option>
-                  <option value="fee">Entry Fee</option>
-                  <option value="prize">Prize Pool</option>
-                  <option value="popularity">Popularity</option>
-                </select>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setFilters(prev => ({ 
-                    ...prev, 
-                    sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc' 
-                  }))}
-                  className="p-1"
-                >
-                  {filters.sortOrder === 'asc' ? '↑' : '↓'}
-                </Button>
-              </div>
 
-              {/* Filter Toggle */}
-              <Button
-                onClick={() => {
-                  try {
-                    setShowFilters(!showFilters)
-                  } catch (error) {
-                    console.error('Error toggling filters:', error)
-                    toast({
-                      title: "Error",
-                      description: "Failed to toggle filters",
-                      variant: "destructive"
-                    })
-                  }
-                }}
-                variant="outline"
-                className="flex items-center space-x-2"
-              >
-                <Filter className="w-4 h-4" />
-                <span>Filters</span>
-              </Button>
-              
-              {/* Clear Filters */}
-              {(filters.role !== 'all' || filters.location !== 'all' || filters.type !== 'all' || 
-                filters.minFee !== '' || filters.maxFee !== '' || filters.search !== '') && (
-                <Button
-                  onClick={() => {
-                    setFilters({
-                      role: 'all',
-                      location: 'all',
-                      type: 'all',
-                      minFee: '',
-                      maxFee: '',
-                      search: '',
-                      sortBy: 'date',
-                      sortOrder: 'asc'
-                    })
-                  }}
-                  variant="outline"
-                  className="text-red-600 border-red-300 hover:bg-red-50"
-                >
-                  Clear All
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Filter Options */}
-          {showFilters && (
-            <Card className="p-6">
-              <div className="space-y-6">
-                {/* Filter Header */}
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filters & Sorting</h3>
-                  <Button
-                    onClick={() => setShowFilters(false)}
-                    variant="ghost"
-                    size="sm"
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                {/* Filter Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {/* Organizer Role */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Organizer Role
-                    </label>
-                    <select
-                      value={filters.role}
-                      onChange={(e) => setFilters(prev => ({ ...prev, role: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="all">All Roles</option>
-                      <option value="Club">Clubs</option>
-                      <option value="Academy">Academies</option>
-                      <option value="Player">Players</option>
-                      <option value="Scout">Scouts</option>
-                    </select>
-                  </div>
-
-                  {/* Sport Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Sport Type
-                    </label>
-                    <select
-                      value={filters.type}
-                      onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="all">All Sports</option>
-                      <option value="Football">Football</option>
-                      <option value="Cricket">Cricket</option>
-                      <option value="Basketball">Basketball</option>
-                      <option value="Tennis">Tennis</option>
-                      <option value="Badminton">Badminton</option>
-                    </select>
-                  </div>
-
-                  {/* Location */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Location
-                    </label>
-                    <select
-                      value={filters.location}
-                      onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="all">All Locations</option>
-                      <option value="Mumbai">Mumbai</option>
-                      <option value="Delhi">Delhi</option>
-                      <option value="Bangalore">Bangalore</option>
-                      <option value="Chennai">Chennai</option>
-                      <option value="Pune">Pune</option>
-                      <option value="Hyderabad">Hyderabad</option>
-                    </select>
-                  </div>
-
-                  {/* Min Entry Fee */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Min Entry Fee (₹)
-                    </label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={filters.minFee}
-                      onChange={(e) => setFilters(prev => ({ ...prev, minFee: e.target.value }))}
-                      className="w-full"
-                    />
-                  </div>
-
-                  {/* Max Entry Fee */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Max Entry Fee (₹)
-                    </label>
-                    <Input
-                      type="number"
-                      placeholder="10000"
-                      value={filters.maxFee}
-                      onChange={(e) => setFilters(prev => ({ ...prev, maxFee: e.target.value }))}
-                      className="w-full"
-                    />
-                  </div>
-
-                  {/* Sort By */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Sort By
-                    </label>
-                    <select
-                      value={filters.sortBy}
-                      onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="date">Start Date</option>
-                      <option value="fee">Entry Fee</option>
-                      <option value="prize">Prize Pool</option>
-                      <option value="popularity">Popularity</option>
-                    </select>
-                  </div>
-
-                  {/* Sort Order */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Sort Order
-                    </label>
-                    <select
-                      value={filters.sortOrder}
-                      onChange={(e) => setFilters(prev => ({ ...prev, sortOrder: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="asc">Ascending</option>
-                      <option value="desc">Descending</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Filter Actions */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {tournaments.length} tournament{tournaments.length !== 1 ? 's' : ''} found
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      onClick={() => {
-                        setFilters({
-                          role: 'all',
-                          location: 'all',
-                          type: 'all',
-                          minFee: '',
-                          maxFee: '',
-                          search: '',
-                          sortBy: 'date',
-                          sortOrder: 'asc'
-                        })
-                      }}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Reset Filters
-                    </Button>
-                    <Button
-                      onClick={() => setShowFilters(false)}
-                      size="sm"
-                    >
-                      Apply Filters
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          )}
-        </div>
 
         {/* Tournaments Grid */}
         <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1026,7 +778,23 @@ export default function Tournaments() {
             </div>
           </div>
         )}
+
+        {/* Quick Apply Button */}
+        {user && tournaments.length > 0 && (
+          <QuickApplyButton
+            tournament={tournaments[0]} // Use first tournament for quick apply
+            user={user}
+            onApplicationSuccess={handleApplicationSuccess}
+          />
+        )}
+
+        {/* Confetti Animation */}
+        <ConfettiAnimation
+          isActive={showConfetti}
+          onComplete={handleConfettiComplete}
+        />
       </div>
     </PageTransition>
   )
 }
+

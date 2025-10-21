@@ -231,49 +231,81 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Mock Google login
+  // Real Google OAuth login using implicit flow
   const loginWithGoogle = async () => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
       
-      // Simulate Google login with dummy data
-      const mockUser = {
-        id: 'google_' + Date.now(),
-        name: 'Google User',
-        email: 'user@gmail.com',
-        role: 'Player',
-        profilePicture: 'https://via.placeholder.com/150',
-        provider: 'google',
-        bio: '',
-        age: '',
-        playerRole: '',
-        location: '',
-        contactInfo: '',
-        organization: '',
-        yearsOfExperience: ''
+      // Load Google Identity Services library
+      if (!window.google) {
+        await loadGoogleScript()
       }
       
-      const mockToken = 'mock_jwt_token_' + Date.now()
+      // Debug environment variable
+      console.log('Google Client ID from env:', import.meta.env.VITE_GOOGLE_CLIENT_ID)
       
-      // Store auth data
-      authService.storeAuthData({
-        token: mockToken,
-        refreshToken: 'mock_refresh_token_' + Date.now(),
-        user: mockUser
+      // Get client ID with fallback
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '828898440872-d0jvss4hghjr7q3quqmcj5ft1a840bev.apps.googleusercontent.com'
+      
+      if (!clientId) {
+        throw new Error('Google Client ID not found in environment variables')
+      }
+      
+      console.log('Using Google Client ID:', clientId)
+      
+      // Use Google Identity Services with implicit flow
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'email profile',
+        callback: async (response) => {
+          try {
+            console.log('Google OAuth response:', response)
+            
+            // Get user info directly from Google
+            const userResponse = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${response.access_token}`)
+            const userInfo = await userResponse.json()
+            
+            console.log('Google user info:', userInfo)
+            
+            // Send Google data to backend using existing signup/login API
+            const result = await authService.googleLogin({
+              email: userInfo.email,
+              name: userInfo.name,
+              picture: userInfo.picture,
+              googleId: userInfo.id
+            })
+            
+            dispatch({
+              type: 'LOGIN',
+              payload: {
+                user: result.user,
+                token: result.token
+              }
+            })
+            
+            toast({
+              title: "Google login successful",
+              description: `Welcome, ${result.user.name}!`,
+              variant: "success"
+            })
+            
+            return result.user
+          } catch (error) {
+            console.error('Google authentication error:', error)
+            toast({
+              title: "Google authentication failed",
+              description: error.message || "Failed to authenticate with Google",
+              variant: "destructive"
+            })
+            dispatch({ type: 'SET_LOADING', payload: false })
+            throw error
+          }
+        }
       })
       
-      dispatch({
-        type: 'LOGIN',
-        payload: { user: mockUser, token: mockToken }
-      })
+      // Request access token
+      client.requestAccessToken()
       
-      toast({
-        title: "Google login successful",
-        description: `Welcome, ${mockUser.name}!`,
-        variant: "success"
-      })
-      
-      return mockUser
     } catch (error) {
       console.error('Google login error:', error)
       toast({
@@ -286,6 +318,23 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'SET_LOADING', payload: false })
     }
   }
+  
+  // Load Google Identity Services script
+  const loadGoogleScript = () => {
+    return new Promise((resolve, reject) => {
+      if (window.google) {
+        resolve()
+        return
+      }
+      
+      const script = document.createElement('script')
+      script.src = 'https://accounts.google.com/gsi/client'
+      script.onload = resolve
+      script.onerror = reject
+      document.head.appendChild(script)
+    })
+  }
+  
 
   // Real API signup with role
   const signupWithRole = async (formData, role) => {

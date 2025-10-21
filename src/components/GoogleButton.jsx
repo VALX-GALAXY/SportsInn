@@ -13,7 +13,7 @@ const GoogleButton = ({
 
   const handleGoogleLogin = async () => {
     try {
-      const user = loginWithGoogle()
+      const user = await loginWithGoogle()
       console.log('Google login successful:', user)
       
       if (onSuccess) {

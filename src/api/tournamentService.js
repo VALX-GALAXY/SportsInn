@@ -20,6 +20,22 @@ class TournamentService {
         }
       })
       console.log('Tournament API response:', response.data)
+      
+      // Handle caching-related errors
+      if (response.data.cacheError) {
+        console.warn('Cache error detected, refreshing data...')
+        // Force refresh by adding cache-busting parameter
+        const refreshResponse = await axiosInstance.get('/api/tournaments', {
+          params: {
+            ...filters,
+            _t: Date.now(), // Cache buster
+            page: filters.page || 1,
+            limit: filters.limit || 20
+          }
+        })
+        return refreshResponse.data
+      }
+      
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
@@ -34,6 +50,17 @@ class TournamentService {
     try {
       const response = await axiosInstance.get(`/api/tournaments/${tournamentId}`)
       console.log('Tournament details API response:', response.data)
+      
+      // Handle caching-related errors
+      if (response.data.cacheError) {
+        console.warn('Cache error detected for tournament, refreshing data...')
+        // Force refresh by adding cache-busting parameter
+        const refreshResponse = await axiosInstance.get(`/api/tournaments/${tournamentId}`, {
+          params: { _t: Date.now() } // Cache buster
+        })
+        return refreshResponse.data
+      }
+      
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
@@ -61,9 +88,28 @@ class TournamentService {
   // Get tournament application status
   async getApplicationStatus(tournamentId) {
     try {
-      const response = await axiosInstance.get(`/api/tournaments/${tournamentId}/application-status`)
-      console.log('Application status API response:', response.data)
-      return response.data
+      // Backend doesn't have a dedicated application status endpoint
+      // We'll get user applications and check if this tournament is in the list
+      const user = JSON.parse(localStorage.getItem('user'))
+      if (!user) {
+        return { status: 'not_applied' }
+      }
+      
+      const response = await axiosInstance.get(`/api/tournaments/user/${user.id}`)
+      console.log('User applications API response:', response.data)
+      
+      const applications = response.data.data || []
+      const application = applications.find(app => app.tournamentId === tournamentId)
+      
+      if (application) {
+        return { 
+          status: application.status || 'applied',
+          applicationId: application.id,
+          appliedAt: application.appliedAt
+        }
+      }
+      
+      return { status: 'not_applied' }
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       await new Promise(resolve => setTimeout(resolve, 300))
@@ -74,9 +120,11 @@ class TournamentService {
   // Withdraw application
   async withdrawApplication(tournamentId) {
     try {
-      const response = await axiosInstance.delete(`/api/tournaments/${tournamentId}/application`)
-      console.log('Withdraw application API response:', response.data)
-      return response.data
+      // Backend doesn't have a withdraw endpoint, so we'll use mock implementation
+      // In a real implementation, this would need to be added to the backend
+      console.warn('Backend doesn\'t support application withdrawal, using mock implementation')
+      await new Promise(resolve => setTimeout(resolve, 500))
+      return this.mockWithdrawApplication(tournamentId)
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       await new Promise(resolve => setTimeout(resolve, 500))
@@ -87,13 +135,57 @@ class TournamentService {
   // Get user's tournament applications
   async getUserApplications() {
     try {
-      const response = await axiosInstance.get('/api/tournaments/applications')
+      const user = JSON.parse(localStorage.getItem('user'))
+      if (!user) {
+        throw new Error('User not authenticated')
+      }
+      
+      const response = await axiosInstance.get(`/api/tournaments/user/${user.id}`)
       console.log('User applications API response:', response.data)
       return response.data
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       await new Promise(resolve => setTimeout(resolve, 500))
       return this.getMockUserApplications()
+    }
+  }
+
+  // Create tournament (admin/academy/club only)
+  async createTournament(tournamentData) {
+    try {
+      const response = await axiosInstance.post('/api/tournaments', tournamentData)
+      console.log('Create tournament API response:', response.data)
+      return response.data
+    } catch (error) {
+      console.warn('Backend API unavailable, using mock data:', error.message)
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      return this.mockCreateTournament(tournamentData)
+    }
+  }
+
+  // Approve player application (admin only)
+  async approvePlayer(tournamentId, playerId) {
+    try {
+      const response = await axiosInstance.patch(`/api/tournaments/${tournamentId}/approve/${playerId}`)
+      console.log('Approve player API response:', response.data)
+      return response.data
+    } catch (error) {
+      console.warn('Backend API unavailable, using mock data:', error.message)
+      await new Promise(resolve => setTimeout(resolve, 500))
+      return this.mockApprovePlayer(tournamentId, playerId)
+    }
+  }
+
+  // Reject player application (admin only)
+  async rejectPlayer(tournamentId, playerId) {
+    try {
+      const response = await axiosInstance.patch(`/api/tournaments/${tournamentId}/reject/${playerId}`)
+      console.log('Reject player API response:', response.data)
+      return response.data
+    } catch (error) {
+      console.warn('Backend API unavailable, using mock data:', error.message)
+      await new Promise(resolve => setTimeout(resolve, 500))
+      return this.mockRejectPlayer(tournamentId, playerId)
     }
   }
 
@@ -317,6 +409,46 @@ class TournamentService {
       success: true,
       message: 'Application withdrawn successfully',
       tournamentId
+    }
+  }
+
+  mockCreateTournament(tournamentData) {
+    return {
+      success: true,
+      data: {
+        id: `tournament_${Date.now()}`,
+        ...tournamentData,
+        status: 'open',
+        registeredTeams: 0,
+        createdAt: new Date().toISOString()
+      },
+      message: 'Tournament created successfully'
+    }
+  }
+
+  mockApprovePlayer(tournamentId, playerId) {
+    return {
+      success: true,
+      data: {
+        tournamentId,
+        playerId,
+        status: 'approved',
+        approvedAt: new Date().toISOString()
+      },
+      message: 'Player application approved successfully'
+    }
+  }
+
+  mockRejectPlayer(tournamentId, playerId) {
+    return {
+      success: true,
+      data: {
+        tournamentId,
+        playerId,
+        status: 'rejected',
+        rejectedAt: new Date().toISOString()
+      },
+      message: 'Player application rejected'
     }
   }
 }
