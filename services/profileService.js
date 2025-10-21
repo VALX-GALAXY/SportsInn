@@ -10,7 +10,10 @@ async function updateProfile(id, requester, body) {
     return { error: "You can only update your own profile" };
   }
 
-  const allowedFields = roleFields[requester.role].filter(f => !["passwordHash", "email", "role"].includes(f));
+  // Allowed fields come from roleFields; exclude 'password' instead of 'passwordHash'
+  const allowedFields = (roleFields[requester.role] || [])
+    .filter(f => !["password", "email", "role"].includes(f));
+
   const updates = {};
   for (const field of allowedFields) {
     if (body[field] !== undefined) updates[field] = body[field];

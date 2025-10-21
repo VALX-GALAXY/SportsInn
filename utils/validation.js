@@ -6,7 +6,8 @@ function validateSignup(body) {
     return "Invalid role provided";
   }
 
-  const requiredFields = roleFields[role].filter(f => f !== "passwordHash");
+  // Required fields for this role (exclude 'password' because we treat it separately)
+  const requiredFields = roleFields[role].filter(f => f !== "password");
   for (const field of requiredFields) {
     if (!body[field]) {
       return `Missing required field: ${field}`;

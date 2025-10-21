@@ -21,7 +21,7 @@ async function updateProfile(req, res, next) {
     // Role-based field restrictions
     const allowed = roleFields[req.user.role] || [];
     // exclude protected fields
-    const protectedFields = ['passwordHash', 'email', 'role', 'refreshTokens', '_id', 'isAdmin'];
+    const protectedFields = ['password', 'email', 'role', 'refreshTokens', '_id', 'isAdmin'];
     const updates = {};
 
     // Handle uploaded image URL

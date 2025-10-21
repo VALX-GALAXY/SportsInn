@@ -1,20 +1,52 @@
+// middlewares/authMiddleware.js
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 
 async function authMiddleware(req, res, next) {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-  if (!token) return res.status(401).json({ success: false, message: "No token provided" });
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-    if (!user) return res.status(401).json({ success: false, message: "User not found" });
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT secret is not set in process.env");
+      return res.status(500).json({ success: false, message: "Server misconfiguration" });
+    }
+
+    const authHeader = req.headers["authorization"] || req.headers["Authorization"];
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ success: false, message: "Authorization header missing or malformed" });
+    }
+
+    const token = authHeader.split(" ")[1].trim();
+    if (!token) return res.status(401).json({ success: false, message: "No token provided" });
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtErr) {
+      // Provide helpful server-side logs for debugging (don't leak secret details to client)
+      console.error("JWT verify error:", jwtErr && jwtErr.name, jwtErr && jwtErr.message);
+      if (jwtErr.name === "TokenExpiredError") {
+        return res.status(401).json({ success: false, message: "Token expired" });
+      }
+      return res.status(401).json({ success: false, message: "Invalid token" });
+    }
+
+    // Support either 'id' or '_id' in payload just in case
+    const userId = decoded.id || decoded._id;
+    if (!userId) {
+      console.error("JWT payload missing user id:", decoded);
+      return res.status(401).json({ success: false, message: "Invalid token payload" });
+    }
+
+    const user = await User.findById(userId).select("-passwordHash -refreshTokens");
+    if (!user) {
+      console.error("Auth: user not found for id:", userId);
+      return res.status(401).json({ success: false, message: "User not found" });
+    }
 
     req.user = user;
     next();
   } catch (err) {
-    res.status(403).json({ success: false, message: "Invalid token" });
+    console.error("Auth middleware unexpected error:", err);
+    res.status(500).json({ success: false, message: "Authentication error" });
   }
 }
 
