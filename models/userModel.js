@@ -9,6 +9,9 @@ const userSchema = new mongoose.Schema({
   gallery: { type: [String], default: [] },
   profilePic: { type: String, default: "" },
 
+  // new: short bio / about me
+  bio: { type: String, default: "" },
+
   // Role-specific fields
   age: Number,
   playingRole: String,
@@ -20,7 +23,6 @@ const userSchema = new mongoose.Schema({
   refreshTokens: [String],
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  profilePic: { type: String, default: '' },
 
   stats: {
     matches: { type: Number, default: 0 },

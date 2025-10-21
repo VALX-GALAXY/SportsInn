@@ -10,9 +10,9 @@ async function updateProfile(id, requester, body) {
     return { error: "You can only update your own profile" };
   }
 
-  // Allowed fields come from roleFields; exclude 'password' instead of 'passwordHash'
-  const allowedFields = (roleFields[requester.role] || [])
-    .filter(f => !["password", "email", "role"].includes(f));
+  // Build allowedFields from roleFields but allow generic 'bio' too
+  const allowedFieldsFromRole = (roleFields[requester.role] || []).filter(f => !["passwordHash", "email", "role"].includes(f));
+  const allowedFields = new Set([...allowedFieldsFromRole, "name", "location", "contactInfo", "bio"]);
 
   const updates = {};
   for (const field of allowedFields) {
