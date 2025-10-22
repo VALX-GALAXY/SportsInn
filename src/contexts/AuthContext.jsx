@@ -79,6 +79,66 @@ export const AuthProvider = ({ children }) => {
     loadUser()
   }, [])
 
+  // Token refresh mechanism
+  useEffect(() => {
+    const refreshTokenInterval = setInterval(async () => {
+      const token = localStorage.getItem('token')
+      const refreshToken = localStorage.getItem('refreshToken')
+      
+      if (token && refreshToken) {
+        try {
+          // Check if token is about to expire (refresh 5 minutes before expiry)
+          const tokenPayload = JSON.parse(atob(token.split('.')[1]))
+          const currentTime = Math.floor(Date.now() / 1000)
+          const timeUntilExpiry = tokenPayload.exp - currentTime
+          
+          // If token expires in less than 5 minutes, refresh it
+          if (timeUntilExpiry < 300) {
+            console.log('AuthContext - Token expiring soon, refreshing...')
+            
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/refresh`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ refreshToken })
+            })
+            
+            if (response.ok) {
+              const data = await response.json()
+              const { accessToken, refreshToken: newRefreshToken } = data.data
+              
+              localStorage.setItem('token', accessToken)
+              localStorage.setItem('refreshToken', newRefreshToken)
+              
+              console.log('AuthContext - Token refreshed successfully')
+            } else {
+              console.error('AuthContext - Token refresh failed')
+              // Don't logout immediately, let the axios interceptor handle it
+            }
+          }
+        } catch (error) {
+          console.error('AuthContext - Error during token refresh:', error)
+          // Don't logout immediately, let the axios interceptor handle it
+        }
+      }
+    }, 60000) // Check every minute
+
+    return () => clearInterval(refreshTokenInterval)
+  }, [])
+
+  // Listen for graceful logout events
+  useEffect(() => {
+    const handleAuthLogout = (event) => {
+      if (event.detail?.reason === 'token_expired') {
+        gracefulLogout()
+      }
+    }
+
+    window.addEventListener('auth:logout', handleAuthLogout)
+    return () => window.removeEventListener('auth:logout', handleAuthLogout)
+  }, [])
+
   // Login function with real API
   const login = async (credentials) => {
     try {
@@ -128,6 +188,16 @@ export const AuthProvider = ({ children }) => {
       // Even if API logout fails, clear local state
       dispatch({ type: 'LOGOUT' })
     }
+  }
+
+  // Graceful logout for token expiration
+  const gracefulLogout = () => {
+    dispatch({ type: 'LOGOUT' })
+    toast({
+      title: "Session expired",
+      description: "Please log in again to continue",
+      variant: "destructive"
+    })
   }
 
   // Update user function - handles both API calls and local updates
@@ -401,6 +471,7 @@ export const AuthProvider = ({ children }) => {
     ...state,
     login,
     logout,
+    gracefulLogout,
     updateUser,
     reloadUser,
     loginWithGoogle,
