@@ -18,6 +18,8 @@ export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isConnected, setIsConnected] = useState(false)
+  const [isReconnecting, setIsReconnecting] = useState(false)
+  const [connectionAttempts, setConnectionAttempts] = useState(0)
   const { user } = useAuth()
   const { toast } = useToast()
 
@@ -46,35 +48,123 @@ export const NotificationProvider = ({ children }) => {
     }
   }
 
+  // Enhanced connection with retry logic
+  const connectWithRetry = async (maxAttempts = 5) => {
+    if (connectionAttempts >= maxAttempts) {
+      console.warn('Max connection attempts reached, using offline mode')
+      setIsReconnecting(false)
+      return
+    }
+
+    try {
+      setIsReconnecting(true)
+      setConnectionAttempts(prev => prev + 1)
+      
+      // Try to connect to socket
+      const socket = socketService.connectMock(user.id)
+      if (socket) {
+        setIsConnected(true)
+        setIsReconnecting(false)
+        setConnectionAttempts(0)
+        
+        // Show success toast
+        toast({
+          title: "Connected",
+          description: "Real-time notifications enabled",
+          variant: "default"
+        })
+      }
+    } catch (error) {
+      console.error('Socket connection failed:', error)
+      
+      // Retry after delay
+      setTimeout(() => {
+        connectWithRetry(maxAttempts)
+      }, Math.min(1000 * Math.pow(2, connectionAttempts), 10000)) // Exponential backoff, max 10s
+    }
+  }
+
   useEffect(() => {
     if (user?.id) {
-      // Connect to socket
-      socketService.connectMock(user.id)
-      setIsConnected(true)
+      // Connect to socket with retry logic
+      connectWithRetry()
 
       // Subscribe to notifications
       socketService.subscribeToNotifications(user.id)
 
-      // Listen for notifications
-      socketService.on('notification', (notification) => {
-        setNotifications(prev => [notification, ...prev])
+      // Enhanced notification listener with better error handling
+      const handleNotification = (notification) => {
+        console.log('Received notification:', notification)
+        
+        // Add notification with animation trigger
+        setNotifications(prev => {
+          const existingIds = new Set(prev.map(n => n.id))
+          if (!existingIds.has(notification.id)) {
+            return [notification, ...prev]
+          }
+          return prev
+        })
+        
         setUnreadCount(prev => prev + 1)
         
-        // Show toast notification
+        // Show enhanced toast notification
         toast({
-          title: "New Notification",
+          title: notification.title,
           description: notification.message,
-          variant: "default"
+          variant: "default",
+          duration: 5000
         })
+      }
+
+      // Listen for notifications
+      socketService.on('notification', handleNotification)
+
+      // Listen for connection errors
+      socketService.on('connect_error', (error) => {
+        console.error('Socket connection error:', error)
+        setIsConnected(false)
+        setIsReconnecting(true)
+        
+        toast({
+          title: "Connection Lost",
+          description: "Attempting to reconnect...",
+          variant: "destructive"
+        })
+        
+        // Attempt reconnection
+        setTimeout(() => {
+          connectWithRetry()
+        }, 3000)
+      })
+
+      // Listen for disconnection
+      socketService.on('disconnect', (reason) => {
+        console.log('Socket disconnected:', reason)
+        setIsConnected(false)
+        
+        if (reason === 'io server disconnect') {
+          // Server initiated disconnect, don't reconnect
+          toast({
+            title: "Disconnected",
+            description: "Server disconnected the connection",
+            variant: "destructive"
+          })
+        } else {
+          // Client disconnect, attempt reconnection
+          setIsReconnecting(true)
+          setTimeout(() => {
+            connectWithRetry()
+          }, 2000)
+        }
       })
 
       // Load notifications from service
       loadNotifications()
 
-      // Start polling for new notifications (reduced interval for better UX)
-      notificationService.startPolling(15000) // 15 seconds for more responsive updates
+      // Start polling for new notifications with enhanced error handling
+      notificationService.startPolling(10000) // 10 seconds for more responsive updates
 
-      // Subscribe to polling updates
+      // Subscribe to polling updates with better error handling
       const unsubscribe = notificationService.subscribe((newNotifications) => {
         if (newNotifications && newNotifications.length > 0) {
           setNotifications(prev => {
@@ -83,13 +173,16 @@ export const NotificationProvider = ({ children }) => {
             if (newNotifs.length > 0) {
               setUnreadCount(prev => prev + newNotifs.length)
               
-              // Show toast for new notifications
-              newNotifs.forEach(notif => {
-                toast({
-                  title: notif.title,
-                  description: notif.message,
-                  variant: "default"
-                })
+              // Show toast for new notifications with staggered timing
+              newNotifs.forEach((notif, index) => {
+                setTimeout(() => {
+                  toast({
+                    title: notif.title,
+                    description: notif.message,
+                    variant: "default",
+                    duration: 4000
+                  })
+                }, index * 200) // Stagger notifications by 200ms
               })
               
               return [...newNotifs, ...prev]
@@ -105,6 +198,8 @@ export const NotificationProvider = ({ children }) => {
         socketService.unsubscribeFromNotifications(user.id)
         socketService.disconnect()
         setIsConnected(false)
+        setIsReconnecting(false)
+        setConnectionAttempts(0)
       }
     }
   }, [user?.id, toast])
@@ -170,6 +265,8 @@ export const NotificationProvider = ({ children }) => {
     notifications,
     unreadCount,
     isConnected,
+    isReconnecting,
+    connectionAttempts,
     markAsRead,
     markAllAsRead,
     clearNotifications

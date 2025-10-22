@@ -383,19 +383,32 @@ export default function Profile() {
         throw new Error('User ID not found')
       }
       
-      const updatedUser = await profileService.removeFromGallery(userId, imageId)
-      setGalleryImages(updatedUser.galleryImages || [])
-      updateUser(updatedUser)
+      // Find the image URL by ID
+      const imageToRemove = galleryImages.find(img => img.id === imageId || img === imageId)
+      const imageUrl = imageToRemove?.url || imageToRemove
       
-      if (currentGalleryIndex >= (updatedUser.galleryImages || []).length) {
-        setCurrentGalleryIndex(Math.max(0, (updatedUser.galleryImages || []).length - 1))
+      if (!imageUrl) {
+        throw new Error('Image not found')
       }
       
-      toast({
-        title: "Success",
-        description: "Image removed from gallery",
-        variant: "default"
-      })
+      const result = await profileService.removeFromGallery(userId, imageUrl)
+      
+      if (result.success) {
+        // Refresh the gallery from backend
+        const updatedUser = await profileService.getProfile(userId)
+        setGalleryImages(updatedUser.galleryImages || [])
+        updateUser(updatedUser)
+        
+        if (currentGalleryIndex >= (updatedUser.galleryImages || []).length) {
+          setCurrentGalleryIndex(Math.max(0, (updatedUser.galleryImages || []).length - 1))
+        }
+        
+        toast({
+          title: "Success",
+          description: "Image removed from gallery",
+          variant: "default"
+        })
+      }
     } catch (error) {
       console.error('Error removing gallery image:', error)
       toast({
@@ -750,35 +763,32 @@ export default function Profile() {
     }, 300)
     
     try {
-      const uploadResult = await uploadService.uploadGalleryImages(validFiles)
+      const userId = user._id || user.id
+      if (!userId) {
+        throw new Error('User ID not found')
+      }
       
-      if (uploadResult.success) {
-        setUploadProgress(100)
-        const newImages = uploadResult.urls.map((url, index) => ({
-          id: `gallery_${Date.now()}_${index}`,
-          url,
-          publicId: uploadResult.publicIds[index]
-        }))
-        
-        // Use profile service to add images to gallery
-        const userId = user._id || user.id
-        if (!userId) {
-          throw new Error('User ID not found')
+      // Upload each file individually to the backend gallery endpoint
+      const uploadedImages = []
+      for (const file of validFiles) {
+        const uploadResult = await profileService.addToGallery(userId, file)
+        if (uploadResult.success) {
+          uploadedImages.push(uploadResult.url)
         }
+      }
+      
+      if (uploadedImages.length > 0) {
+        setUploadProgress(100)
         
-        // Add all images at once to avoid duplicates
-        const updatedUser = await profileService.updateGallery(userId, [
-          ...galleryImages,
-          ...newImages
-        ])
-        
+        // Refresh the gallery from backend
+        const updatedUser = await profileService.getProfile(userId)
         setGalleryImages(updatedUser.galleryImages || [])
         updateUser(updatedUser)
         setUploadStatus('success')
         
         toast({
           title: "Success",
-          description: `${validFiles.length} image(s) uploaded successfully!`,
+          description: `${uploadedImages.length} image(s) uploaded successfully!`,
           variant: "default"
         })
         

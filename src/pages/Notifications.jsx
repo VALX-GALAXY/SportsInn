@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
@@ -26,90 +27,6 @@ import { NotificationsSkeleton } from '../components/SkeletonLoaders'
 import { useNotifications } from '../contexts/NotificationContext'
 import notificationService from '../api/notificationService'
 
-// Dummy notifications data
-const dummyNotifications = [
-  {
-    id: 1,
-    type: 'like',
-    title: 'New Like',
-    message: 'Suraj Kumar liked your post about training session',
-    timestamp: '2 minutes ago',
-    read: false,
-    user: {
-      name: 'Suraj Kumar',
-      avatar: 'https://i.pravatar.cc/150?img=66',
-      role: 'Player'
-    },
-    post: {
-      id: 1,
-      preview: 'Just finished an amazing training session!'
-    }
-  },
-  {
-    id: 2,
-    type: 'follow',
-    title: 'New Follower',
-    message: 'Alex Johnson started following you',
-    timestamp: '1 hour ago',
-    read: false,
-    user: {
-      name: 'Trisha Yadav',
-      avatar: 'https://i.pravatar.cc/150?img=32',
-      role: 'Academy'
-    }
-  },
-  {
-    id: 3,
-    type: 'comment',
-    title: 'New Comment',
-    message: 'Nidhi commented on your post',
-    timestamp: '3 hours ago',
-    read: true,
-    user: {
-      name: 'Nidhi',
-      avatar: 'https://i.pravatar.cc/150?img=45',
-      role: 'Club'
-    },
-    post: {
-      id: 2,
-      preview: 'Great match yesterday!'
-    },
-    comment: {
-      text: 'Amazing performance! Keep it up!'
-    }
-  },
-  {
-    id: 4,
-    type: 'share',
-    title: 'Post Shared',
-    message: 'Priyanshu shared your post',
-    timestamp: '5 hours ago',
-    read: true,
-    user: {
-      name: 'Shanky',
-      
-      avatar: 'https://i.pravatar.cc/150?img=78',
-      role: 'Scout'
-    },
-    post: {
-      id: 3,
-      preview: 'Looking for talented players...'
-    }
-  },
-  {
-    id: 5,
-    type: 'follow',
-    title: 'New Follower',
-    message: 'Shruti started following you',
-    timestamp: '1 day ago',
-    read: true,
-    user: {
-      name: 'Rashmi',
-      avatar: 'https://i.pravatar.cc/150?img=23',
-      role: 'Player'
-    }
-  }
-]
 
 export default function Notifications() {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
@@ -265,16 +182,22 @@ export default function Notifications() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-4xl mx-auto px-3 py-4 sm:px-6 sm:py-8">
-        {/* Header */}
+        {/* Header with Sporty Design */}
         <div className="mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-3 sm:space-y-0">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1 sm:text-2xl lg:text-3xl">
-                Notifications
-              </h1>
-              <p className="text-xs text-gray-600 dark:text-gray-400 sm:text-sm lg:text-base">
-                Stay updated with your activity
-              </p>
+            <div className="relative">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-1 sm:text-2xl lg:text-3xl">
+                  Notifications
+                </h1>
+                <p className="text-xs text-gray-600 dark:text-gray-400 sm:text-sm lg:text-base font-medium">
+                  Stay updated with your activity
+                </p>
+              </motion.div>
             </div>
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
@@ -284,60 +207,82 @@ export default function Notifications() {
                 </Badge>
               )}
               <div className="flex items-center space-x-2">
-                <Button
-                  onClick={refreshNotifications}
-                  variant="outline"
-                  size="sm"
-                  disabled={isRefreshing}
-                  className="flex items-center space-x-2 text-xs sm:text-sm"
-                >
-                  <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  <span className="hidden sm:inline">Refresh</span>
-                </Button>
-                {unreadCount > 0 && (
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button
-                    onClick={markAllAsRead}
+                    onClick={refreshNotifications}
                     variant="outline"
                     size="sm"
-                    className="flex items-center space-x-2 text-xs sm:text-sm sportsin-gradient-button"
+                    disabled={isRefreshing}
+                    className="flex items-center space-x-2 text-xs sm:text-sm bg-gradient-to-r from-blue-50 to-green-50 hover:from-blue-100 hover:to-green-100 border-blue-200 hover:border-blue-300 text-blue-700 hover:text-blue-800 font-medium"
                   >
-                    <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span className="hidden sm:inline">Mark all read</span>
-                    <span className="sm:hidden">Mark all</span>
+                    <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <span className="hidden sm:inline">Refresh</span>
                   </Button>
+                </motion.div>
+                {unreadCount > 0 && (
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button
+                      onClick={markAllAsRead}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center space-x-2 text-xs sm:text-sm bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white border-0 shadow-lg hover:shadow-xl font-medium"
+                    >
+                      <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">Mark all read</span>
+                      <span className="sm:hidden">Mark all</span>
+                    </Button>
+                  </motion.div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex overflow-x-auto space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 scrollbar-hide">
+          {/* Filter Tabs with Sporty Design */}
+          <div className="flex overflow-x-auto space-x-2 bg-gradient-to-r from-blue-50 to-green-50 dark:from-gray-800 dark:to-gray-700 rounded-xl p-2 scrollbar-hide border border-blue-100 dark:border-gray-600">
             {[
-              { key: 'all', label: 'All', count: notifications.length },
-              { key: 'unread', label: 'Unread', count: unreadCount },
-              { key: 'likes', label: 'Likes', count: notifications.filter(n => n.type === 'like').length },
-              { key: 'follows', label: 'Follows', count: notifications.filter(n => n.type === 'follow').length },
-              { key: 'comments', label: 'Comments', count: notifications.filter(n => n.type === 'comment').length }
-            ].map(({ key, label, count }) => (
-              <Button
+              { key: 'all', label: 'All', count: notifications.length, color: 'from-blue-500 to-blue-600' },
+              { key: 'unread', label: 'Unread', count: unreadCount, color: 'from-red-500 to-red-600' },
+              { key: 'likes', label: 'Likes', count: notifications.filter(n => n.type === 'like').length, color: 'from-pink-500 to-pink-600' },
+              { key: 'follows', label: 'Follows', count: notifications.filter(n => n.type === 'follow').length, color: 'from-green-500 to-green-600' },
+              { key: 'comments', label: 'Comments', count: notifications.filter(n => n.type === 'comment').length, color: 'from-purple-500 to-purple-600' }
+            ].map(({ key, label, count, color }) => (
+              <motion.div
                 key={key}
-                variant={filter === key ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setFilter(key)}
-                className={`flex items-center space-x-1 sm:space-x-2 transition-all duration-200 whitespace-nowrap text-xs sm:text-sm ${
-                  filter === key 
-                    ? 'bg-white dark:bg-gray-700 shadow-sm' 
-                    : 'hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <span className="hidden sm:inline">{label}</span>
-                <span className="sm:hidden">{label.charAt(0)}</span>
-                {count > 0 && (
-                  <Badge variant="secondary" className="ml-1 px-1.5 py-0.5 text-xs">
-                    {count}
-                  </Badge>
-                )}
-              </Button>
+                <Button
+                  variant={filter === key ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setFilter(key)}
+                  className={`flex items-center space-x-2 transition-all duration-300 whitespace-nowrap text-xs sm:text-sm font-medium ${
+                    filter === key 
+                      ? `bg-gradient-to-r ${color} text-white shadow-lg hover:shadow-xl transform scale-105` 
+                      : 'hover:bg-white/80 dark:hover:bg-gray-600/80 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  <span className="hidden sm:inline font-semibold">{label}</span>
+                  <span className="sm:hidden font-bold">{label.charAt(0)}</span>
+                  {count > 0 && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    >
+                      <Badge 
+                        variant={filter === key ? "secondary" : "default"} 
+                        className={`ml-1 px-2 py-1 text-xs font-bold ${
+                          filter === key 
+                            ? 'bg-white/20 text-white border-white/30' 
+                            : 'bg-gradient-to-r from-blue-500 to-green-500 text-white'
+                        }`}
+                      >
+                        {count}
+                      </Badge>
+                    </motion.div>
+                  )}
+                </Button>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -359,92 +304,169 @@ export default function Notifications() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-2 sm:space-y-3">
-            {filteredNotifications.map((notification) => (
-                <Card 
-                key={notification.id} 
-                className={`bg-white dark:bg-gray-800 border-0 shadow-sm hover:shadow-md transition-all duration-200 ${
-                  !notification.isRead ? 'ring-2 ring-blue-100 dark:ring-blue-900' : ''
-                }`}
-              >
-                <CardContent className="p-3 sm:p-4">
-                  <div className="flex items-start space-x-3 sm:space-x-4">
-                    {/* Notification Icon */}
-                    <div className="flex-shrink-0">
-                      {getNotificationIcon(notification.type)}
-                    </div>
+          <motion.div 
+            className="space-y-2 sm:space-y-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <AnimatePresence>
+              {filteredNotifications.map((notification, index) => (
+                <motion.div
+                  key={notification.id}
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 300, 
+                    damping: 30,
+                    delay: index * 0.05 
+                  }}
+                  whileHover={{ 
+                    scale: 1.02,
+                    transition: { duration: 0.2 }
+                  }}
+                >
+                  <Card 
+                    className={`bg-gradient-to-r from-white to-blue-50/30 dark:from-gray-800 dark:to-gray-700 border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl ${
+                      !notification.isRead 
+                        ? 'ring-2 ring-blue-400/50 dark:ring-blue-500/50 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20' 
+                        : 'hover:from-blue-50/50 hover:to-green-50/50 dark:hover:from-blue-900/10 dark:hover:to-green-900/10'
+                    }`}
+                  >
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="flex items-start space-x-3 sm:space-x-4">
+                        {/* Notification Icon with Sporty Background */}
+                        <motion.div 
+                          className="flex-shrink-0 p-2 rounded-full bg-gradient-to-br from-blue-100 to-green-100 dark:from-blue-900/30 dark:to-green-900/30"
+                          whileHover={{ scale: 1.1, rotate: 5 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                        >
+                          {getNotificationIcon(notification.type)}
+                        </motion.div>
 
-                    {/* Notification Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-2 sm:space-y-0">
+                        {/* Notification Content */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <h3 className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
-                              {notification.title}
-                            </h3>
-                            {!notification.isRead && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                            )}
-                          </div>
-                          
-                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-2 leading-relaxed">
-                            {notification.message}
-                          </p>
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-2 sm:space-y-0">
+                            <div className="flex-1 min-w-0">
+                              <motion.div 
+                                className="flex items-center space-x-2 mb-1"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: index * 0.05 + 0.1 }}
+                              >
+                                <h3 className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
+                                  {notification.title}
+                                </h3>
+                                <AnimatePresence>
+                                  {!notification.isRead && (
+                                    <motion.div 
+                                      className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      exit={{ scale: 0 }}
+                                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                    />
+                                  )}
+                                </AnimatePresence>
+                              </motion.div>
+                              
+                              <motion.p 
+                                className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-2 leading-relaxed"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: index * 0.05 + 0.15 }}
+                              >
+                                {notification.message}
+                              </motion.p>
 
-                          {/* Comment Preview */}
-                          {notification.comment && (
-                            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3 mt-2">
-                              <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 italic">
-                                "{notification.comment.text}"
-                              </p>
+                              {/* Comment Preview with Animation */}
+                              {notification.comment && (
+                                <motion.div 
+                                  className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3 mt-2"
+                                  initial={{ opacity: 0, scale: 0.95 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{ delay: index * 0.05 + 0.2 }}
+                                >
+                                  <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 italic">
+                                    "{notification.comment.text}"
+                                  </p>
+                                </motion.div>
+                              )}
+
+                              {/* Post Preview with Animation */}
+                              {notification.post && (
+                                <motion.div 
+                                  className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3 mt-2"
+                                  initial={{ opacity: 0, scale: 0.95 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{ delay: index * 0.05 + 0.2 }}
+                                >
+                                  <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                                    {notification.post.preview}
+                                  </p>
+                                </motion.div>
+                              )}
+
+                              <motion.div 
+                                className="flex items-center space-x-1 mt-2"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: index * 0.05 + 0.25 }}
+                              >
+                                <Clock className="w-3 h-3 text-gray-400" />
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {formatTimeAgo(notification.createdAt)}
+                                </p>
+                              </motion.div>
                             </div>
-                          )}
 
-                          {/* Post Preview */}
-                          {notification.post && (
-                            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3 mt-2">
-                              <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
-                                {notification.post.preview}
-                              </p>
-                            </div>
-                          )}
-
-                          <div className="flex items-center space-x-1 mt-2">
-                            <Clock className="w-3 h-3 text-gray-400" />
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {formatTimeAgo(notification.createdAt)}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center space-x-1 sm:space-x-2 self-end sm:self-start">
-                          {!notification.isRead && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => markAsRead(notification.id)}
-                              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-1 sm:p-2"
+                            {/* Actions with Animation */}
+                            <motion.div 
+                              className="flex items-center space-x-1 sm:space-x-2 self-end sm:self-start"
+                              initial={{ opacity: 0, x: 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.05 + 0.3 }}
                             >
-                              <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => deleteNotification(notification.id)}
-                            className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 p-1 sm:p-2"
-                          >
-                            <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                          </Button>
+                              {!notification.isRead && (
+                                <motion.div
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                >
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => markAsRead(notification.id)}
+                                    className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-1 sm:p-2"
+                                  >
+                                    <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </Button>
+                                </motion.div>
+                              )}
+                              <motion.div
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                              >
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => deleteNotification(notification.id)}
+                                  className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 p-1 sm:p-2"
+                                >
+                                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </Button>
+                              </motion.div>
+                            </motion.div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         )}
       </div>
     </div>

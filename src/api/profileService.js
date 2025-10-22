@@ -7,8 +7,16 @@ class ProfileService {
       const response = await axiosInstance.get(`/api/profile/${userId}`)
       const userData = response.data.data
       
-      // Load gallery images from localStorage since backend doesn't support it
-      const galleryImages = JSON.parse(localStorage.getItem(`gallery_${userId}`) || '[]')
+      // Get gallery images from backend
+      let galleryImages = []
+      try {
+        const galleryResponse = await axiosInstance.get(`/api/profile/${userId}/gallery`)
+        galleryImages = galleryResponse.data.data || []
+      } catch (galleryError) {
+        console.warn('Could not fetch gallery from backend, using localStorage:', galleryError.message)
+        // Fallback to localStorage
+        galleryImages = JSON.parse(localStorage.getItem(`gallery_${userId}`) || '[]')
+      }
       
       return {
         ...userData,
@@ -110,11 +118,18 @@ class ProfileService {
     try {
       console.log('ProfileService.uploadProfilePicture called with:', { userId, fileName: file.name })
       
+      // Check if user is authenticated
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('User not authenticated. Please log in again.')
+      }
+      
       // Create FormData for file upload
       const formData = new FormData()
       formData.append('profilePic', file)
       
       console.log('Uploading to backend endpoint:', `/api/profile/${userId}/picture`)
+      console.log('Authentication token present:', !!token)
       
       // Use the dedicated profile picture upload endpoint
       const response = await axiosInstance.post(`/api/profile/${userId}/picture`, formData, {
@@ -136,6 +151,11 @@ class ProfileService {
       console.error('Error response:', error.response?.data)
       console.error('Error status:', error.response?.status)
       
+      // Handle authentication errors
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        throw new Error('Authentication failed. Please log in again.')
+      }
+      
       // If backend is not running, throw a clear error
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
         throw new Error('Backend server is not running. Please start the server and try again.')
@@ -144,6 +164,14 @@ class ProfileService {
       // For 500 errors, show more specific error message
       if (error.response?.status === 500) {
         const errorMessage = error.response?.data?.message || 'Internal server error occurred'
+        
+        // Check if it's a Cloudinary configuration error
+        if (errorMessage.includes('Cloudinary is not configured')) {
+          throw new Error('Cloudinary is not configured. Please contact the administrator to set up Cloudinary for file uploads.')
+        } else if (errorMessage.includes('Cloudinary upload failed')) {
+          throw new Error('File upload failed. Please try again or contact support if the issue persists.')
+        }
+        
         throw new Error(`Server error: ${errorMessage}`)
       }
       
@@ -434,97 +462,115 @@ class ProfileService {
     }
   }
 
-  // Add image to gallery - using main profile update endpoint
-  async addToGallery(userId, imageData) {
+  // Add image to gallery - using backend gallery endpoint
+  async addToGallery(userId, file) {
     try {
-      // Get current user to get existing gallery
-      const currentUser = await this.getProfile(userId)
-      const newGalleryImages = [...(currentUser.galleryImages || []), imageData]
+      console.log('ProfileService.addToGallery called with:', { userId, fileName: file.name })
       
-      const response = await axiosInstance.put(`/api/profile/${userId}`, {
-        galleryImages: newGalleryImages
-      })
-      return response.data.data
-    } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
-      // Fallback to mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      const currentUser = JSON.parse(localStorage.getItem('user'))
-      if (!currentUser) {
-        throw new Error('No user logged in')
+      // Check if user is authenticated
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('User not authenticated. Please log in again.')
       }
       
-      const newGalleryImages = [...(currentUser.galleryImages || []), imageData]
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append('file', file)
       
-      // Update user in mock database
-      const users = JSON.parse(localStorage.getItem('sportshub_mock_users') || '[]')
-      const userIndex = users.findIndex(u => u.id === currentUser.id)
+      console.log('Uploading to backend gallery endpoint:', `/api/profile/${userId}/gallery`)
+      console.log('Authentication token present:', !!token)
       
-      if (userIndex !== -1) {
-        users[userIndex] = {
-          ...users[userIndex],
-          galleryImages: newGalleryImages
+      // Use the backend gallery upload endpoint
+      const response = await axiosInstance.post(`/api/profile/${userId}/gallery`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
         }
-        localStorage.setItem('sportshub_mock_users', JSON.stringify(users))
+      })
+      
+      console.log('Backend gallery upload response:', response.data)
+      
+      // Return the updated gallery
+      return {
+        success: true,
+        gallery: response.data.data,
+        url: response.data.url,
+        message: response.data.message || 'Image added to gallery successfully'
+      }
+    } catch (error) {
+      console.error('ProfileService.addToGallery error:', error)
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
+      
+      // Handle authentication errors
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        throw new Error('Authentication failed. Please log in again.')
       }
       
-      // Update stored user data
-      const updatedUser = {
-        ...currentUser,
-        galleryImages: newGalleryImages
+      // If backend is not running, throw a clear error
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('Backend server is not running. Please start the server and try again.')
       }
       
-      localStorage.setItem('user', JSON.stringify(updatedUser))
+      // For 500 errors, show more specific error message
+      if (error.response?.status === 500) {
+        const errorMessage = error.response?.data?.message || 'Internal server error occurred'
+        throw new Error(`Server error: ${errorMessage}`)
+      }
       
-      return updatedUser
+      // For other errors, throw the original error
+      throw error
     }
   }
 
-  // Remove image from gallery - using main profile update endpoint
-  async removeFromGallery(userId, imageId) {
+  // Remove image from gallery - using backend gallery endpoint
+  async removeFromGallery(userId, imageUrl) {
     try {
-      // Get current user to get existing gallery
-      const currentUser = await this.getProfile(userId)
-      const newGalleryImages = (currentUser.galleryImages || []).filter(img => img.id !== imageId)
+      console.log('ProfileService.removeFromGallery called with:', { userId, imageUrl })
       
-      const response = await axiosInstance.put(`/api/profile/${userId}`, {
-        galleryImages: newGalleryImages
+      // Check if user is authenticated
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('User not authenticated. Please log in again.')
+      }
+      
+      console.log('Authentication token present:', !!token)
+      
+      // Use the backend gallery delete endpoint
+      const response = await axiosInstance.delete(`/api/profile/${userId}/gallery`, {
+        data: { url: imageUrl }
       })
-      return response.data.data
+      
+      console.log('Backend gallery remove response:', response.data)
+      
+      // Return the updated gallery
+      return {
+        success: true,
+        gallery: response.data.data,
+        message: response.data.message || 'Image removed from gallery successfully'
+      }
     } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
-      // Fallback to mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      console.error('ProfileService.removeFromGallery error:', error)
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
       
-      const currentUser = JSON.parse(localStorage.getItem('user'))
-      if (!currentUser) {
-        throw new Error('No user logged in')
+      // Handle authentication errors
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        throw new Error('Authentication failed. Please log in again.')
       }
       
-      const newGalleryImages = (currentUser.galleryImages || []).filter(img => img.id !== imageId)
-      
-      // Update user in mock database
-      const users = JSON.parse(localStorage.getItem('sportshub_mock_users') || '[]')
-      const userIndex = users.findIndex(u => u.id === currentUser.id)
-      
-      if (userIndex !== -1) {
-        users[userIndex] = {
-          ...users[userIndex],
-          galleryImages: newGalleryImages
-        }
-        localStorage.setItem('sportshub_mock_users', JSON.stringify(users))
+      // If backend is not running, throw a clear error
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('Backend server is not running. Please start the server and try again.')
       }
       
-      // Update stored user data
-      const updatedUser = {
-        ...currentUser,
-        galleryImages: newGalleryImages
+      // For 500 errors, show more specific error message
+      if (error.response?.status === 500) {
+        const errorMessage = error.response?.data?.message || 'Internal server error occurred'
+        throw new Error(`Server error: ${errorMessage}`)
       }
       
-      localStorage.setItem('user', JSON.stringify(updatedUser))
-      
-      return updatedUser
+      // For other errors, throw the original error
+      throw error
     }
   }
 }
