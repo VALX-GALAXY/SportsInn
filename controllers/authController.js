@@ -1,4 +1,5 @@
 const authService = require("../services/authService");
+const { verifyIdToken } = require("../utils/googleVerify");
 
 async function signup(req, res) {
   const result = await authService.signup(req.body);
@@ -44,4 +45,35 @@ async function logout(req, res) {
   res.json({ success: true, message: "Logged out successfully" });
 }
 
-module.exports = { signup, login, adminSignup, adminLogin, refresh, logout };
+// Google OAuth2 authentication
+async function googleAuth(req, res) {
+  try {
+    const { idToken, role } = req.body;
+    if (!idToken) return res.status(400).json({ success: false, message: "idToken required" });
+
+    const payload = await verifyIdToken(idToken);
+    if (!payload) return res.status(400).json({ success: false, message: "Invalid Google token" });
+
+    if (!payload.email_verified) {
+      // you can relax this if necessary, but recommended to require verified email
+      return res.status(400).json({ success: false, message: "Google email not verified" });
+    }
+
+    const result = await authService.loginWithGoogle({
+      googleId: payload.sub,
+      email: payload.email,
+      name: payload.name,
+      picture: payload.picture,
+      role // optional: front can suggest a role
+    });
+
+    if (result.error) return res.status(400).json({ success: false, message: result.error });
+
+    return res.json({ success: true, data: result, message: "Google login successful" });
+  } catch (err) {
+    console.error("googleAuth error:", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+module.exports = { signup, login, adminSignup, adminLogin, refresh, logout, googleAuth };

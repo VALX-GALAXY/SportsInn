@@ -22,6 +22,10 @@ async function login(body) {
   const user = await User.findOne({ email });
   if (!user) return { error: "Invalid email or password" };
 
+  if (!user.passwordHash) {
+    return { error: "Account registered via social login. Use Google sign-in or set a password." };
+  }
+
   const match = await bcrypt.compare(password, user.passwordHash);
   if (!match) return { error: "Invalid email or password" };
 
@@ -103,4 +107,52 @@ async function logout(refreshToken) {
   return { success: true };
 }
 
-module.exports = { signup, login, adminSignup, adminLogin, refresh, logout };
+
+
+async function loginWithGoogle({ googleId, email, name, picture, role }) {
+  if (!email) return { error: "Email missing from Google profile" };
+
+  // try find user by googleId or email
+  let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+  if (!user) {
+    // create new user
+    const newUser = {
+      name: name || (email.split('@')[0]),
+      email,
+      role: role || "player",
+      profilePic: picture || "",
+      googleId
+    };
+    user = await User.create(newUser);
+  } else {
+    // if found by email but no googleId, link accounts
+    if (!user.googleId) {
+      user.googleId = googleId;
+      if (!user.profilePic && picture) user.profilePic = picture;
+      await user.save();
+    }
+  }
+
+  // Generate access + refresh tokens using your existing function
+  const { accessToken, refreshToken } = generateTokens(user);
+
+  user.refreshTokens = user.refreshTokens || [];
+  user.refreshTokens.push(refreshToken);
+  await user.save();
+
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      profilePic: user.profilePic
+    }
+  };
+}
+
+
+module.exports = { signup, login, adminSignup, adminLogin, refresh, logout, loginWithGoogle };

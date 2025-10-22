@@ -3,7 +3,11 @@ const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, unique: true, required: true },
-  passwordHash: { type: String, required: true },
+  passwordHash: { 
+    type: String,
+    required: function () { return !this.googleId; } // required only when googleId absent
+  },
+  googleId: { type: String, default: null },
   role: { type: String, enum: ["player", "academy", "scout", "admin"], required: true },
   isAdmin: { type: Boolean, default: false },
   gallery: { type: [String], default: [] },
