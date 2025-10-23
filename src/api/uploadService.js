@@ -1,33 +1,31 @@
 import axiosInstance from './axiosInstance'
 
 class UploadService {
-  // Upload image to Cloudinary
+  // Upload image using backend endpoint
   async uploadImage(file, folder = 'sportshub') {
     try {
       // Create form data
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('upload_preset', 'sportshub_preset') // Replace with your upload preset
-      formData.append('folder', folder)
 
-      // Upload to Cloudinary
-      const response = await fetch('https://api.cloudinary.com/v1_1/your_cloud_name/image/upload', {
-        method: 'POST',
-        body: formData
+      // Upload through backend endpoint
+      const response = await axiosInstance.post('/api/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       })
 
-      if (!response.ok) {
-        throw new Error('Upload failed')
-      }
-
-      const data = await response.json()
-      return {
-        success: true,
-        url: data.secure_url,
-        publicId: data.public_id
+      if (response.data.success) {
+        return {
+          success: true,
+          url: response.data.data.url,
+          publicId: response.data.data.publicId || null
+        }
+      } else {
+        throw new Error(response.data.message || 'Upload failed')
       }
     } catch (error) {
-      console.warn('Cloudinary upload failed, using mock upload:', error.message)
+      console.warn('Backend upload failed, using mock upload:', error.message)
       // Fallback to mock upload
       return this.mockUploadImage(file, folder)
     }
@@ -50,28 +48,15 @@ class UploadService {
     }
   }
 
-  // Delete image from Cloudinary
+  // Delete image using backend endpoint
   async deleteImage(publicId) {
     try {
-      const response = await fetch(`https://api.cloudinary.com/v1_1/your_cloud_name/image/destroy`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          public_id: publicId,
-          api_key: 'your_api_key', // Replace with your API key
-          api_secret: 'your_api_secret' // Replace with your API secret
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Delete failed')
-      }
-
-      return { success: true }
+      // For now, we'll use mock delete since backend doesn't have delete endpoint
+      // In a real implementation, you'd add a DELETE endpoint to your backend
+      console.warn('Delete endpoint not implemented in backend, using mock delete')
+      return this.mockDeleteImage(publicId)
     } catch (error) {
-      console.warn('Cloudinary delete failed, using mock delete:', error.message)
+      console.warn('Delete failed, using mock delete:', error.message)
       return this.mockDeleteImage(publicId)
     }
   }
@@ -104,14 +89,75 @@ class UploadService {
     })
   }
 
-  // Upload profile picture
-  async uploadProfilePicture(file) {
-    return this.uploadImage(file, 'sportshub/profiles')
+  // Upload profile picture using backend profile endpoint
+  async uploadProfilePicture(userId, file) {
+    try {
+      const formData = new FormData()
+      formData.append('profilePic', file)
+
+      const response = await axiosInstance.post(`/api/profile/${userId}/picture`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      if (response.data.success) {
+        return {
+          success: true,
+          url: response.data.profilePic || response.data.data?.profilePic,
+          message: response.data.message || 'Profile picture updated successfully'
+        }
+      } else {
+        throw new Error(response.data.message || 'Upload failed')
+      }
+    } catch (error) {
+      console.warn('Backend profile upload failed, using mock upload:', error.message)
+      return this.mockUploadImage(file, 'sportshub/profiles')
+    }
   }
 
-  // Upload gallery images
-  async uploadGalleryImages(files) {
-    return this.uploadMultipleImages(files, 'sportshub/gallery')
+  // Upload gallery images using backend gallery endpoint
+  async uploadGalleryImages(userId, files) {
+    try {
+      const uploadPromises = files.map(file => this.uploadGalleryImage(userId, file))
+      const results = await Promise.all(uploadPromises)
+      
+      return {
+        success: true,
+        urls: results.map(result => result.url),
+        publicIds: results.map(result => result.publicId)
+      }
+    } catch (error) {
+      console.error('Error uploading gallery images:', error)
+      throw error
+    }
+  }
+
+  // Upload single gallery image
+  async uploadGalleryImage(userId, file) {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await axiosInstance.post(`/api/profile/${userId}/gallery`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      if (response.data.success) {
+        return {
+          success: true,
+          url: response.data.url,
+          message: response.data.message || 'Image added to gallery successfully'
+        }
+      } else {
+        throw new Error(response.data.message || 'Upload failed')
+      }
+    } catch (error) {
+      console.warn('Backend gallery upload failed, using mock upload:', error.message)
+      return this.mockUploadImage(file, 'sportshub/gallery')
+    }
   }
 
   // Upload tournament image

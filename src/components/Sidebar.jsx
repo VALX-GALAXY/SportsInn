@@ -156,7 +156,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
                 {user?.profilePicture ? (
                   <img
-                    src={user.profilePicture}
+                    src={user.profilePic}
                     alt={user.name}
                     className={`${isCollapsed ? 'w-8 h-8' : 'w-12 h-12'} rounded-full object-cover border-2 border-white/50 dark:border-gray-600/50 shadow-lg sportsin-hover-glow`}
                   />

@@ -257,7 +257,7 @@ const Navbar = ({ onMenuClick }) => {
               {/* Profile Picture */}
               {user?.profilePicture ? (
                 <img
-                  src={user.profilePicture}
+                  src={user.profilePic}
                   alt={user.name}
                   className="w-8 h-8 rounded-full object-cover border-2 border-white dark:border-gray-700 flex-shrink-0"
                 />

@@ -33,7 +33,7 @@ export default function Profile() {
     yearsOfExperience: user?.yearsOfExperience || ''
   })
   const [errors, setErrors] = useState({})
-  const [imagePreview, setImagePreview] = useState(user?.profilePicture || null)
+  const [imagePreview, setImagePreview] = useState(user?.profilePic || null)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [editingSection, setEditingSection] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -148,7 +148,28 @@ export default function Profile() {
         organization: user.organization || '',
         yearsOfExperience: user.yearsOfExperience || ''
       })
-      setImagePreview(user.profilePicture || null)
+      setImagePreview(user.profilePic || null)
+      
+      // Initialize gallery images
+      console.log('Initializing gallery images for user:', user)
+      console.log('User.galleryImages:', user.galleryImages)
+      console.log('User.gallery:', user.gallery)
+      // Check if user already has formatted galleryImages, otherwise convert from gallery
+      if (user.galleryImages && Array.isArray(user.galleryImages) && user.galleryImages.length > 0) {
+        // User already has formatted gallery images
+        console.log('Using existing galleryImages:', user.galleryImages)
+        setGalleryImages(user.galleryImages)
+      } else {
+        // Convert from raw gallery URLs
+        const galleryUrls = user.gallery || []
+        console.log('Converting from gallery URLs:', galleryUrls)
+        const formattedGallery = galleryUrls.map((url, index) => ({
+          id: `gallery_${index}_${Date.now()}`,
+          url: url
+        }))
+        console.log('Formatted gallery from URLs:', formattedGallery)
+        setGalleryImages(formattedGallery)
+      }
     }
   }, [user])
 
@@ -665,7 +686,9 @@ export default function Profile() {
         if (uploadResult.success) {
           setUploadProgress(100)
           setImagePreview(uploadResult.url)
-          updateUser({ profilePic: uploadResult.url })
+          // Update the user object with the new profile picture
+          const updatedUser = { ...user, profilePic: uploadResult.url }
+          updateUser(updatedUser)
           setUploadStatus('success')
           
           toast({
@@ -782,8 +805,21 @@ export default function Profile() {
         
         // Refresh the gallery from backend
         const updatedUser = await profileService.getProfile(userId)
-        setGalleryImages(updatedUser.galleryImages || [])
-        updateUser(updatedUser)
+        console.log('Updated user after gallery upload:', updatedUser)
+        console.log('Updated user.gallery:', updatedUser.gallery)
+        // Convert gallery URLs to the expected format
+        const galleryUrls = updatedUser.gallery || []
+        console.log('Gallery URLs after upload:', galleryUrls)
+        const formattedGallery = galleryUrls.map((url, index) => ({
+          id: `gallery_${index}_${Date.now()}`,
+          url: url
+        }))
+        console.log('Formatted gallery after upload:', formattedGallery)
+        setGalleryImages(formattedGallery)
+        // Update user with formatted gallery data
+        const userWithFormattedGallery = { ...updatedUser, galleryImages: formattedGallery }
+        console.log('User with formatted gallery:', userWithFormattedGallery)
+        updateUser(userWithFormattedGallery)
         setUploadStatus('success')
         
         toast({
@@ -1116,7 +1152,7 @@ export default function Profile() {
         )}
         
         {/* Welcome message for new users */}
-        {!user?.bio && !user?.profilePicture && (
+        {!user?.bio && !user?.profilePic && (
           <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-md shadow-sm">
             <p className="text-sm text-blue-800 dark:text-blue-300 font-medium">
                Welcome! Complete your profile to get started.
@@ -1129,10 +1165,10 @@ export default function Profile() {
           <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
               <div className="relative flex-shrink-0">
-                {user?.profilePicture ? (
+                {user?.profilePic ? (
                   <div className="relative">
                     <img
-                      src={user.profilePicture}
+                      src={user.profilePic}
                       alt={user.name}
                       className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-lg"
                     />
@@ -1586,12 +1622,12 @@ export default function Profile() {
                     <p className="text-lg text-gray-900 dark:text-white">{user?.bio || 'No bio available'}</p>
                   )}
                 </div>
-                {user?.profilePicture && (
+                {user?.profilePic && (
                   <div>
                     <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Profile Picture</Label>
                     <div className="mt-2">
                       <img
-                        src={user.profilePicture}
+                        src={user.profilePic}
                         alt="Profile"
                         className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
                       />
@@ -1693,6 +1729,8 @@ export default function Profile() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {console.log('Main gallery section - galleryImages:', galleryImages)}
+            {console.log('Gallery images structure:', galleryImages.map(img => ({ id: img.id, url: img.url, type: typeof img })))}
             {galleryImages.length === 0 ? (
               <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                 <Image className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -1704,7 +1742,7 @@ export default function Profile() {
                 <AnimatePresence>
                   {galleryImages.map((image, index) => (
                     <motion.div
-                      key={image.id}
+                      key={image.id || `gallery-${index}-${Date.now()}`}
                       initial={{ opacity: 0, scale: 0.8, y: 20 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.8, y: -20 }}
@@ -1712,7 +1750,7 @@ export default function Profile() {
                       className="relative group"
                     >
                       <img
-                        src={image.url}
+                        src={image.url || image}
                         alt="Gallery"
                         className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg"
                       />
@@ -1729,7 +1767,7 @@ export default function Profile() {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => handleRemoveGalleryImage(image.id)}
+                            onClick={() => handleRemoveGalleryImage(image.id || image.url || image)}
                             className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                           >
                             <Trash2 className="w-4 h-4" />
