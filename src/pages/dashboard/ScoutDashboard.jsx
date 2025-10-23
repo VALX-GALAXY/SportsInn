@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader } from '../../components/ui/card'
 import { Button } from '../../components/ui/button'
 import { Badge } from '../../components/ui/badge'
@@ -18,21 +19,18 @@ import {
   Award,
   Search,
   Heart,
-  MessageCircle
+  MessageCircle,
+  ArrowUpRight,
+  ArrowDownRight
 } from 'lucide-react'
-// import { useAuth } from '../../contexts/AuthContext' // Not used
+import { useAuth } from '../../contexts/AuthContext'
 import tournamentService from '../../api/tournamentService'
 import feedService from '../../api/feedService'
+import statsService from '../../api/statsService'
 
 export default function ScoutDashboard() {
-  const [stats] = useState({
-    playersScouted: 45,
-    successfulPlacements: 12,
-    activeConnections: 28,
-    tournamentsAttended: 8,
-    upcomingEvents: 3,
-    totalEarnings: 180000
-  })
+  const { user } = useAuth()
+  const [stats, setStats] = useState(null)
   const [recommendedPlayers, setRecommendedPlayers] = useState([])
   const [upcomingTournaments, setUpcomingTournaments] = useState([])
   const [recentPosts, setRecentPosts] = useState([])
@@ -40,11 +38,35 @@ export default function ScoutDashboard() {
 
   useEffect(() => {
     fetchDashboardData()
-  }, [])
+  }, [user?.id]) // Re-fetch when user changes
+
+  // Add refresh functionality
+  const handleRefresh = async () => {
+    if (user?.id) {
+      setIsLoading(true)
+      try {
+        const scoutStats = await statsService.getScoutStats(user.id)
+        setStats(scoutStats)
+      } catch (error) {
+        console.error('Error refreshing dashboard:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+  }
 
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true)
+      
+      // Fetch scout statistics
+      if (user?.id) {
+        const scoutStats = await statsService.getScoutStats(user.id)
+        setStats(scoutStats)
+      } else {
+        // Clear stats when no user
+        setStats(null)
+      }
       
       // Fetch upcoming tournaments
       try {
@@ -183,77 +205,177 @@ export default function ScoutDashboard() {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="sportsin-card sportsin-fade-in">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Players Scouted</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.playersScouted}</p>
-                  <div className="flex items-center mt-2">
-                    <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
-                    <span className="text-sm text-emerald-600 dark:text-emerald-400">+25%</span>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            whileHover={{ scale: 1.02, y: -2 }}
+            className="h-full"
+          >
+            <Card className="sportsin-card sportsin-fade-in h-full">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Players Scouted</p>
+                    <motion.p 
+                      className="text-2xl font-bold text-gray-900 dark:text-white"
+                      initial={{ scale: 0.8 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, delay: 0.2 }}
+                    >
+                      {stats?.playersScouted || 0}
+                    </motion.p>
+                    <motion.div 
+                      className="flex items-center mt-2"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: 0.4 }}
+                    >
+                      <ArrowUpRight className="w-4 h-4 text-emerald-500 mr-1" />
+                      <span className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">+25%</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">vs last month</span>
+                    </motion.div>
                   </div>
+                  <motion.div 
+                    className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full"
+                    whileHover={{ rotate: 5 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </motion.div>
                 </div>
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                  <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          <Card className="sportsin-card sportsin-fade-in">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Successful Placements</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.successfulPlacements}</p>
-                  <div className="flex items-center mt-2">
-                    <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
-                    <span className="text-sm text-emerald-600 dark:text-emerald-400">+40%</span>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            whileHover={{ scale: 1.02, y: -2 }}
+            className="h-full"
+          >
+            <Card className="sportsin-card sportsin-fade-in h-full">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Successful Placements</p>
+                    <motion.p 
+                      className="text-2xl font-bold text-gray-900 dark:text-white"
+                      initial={{ scale: 0.8 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, delay: 0.3 }}
+                    >
+                      {stats?.successfulPlacements || 0}
+                    </motion.p>
+                    <motion.div 
+                      className="flex items-center mt-2"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: 0.5 }}
+                    >
+                      <ArrowUpRight className="w-4 h-4 text-emerald-500 mr-1" />
+                      <span className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">+40%</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">vs last month</span>
+                    </motion.div>
                   </div>
+                  <motion.div 
+                    className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full"
+                    whileHover={{ rotate: 5 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Target className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  </motion.div>
                 </div>
-                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
-                  <Target className="w-6 h-6 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          <Card className="sportsin-card sportsin-fade-in">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Connections</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.activeConnections}</p>
-                  <div className="flex items-center mt-2">
-                    <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
-                    <span className="text-sm text-emerald-600 dark:text-emerald-400">+12%</span>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            whileHover={{ scale: 1.02, y: -2 }}
+            className="h-full"
+          >
+            <Card className="sportsin-card sportsin-fade-in h-full">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Connections</p>
+                    <motion.p 
+                      className="text-2xl font-bold text-gray-900 dark:text-white"
+                      initial={{ scale: 0.8 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, delay: 0.4 }}
+                    >
+                      {stats?.activeConnections || 0}
+                    </motion.p>
+                    <motion.div 
+                      className="flex items-center mt-2"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: 0.6 }}
+                    >
+                      <ArrowUpRight className="w-4 h-4 text-emerald-500 mr-1" />
+                      <span className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">+12%</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">vs last month</span>
+                    </motion.div>
                   </div>
+                  <motion.div 
+                    className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full"
+                    whileHover={{ rotate: 5 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  </motion.div>
                 </div>
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-                  <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          <Card className="sportsin-card sportsin-fade-in">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Earnings</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.totalEarnings)}</p>
-                  <div className="flex items-center mt-2">
-                    <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
-                    <span className="text-sm text-emerald-600 dark:text-emerald-400">+35%</span>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            whileHover={{ scale: 1.02, y: -2 }}
+            className="h-full"
+          >
+            <Card className="sportsin-card sportsin-fade-in h-full">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Earnings</p>
+                    <motion.p 
+                      className="text-2xl font-bold text-gray-900 dark:text-white"
+                      initial={{ scale: 0.8 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3, delay: 0.5 }}
+                    >
+                      {formatCurrency(stats?.totalEarnings || 0)}
+                    </motion.p>
+                    <motion.div 
+                      className="flex items-center mt-2"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: 0.7 }}
+                    >
+                      <ArrowUpRight className="w-4 h-4 text-emerald-500 mr-1" />
+                      <span className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">+35%</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">vs last month</span>
+                    </motion.div>
                   </div>
+                  <motion.div 
+                    className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full"
+                    whileHover={{ rotate: 5 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <DollarSign className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                  </motion.div>
                 </div>
-                <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full">
-                  <DollarSign className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

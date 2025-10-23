@@ -54,7 +54,22 @@ export default function PlayerDashboard() {
 
   useEffect(() => {
     fetchDashboardData()
-  }, [])
+  }, [user?.id]) // Re-fetch when user changes
+
+  // Add refresh functionality
+  const handleRefresh = async () => {
+    if (user?.id) {
+      setIsLoading(true)
+      try {
+        const playerStats = await statsService.getPlayerStats(user.id)
+        setStats(playerStats)
+      } catch (error) {
+        console.error('Error refreshing dashboard:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+  }
 
   const fetchDashboardData = async () => {
     try {
@@ -64,6 +79,9 @@ export default function PlayerDashboard() {
       if (user?.id) {
         const playerStats = await statsService.getPlayerStats(user.id)
         setStats(playerStats)
+      } else {
+        // Clear stats when no user
+        setStats(null)
       }
       
       // Fetch tournament invites (mock data for now)
