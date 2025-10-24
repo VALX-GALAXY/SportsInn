@@ -3,6 +3,21 @@ const User = require("../models/userModel");
 const { generateTokens, verifyRefreshToken } = require("../utils/jwtUtils");
 const { validateSignup } = require("../utils/validation");
 
+// Token refresh queue to prevent race conditions
+const refreshQueue = new Map(); // Map of userId -> Promise<{accessToken, refreshToken}>
+
+// Cleanup old entries from the queue every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [userId, promise] of refreshQueue.entries()) {
+    // If a promise has been in the queue for more than 5 minutes, remove it
+    if (promise._timestamp && (now - promise._timestamp) > 300000) {
+      console.log(`Cleaning up stale refresh queue entry for user ${userId}`);
+      refreshQueue.delete(userId);
+    }
+  }
+}, 300000); // 5 minutes
+
 async function signup(body) {
   const error = validateSignup(body);
   if (error) return { error };
@@ -84,16 +99,49 @@ async function refresh(refreshToken) {
   const payload = verifyRefreshToken(refreshToken);
   if (!payload) return { error: "Invalid refresh token" };
 
-  const user = await User.findById(payload.id);
-  if (!user || !user.refreshTokens.includes(refreshToken)) return { error: "Invalid refresh token" };
+  const userId = payload.id;
+  
+  // Check if there's already a refresh in progress for this user
+  if (refreshQueue.has(userId)) {
+    console.log(`Token refresh already in progress for user ${userId}, waiting...`);
+    try {
+      return await refreshQueue.get(userId);
+    } catch (error) {
+      // If the queued refresh failed, remove it and try again
+      refreshQueue.delete(userId);
+    }
+  }
+
+  // Create a new refresh promise and add it to the queue
+  const refreshPromise = performTokenRefresh(refreshToken, userId);
+  refreshPromise._timestamp = Date.now(); // Add timestamp for cleanup
+  refreshQueue.set(userId, refreshPromise);
+
+  try {
+    const result = await refreshPromise;
+    return result;
+  } finally {
+    // Clean up the queue after completion
+    refreshQueue.delete(userId);
+  }
+}
+
+async function performTokenRefresh(refreshToken, userId) {
+  console.log(`Performing token refresh for user ${userId}`);
+  
+  const user = await User.findById(userId);
+  if (!user || !user.refreshTokens.includes(refreshToken)) {
+    throw new Error("Invalid refresh token");
+  }
 
   const { accessToken, refreshToken: newRefresh } = generateTokens(user);
 
-  // replace old token
+  // Replace old token
   user.refreshTokens = user.refreshTokens.filter(rt => rt !== refreshToken);
   user.refreshTokens.push(newRefresh);
   await user.save();
 
+  console.log(`Token refresh completed for user ${userId}`);
   return { accessToken, refreshToken: newRefresh };
 }
 
