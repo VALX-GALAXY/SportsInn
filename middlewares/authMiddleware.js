@@ -23,10 +23,29 @@ async function authMiddleware(req, res, next) {
     } catch (jwtErr) {
       // Provide helpful server-side logs for debugging (don't leak secret details to client)
       console.error("JWT verify error:", jwtErr && jwtErr.name, jwtErr && jwtErr.message);
+      
       if (jwtErr.name === "TokenExpiredError") {
-        return res.status(401).json({ success: false, message: "Token expired" });
+        return res.status(401).json({ 
+          success: false, 
+          message: "Token expired", 
+          code: "TOKEN_EXPIRED",
+          shouldRefresh: true 
+        });
       }
-      return res.status(401).json({ success: false, message: "Invalid token" });
+      
+      if (jwtErr.name === "JsonWebTokenError") {
+        return res.status(401).json({ 
+          success: false, 
+          message: "Invalid token format", 
+          code: "INVALID_TOKEN" 
+        });
+      }
+      
+      return res.status(401).json({ 
+        success: false, 
+        message: "Invalid token", 
+        code: "INVALID_TOKEN" 
+      });
     }
 
     // Support either 'id' or '_id' in payload just in case

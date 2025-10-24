@@ -45,6 +45,54 @@ async function logout(req, res) {
   res.json({ success: true, message: "Logged out successfully" });
 }
 
+// Token validation endpoint for debugging
+async function validateToken(req, res) {
+  try {
+    const authHeader = req.headers["authorization"] || req.headers["Authorization"];
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ success: false, message: "No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1].trim();
+    const jwt = require("jsonwebtoken");
+    
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await require("../models/userModel").findById(decoded.id).select("-passwordHash -refreshTokens");
+      
+      if (!user) {
+        return res.status(401).json({ success: false, message: "User not found" });
+      }
+
+      return res.json({ 
+        success: true, 
+        message: "Token is valid",
+        data: {
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role
+          },
+          tokenInfo: {
+            expiresAt: new Date(decoded.exp * 1000),
+            issuedAt: new Date(decoded.iat * 1000),
+            timeRemaining: Math.max(0, decoded.exp - Math.floor(Date.now() / 1000))
+          }
+        }
+      });
+    } catch (jwtErr) {
+      return res.status(401).json({ 
+        success: false, 
+        message: jwtErr.message,
+        code: jwtErr.name 
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+}
+
 // Google OAuth2 authentication
 async function googleAuth(req, res) {
   try {
@@ -76,4 +124,4 @@ async function googleAuth(req, res) {
   }
 }
 
-module.exports = { signup, login, adminSignup, adminLogin, refresh, logout, googleAuth };
+module.exports = { signup, login, adminSignup, adminLogin, refresh, logout, googleAuth, validateToken };

@@ -11,7 +11,6 @@ const PORT = process.env.PORT || 3000;
 const authRoutes = require("./routes/authRoutes");
 const feedRoutes = require("./routes/feedRoutes");
 const profileRoutes = require("./routes/profileRoutes");
-const userRoutes = require("./routes/userRoutes");
 const notificationRoutes = require("./routes/notificationRoutes")
 const messageRoutes = require("./routes/messageRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
@@ -63,7 +62,6 @@ app.get("/api/health", (req, res) => res.json({ success: true, message: "ok" }))
 app.use("/api/auth", authRoutes);
 app.use("/api/feed", feedRoutes);
 app.use("/api/profile", profileRoutes);
-app.use("/api/users", userRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/dashboard", dashboardRoutes);
