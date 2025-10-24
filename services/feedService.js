@@ -1,19 +1,9 @@
+// services/feedService.js
 const Post = require("../models/postModel");
 const User = require("../models/userModel");
 const Notification = require("../models/notificationModel");
-const redisClient = require("../utils/redisClient");
+const redis = require("../utils/redisClient");
 const DEFAULT_TTL = Number(process.env.FEED_CACHE_TTL) || 30;
-
-async function invalidateFeedCache() {
-  if (!redisClient) return;
-  try {
-    // if Redis supports KEYS in your environment; in prod you'd use a proper pattern or track keys
-    const keys = await redisClient.keys("feed:*");
-    if (keys.length) await redisClient.del(keys);
-  } catch (err) {
-    console.warn("Redis invalidate error:", err.message || err);
-  }
-}
 
 // Cloudinary
 const cloudinary = require("cloudinary").v2;
@@ -27,6 +17,42 @@ if (process.env.CLOUDINARY_CLOUD_NAME) {
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
   });
+}
+
+/**
+ * Try to delete all feed:* keys using SCAN (safe for production).
+ * Gracefully returns when Redis unavailable.
+ */
+async function invalidateFeedCache() {
+  try {
+    const client = redis.getClient && redis.getClient();
+    if (!client) return;
+
+    // use scanIterator if available (node-redis v4 supports scanIterator)
+    if (typeof client.scanIterator === "function") {
+      const batch = [];
+      for await (const key of client.scanIterator({ MATCH: "feed:*", COUNT: 100 })) {
+        batch.push(key);
+        if (batch.length >= 100) {
+          // prefer UNLINK (non-blocking) then fall back to DEL
+          try { await client.unlink(...batch); } catch (e) { await client.del(...batch); }
+          batch.length = 0;
+        }
+      }
+      if (batch.length) {
+        try { await client.unlink(...batch); } catch (e) { await client.del(...batch); }
+      }
+    } else {
+      // fallback: try KEYS (not recommended for huge prod datasets) but safe as fallback
+      const keys = await client.keys("feed:*").catch(() => []);
+      if (keys && keys.length) {
+        try { await client.unlink(...keys); } catch (e) { await client.del(...keys); }
+      }
+    }
+  } catch (err) {
+    // do not throw — cache invalidation failure should not break flow
+    console.warn("Redis invalidate error:", err && err.message ? err.message : err);
+  }
 }
 
 async function uploadFile(file) {
@@ -46,8 +72,6 @@ async function uploadFile(file) {
   return { url, type: file.mimetype.startsWith("video") ? "video" : "image" };
 }
 
-
-
 async function createPost(user, body) {
   const post = new Post({
     authorId: user._id,
@@ -58,6 +82,7 @@ async function createPost(user, body) {
     likes: []
   });
   await post.save();
+  // invalidate cache after DB write
   invalidateFeedCache();
   return post;
 }
@@ -67,17 +92,17 @@ async function getFeed(filters = {}, page = 1, limit = 10) {
   const type = filters.type || "";
   const key = `feed:role=${role}:type=${type}:page=${page}:limit=${limit}`;
 
-  // try cache
-  if (redisClient) {
-    try {
-      const cached = await redisClient.get(key);
+  // try cache (redis.get returns parsed object or null)
+  try {
+    if (redis && typeof redis.get === "function") {
+      const cached = await redis.get(key);
       if (cached) {
-        return JSON.parse(cached);
+        return cached;
       }
-    } catch (err) {
-      // log, but continue to DB
-      console.warn("Redis read error:", err.message || err);
     }
+  } catch (err) {
+    console.warn("Redis read error:", err && err.message ? err.message : err);
+    // continue to DB
   }
 
   // build mongo query
@@ -108,13 +133,13 @@ async function getFeed(filters = {}, page = 1, limit = 10) {
     data: paged
   };
 
-  // write cache
-  if (redisClient) {
-    try {
-      await redisClient.setEx(key, DEFAULT_TTL, JSON.stringify(result));
-    } catch (err) {
-      console.warn("Redis write error:", err.message || err);
+  // write cache using helper (redis.set will stringify)
+  try {
+    if (redis && typeof redis.set === "function") {
+      await redis.set(key, result, DEFAULT_TTL);
     }
+  } catch (err) {
+    console.warn("Redis write error:", err && err.message ? err.message : err);
   }
 
   return result;
@@ -147,7 +172,6 @@ async function likePost(user, postId, io) {
   return { likesCount: post.likes.length };
 }
 
-
 async function unlikePost(user, postId) {
   const post = await Post.findById(postId);
   if (!post) throw new Error("Post not found");
@@ -157,6 +181,7 @@ async function unlikePost(user, postId) {
     post.likes.splice(idx, 1);
     await post.save();
     // optionally remove like notifications - skipped for simplicity
+    invalidateFeedCache();
   }
   return { likesCount: post.likes.length };
 }
@@ -206,7 +231,7 @@ async function addComment(user, postId, text, io) {
   const post = await Post.findById(postId);
   if (!post) throw new Error("Post not found");
 
-  const comment = { userId: user._id, text, createdAt: new Date() };  
+  const comment = { userId: user._id, text, createdAt: new Date() };
   post.comments.push(comment);
   invalidateFeedCache();
   await post.save();
@@ -235,7 +260,7 @@ async function getComments(postId, page = 1, limit = 5) {
   return post.comments.slice(start, end);
 }
 
-module.exports = { 
+module.exports = {
   uploadFile,
   createPost,
   getFeed,

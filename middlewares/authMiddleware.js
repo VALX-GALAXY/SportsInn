@@ -1,52 +1,40 @@
 // middlewares/authMiddleware.js
-const jwt = require("jsonwebtoken");
+const { verifyAccessToken } = require("../utils/jwtUtils");
 const User = require("../models/userModel");
 
 async function authMiddleware(req, res, next) {
   try {
-    if (!process.env.JWT_SECRET) {
-      console.error("JWT secret is not set in process.env");
-      return res.status(500).json({ success: false, message: "Server misconfiguration" });
-    }
-
     const authHeader = req.headers["authorization"] || req.headers["Authorization"];
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ success: false, message: "Authorization header missing or malformed" });
-    }
+    const token = authHeader && authHeader.split(" ")[1];
 
-    const token = authHeader.split(" ")[1].trim();
     if (!token) return res.status(401).json({ success: false, message: "No token provided" });
 
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (jwtErr) {
-      // Provide helpful server-side logs for debugging (don't leak secret details to client)
-      console.error("JWT verify error:", jwtErr && jwtErr.name, jwtErr && jwtErr.message);
-      if (jwtErr.name === "TokenExpiredError") {
-        return res.status(401).json({ success: false, message: "Token expired" });
-      }
-      return res.status(401).json({ success: false, message: "Invalid token" });
+    const decoded = verifyAccessToken(token);
+
+    if (!decoded) {
+      // helpful server-side log for debugging
+      console.warn("authMiddleware: token verification failed (null payload)");
+      return res.status(403).json({ success: false, message: "Invalid token" });
     }
 
-    // Support either 'id' or '_id' in payload just in case
-    const userId = decoded.id || decoded._id;
+    // accept multiple naming conventions used across code
+    const userId = decoded.id || decoded._id || decoded.userId || decoded.sub;
     if (!userId) {
-      console.error("JWT payload missing user id:", decoded);
-      return res.status(401).json({ success: false, message: "Invalid token payload" });
+      console.warn("authMiddleware: decoded token missing user id", decoded);
+      return res.status(403).json({ success: false, message: "Invalid token payload" });
     }
 
-    const user = await User.findById(userId).select("-passwordHash -refreshTokens");
+    const user = await User.findById(userId);
     if (!user) {
-      console.error("Auth: user not found for id:", userId);
+      console.warn("authMiddleware: user not found for id", userId);
       return res.status(401).json({ success: false, message: "User not found" });
     }
 
     req.user = user;
-    next();
+    return next();
   } catch (err) {
-    console.error("Auth middleware unexpected error:", err);
-    res.status(500).json({ success: false, message: "Authentication error" });
+    console.error("authMiddleware error:", err && err.message);
+    return res.status(403).json({ success: false, message: "Invalid token" });
   }
 }
 
