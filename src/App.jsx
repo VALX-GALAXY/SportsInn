@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useState } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { NotificationProvider } from './contexts/NotificationContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import { ToastProvider } from './components/ui/simple-toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
@@ -21,6 +22,7 @@ import PlayerDashboard from './pages/dashboard/PlayerDashboard'
 import AcademyDashboard from './pages/dashboard/AcademyDashboard'
 import ClubDashboard from './pages/dashboard/ClubDashboard'
 import ScoutDashboard from './pages/dashboard/ScoutDashboard'
+import Settings from './pages/Settings'
 import TestConnection from './pages/TestConnection'
 import './App.css'
 
@@ -180,6 +182,13 @@ function AppRoutes() {
           </ErrorBoundary>
         </AuthenticatedLayout>
       } />
+      <Route path="/settings" element={
+        <AuthenticatedLayout>
+          <ErrorBoundary>
+            <Settings />
+          </ErrorBoundary>
+        </AuthenticatedLayout>
+      } />
       <Route path="/test-connection" element={
         <AuthenticatedLayout>
           <ErrorBoundary>
@@ -194,15 +203,17 @@ function AppRoutes() {
 function App() {
   return (
     <ErrorBoundary>
-      <ToastProvider>
-        <AuthProvider>
-          <NotificationProvider>
-            <Router>
-              <AppRoutes />
-            </Router>
-          </NotificationProvider>
-        </AuthProvider>
-      </ToastProvider>
+      <ThemeProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <NotificationProvider>
+              <Router>
+                <AppRoutes />
+              </Router>
+            </NotificationProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   )
 }

@@ -13,7 +13,6 @@ import {
   MapPin, 
   Calendar,
   Loader2,
-  Filter,
   X,
   TrendingUp,
   Clock,
@@ -106,14 +105,6 @@ export default function Search() {
   const [searchResults, setSearchResults] = useState({})
   const [isLoading, setIsLoading] = useState(false)
   const [activeFilter, setActiveFilter] = useState('all') // 'all', 'players', 'academies', 'clubs', 'scouts'
-  const [showFilters, setShowFilters] = useState(false)
-  const [filters, setFilters] = useState({
-    name: '',
-    playerRole: '', // Batsman | Bowler | All-rounder
-    ageMin: '',
-    ageMax: '',
-    location: ''
-  })
   const [page, setPage] = useState(1)
   const pageSize = 9
   const [visibleResults, setVisibleResults] = useState([])
@@ -436,16 +427,6 @@ export default function Search() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center space-x-2"
-              >
-                <Filter className="w-4 h-4" />
-                <span>Filters</span>
-              </Button>
-              
               {searchQuery && (
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   {totalResults} results for "{searchQuery}"
@@ -466,128 +447,8 @@ export default function Search() {
             )}
           </div>
 
-          {/* Sidebar filter panel */}
-          {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-              <div className="md:col-span-1 bg-white dark:bg-gray-800 border-0 shadow-sm rounded-lg p-4">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
-                    <Input
-                      placeholder="e.g., Alex"
-                      value={filters.name}
-                      onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Player Role</label>
-                    <select
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
-                      value={filters.playerRole}
-                      onChange={(e) => setFilters(prev => ({ ...prev, playerRole: e.target.value }))}
-                    >
-                      <option value="">Any</option>
-                      <option value="Batsman">Batsman</option>
-                      <option value="Bowler">Bowler</option>
-                      <option value="All-rounder">All-rounder</option>
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Age Min</label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={filters.ageMin}
-                        onChange={(e) => setFilters(prev => ({ ...prev, ageMin: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Age Max</label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={filters.ageMax}
-                        onChange={(e) => setFilters(prev => ({ ...prev, ageMax: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
-                    <Input
-                      placeholder="City, State"
-                      value={filters.location}
-                      onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        if (!searchQuery.trim()) {
-                          toast({ title: 'Enter a search term first', variant: 'default' })
-                          return
-                        }
-                        performSearch(searchQuery)
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      Apply
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setFilters({ name: '', playerRole: '', ageMin: '', ageMax: '', location: '' })
-                        setPage(1)
-                        performSearch(searchQuery)
-                      }}
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="md:col-span-3">
-                {/* Filter Tabs */}
-                <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-                  {[
-                    { key: 'all', label: 'All', count: totalResults },
-                    { key: 'players', label: 'Players', count: searchResults.players?.length || 0 },
-                    { key: 'academies', label: 'Academies', count: searchResults.academies?.length || 0 },
-                    { key: 'clubs', label: 'Clubs', count: searchResults.clubs?.length || 0 },
-                    { key: 'scouts', label: 'Scouts', count: searchResults.scouts?.length || 0 }
-                  ].map(({ key, label, count }) => (
-                    <Button
-                      key={key}
-                      variant={activeFilter === key ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => {
-                        setActiveFilter(key)
-                        setPage(1)
-                      }}
-                      className={`flex items-center space-x-2 transition-all duration-200 ${
-                        activeFilter === key 
-                          ? 'bg-gradient-to-r from-blue-500 to-emerald-500 text-white shadow-sm' 
-                          : 'hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400'
-                      }`}
-                    >
-                      <span>{label}</span>
-                      {count > 0 && (
-                        <Badge variant="secondary" className="ml-1 px-2 py-0.5 text-xs">
-                          {count}
-                        </Badge>
-                      )}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Filter Tabs */}
-          {!showFilters && (
           <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
             {[
               { key: 'all', label: 'All', count: totalResults },
@@ -619,7 +480,6 @@ export default function Search() {
               </Button>
             ))}
           </div>
-          )}
         </div>
 
         {/* Search Results */}

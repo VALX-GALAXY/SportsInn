@@ -598,6 +598,12 @@
   --sportsin-accent: #ef4444;
   --sportsin-gradient: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
   --sportsin-gradient-hover: linear-gradient(135deg, #2563eb 0%, #059669 100%);
+  
+  /* Dynamic theme colors */
+  --theme-primary: #3b82f6;
+  --theme-secondary: #10b981;
+  --theme-gradient: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #2563eb 0%, #059669 100%);
 }
 
 /* Dark mode SportsIn theme */
@@ -607,6 +613,69 @@
   --sportsin-accent: #f87171;
   --sportsin-gradient: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
   --sportsin-gradient-hover: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+  
+  /* Dynamic theme colors for dark mode */
+  --theme-primary: #60a5fa;
+  --theme-secondary: #34d399;
+  --theme-gradient: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+}
+
+/* Dynamic theme classes */
+.theme-blue {
+  --theme-primary: #3b82f6;
+  --theme-secondary: #10b981;
+  --theme-gradient: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #2563eb 0%, #059669 100%);
+}
+
+.theme-green {
+  --theme-primary: #10b981;
+  --theme-secondary: #3b82f6;
+  --theme-gradient: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #059669 0%, #2563eb 100%);
+}
+
+.theme-purple {
+  --theme-primary: #8b5cf6;
+  --theme-secondary: #ec4899;
+  --theme-gradient: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
+}
+
+.theme-red {
+  --theme-primary: #ef4444;
+  --theme-secondary: #f59e0b;
+  --theme-gradient: linear-gradient(135deg, #ef4444 0%, #f59e0b 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #dc2626 0%, #d97706 100%);
+}
+
+.theme-orange {
+  --theme-primary: #f59e0b;
+  --theme-secondary: #ef4444;
+  --theme-gradient: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #d97706 0%, #dc2626 100%);
+}
+
+.theme-pink {
+  --theme-primary: #ec4899;
+  --theme-secondary: #8b5cf6;
+  --theme-gradient: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #db2777 0%, #7c3aed 100%);
+}
+
+.theme-indigo {
+  --theme-primary: #6366f1;
+  --theme-secondary: #06b6d4;
+  --theme-gradient: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #4f46e5 0%, #0891b2 100%);
+}
+
+.theme-teal {
+  --theme-primary: #14b8a6;
+  --theme-secondary: #3b82f6;
+  --theme-gradient: linear-gradient(135deg, #14b8a6 0%, #3b82f6 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #0d9488 0%, #2563eb 100%);
 }
 
 /* SportsIn Gradient Button */

@@ -5,23 +5,66 @@ class SearchService {
   async searchUsers(query, filters = {}, page = 1, limit = 20) {
     try {
       console.log('🔍 Searching users via backend API:', query)
-      const response = await axiosInstance.get('/api/search', {
-        params: {
-          name: query,  // Backend expects 'name' parameter
-          role: filters.role,
-          location: filters.location,
-          ageMin: filters.ageMin,
-          ageMax: filters.ageMax,
-          page,
-          limit
-        }
-      })
+      
+      // Build params object with all possible filters
+      const params = {
+        name: query,  // Backend expects 'name' parameter
+        role: filters.role,
+        location: filters.location,
+        page,
+        limit
+      }
+      
+      // Add role-specific filters based on the active filter
+      if (filters.role === 'Player' || filters.role === 'players') {
+        if (filters.ageMin) params.ageMin = filters.ageMin
+        if (filters.ageMax) params.ageMax = filters.ageMax
+        if (filters.playerRole) params.playerRole = filters.playerRole
+      } else if (filters.role === 'Academy' || filters.role === 'academies') {
+        if (filters.established) params.established = filters.established
+        if (filters.studentsMin) params.studentsMin = filters.studentsMin
+        if (filters.studentsMax) params.studentsMax = filters.studentsMax
+      } else if (filters.role === 'Club' || filters.role === 'clubs') {
+        if (filters.founded) params.founded = filters.founded
+        if (filters.playersMin) params.playersMin = filters.playersMin
+        if (filters.playersMax) params.playersMax = filters.playersMax
+      } else if (filters.role === 'Scout' || filters.role === 'scouts') {
+        if (filters.experience) params.experience = filters.experience
+        if (filters.discoveriesMin) params.discoveriesMin = filters.discoveriesMin
+        if (filters.discoveriesMax) params.discoveriesMax = filters.discoveriesMax
+      }
+      
+      const response = await axiosInstance.get('/api/search', { params })
       
       console.log('✅ Backend users search response:', response.data)
       
       if (response.data.success) {
+        // Transform backend users to frontend format
+        const transformedUsers = response.data.data.map(user => ({
+          id: user._id,
+          name: user.name,
+          role: user.role,
+          avatar: user.profilePic || user.avatar || 'https://i.pravatar.cc/150?img=1',
+          location: user.location || 'Not specified',
+          age: user.age,
+          position: user.position || 'Not specified',
+          playerRole: user.playerRole || 'Not specified',
+          experience: user.experience || 'Not specified',
+          verified: user.verified || false,
+          followers: user.followers || 0,
+          bio: user.bio || 'No bio available',
+          // Academy specific fields
+          established: user.established,
+          students: user.students,
+          // Club specific fields
+          founded: user.founded,
+          players: user.players,
+          // Scout specific fields
+          discoveries: user.discoveries
+        }))
+        
         return {
-          users: response.data.data || [],
+          users: transformedUsers,
           total: response.data.total || 0,
           page: response.data.page || page,
           limit: response.data.limit || limit
@@ -30,104 +73,11 @@ class SearchService {
         throw new Error('Backend returned success: false')
       }
     } catch (error) {
-      console.warn('⚠️ Backend users search API unavailable, using mock data:', error.message)
-      console.warn('Error details:', error.response?.data || error.message)
-      // Fallback to mock data
-      await new Promise(resolve => setTimeout(resolve, 500))
+      console.error('❌ Backend users search API failed:', error.message)
+      console.error('Error details:', error.response?.data || error.message)
       
-      const mockUsers = [
-        {
-          id: 1,
-          name: 'Jay kumar',
-          role: 'Player',
-          avatar: 'https://i.pravatar.cc/150?img=32',
-          location: 'New York, NY',
-          age: 22,
-          position: 'Forward',
-          playerRole: 'Batsman',
-          experience: '5 years',
-          verified: true,
-          followers: 1250,
-          bio: 'Professional football player with 5 years of experience. Looking for opportunities to grow.'
-        },
-        {
-          id: 2,
-          name: 'Ankit kumar',
-          role: 'Player',
-          avatar: 'https://i.pravatar.cc/150?img=45',
-          location: 'Los Angeles, CA',
-          age: 19,
-          position: 'Midfielder',
-          playerRole: 'Bowler',
-          experience: '3 years',
-          verified: false,
-          followers: 890,
-          bio: 'Young talented midfielder with great potential.'
-        },
-        {
-          id: 3,
-          name: 'Elite Sports Academy',
-          role: 'Academy',
-          avatar: 'https://i.pravatar.cc/150?img=67',
-          location: 'Miami, FL',
-          established: '2015',
-          students: 150,
-          verified: true,
-          followers: 3200,
-          bio: 'Premier sports academy focused on developing young talent.'
-        },
-        {
-          id: 4,
-          name: 'Csk',
-          role: 'Club',
-          avatar: 'https://i.pravatar.cc/150?img=78',
-          location: 'Chicago, IL',
-          founded: '2010',
-          players: 25,
-          verified: true,
-          followers: 4500,
-          bio: 'Professional football club competing in the national league.'
-        },
-        {
-          id: 5,
-          name: 'Trisha',
-          role: 'Scout',
-          avatar: 'https://i.pravatar.cc/150?img=89',
-          location: 'Boston, MA',
-          experience: '10 years',
-          discoveries: 50,
-          verified: true,
-          followers: 2100,
-          bio: 'Experienced scout with a track record of discovering talented players.'
-        }
-      ]
-      
-      // Filter based on query and filters
-      let filteredUsers = mockUsers.filter(user => {
-        const matchesQuery = 
-          user.name.toLowerCase().includes(query.toLowerCase()) ||
-          user.bio.toLowerCase().includes(query.toLowerCase()) ||
-          user.location.toLowerCase().includes(query.toLowerCase())
-        
-        const matchesRole = !filters.role || filters.role === 'all' || user.role === filters.role
-        const matchesPlayerRole = !filters.playerRole || user.playerRole === filters.playerRole
-        const matchesAge = !filters.ageMin || !filters.ageMax || (user.age >= filters.ageMin && user.age <= filters.ageMax)
-        const matchesLocation = !filters.location || user.location.toLowerCase().includes(filters.location.toLowerCase())
-        
-        return matchesQuery && matchesRole && matchesPlayerRole && matchesAge && matchesLocation
-      })
-      
-      // Pagination
-      const startIndex = (page - 1) * limit
-      const endIndex = startIndex + limit
-      
-      return {
-        users: filteredUsers.slice(startIndex, endIndex),
-        total: filteredUsers.length,
-        page,
-        limit,
-        hasMore: endIndex < filteredUsers.length
-      }
+      // Don't fall back to mock data - throw the error instead
+      throw new Error(`Search failed: ${error.response?.data?.message || error.message}`)
     }
   }
 
