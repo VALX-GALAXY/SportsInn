@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -13,10 +14,15 @@ import {
   Calendar,
   Loader2,
   Filter,
-  X
+  X,
+  TrendingUp,
+  Clock,
+  Star
 } from 'lucide-react'
 import { useToast } from '../components/ui/simple-toast'
 import { SearchResultsSkeleton } from '../components/SkeletonLoaders'
+import searchService from '../api/searchService'
+import { useAuth } from '../contexts/AuthContext'
 
 // Dummy search results data
 const dummySearchResults = {
@@ -95,6 +101,7 @@ const dummySearchResults = {
 }
 
 export default function Search() {
+  const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState({})
   const [isLoading, setIsLoading] = useState(false)
@@ -110,8 +117,31 @@ export default function Search() {
   const [page, setPage] = useState(1)
   const pageSize = 9
   const [visibleResults, setVisibleResults] = useState([])
+  const [suggestions, setSuggestions] = useState([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [searchHistory, setSearchHistory] = useState([])
+  const [trendingSearches, setTrendingSearches] = useState([])
   const loadMoreRef = useRef(null)
   const { toast } = useToast()
+
+  // Load search history and trending searches on mount
+  useEffect(() => {
+    const loadSearchData = async () => {
+      if (user?.id) {
+        try {
+          const [history, trending] = await Promise.all([
+            searchService.getSearchHistory(user.id),
+            searchService.getTrendingSearches()
+          ])
+          setSearchHistory(history)
+          setTrendingSearches(trending)
+        } catch (error) {
+          console.error('Error loading search data:', error)
+        }
+      }
+    }
+    loadSearchData()
+  }, [user?.id])
 
   // Debounced search function
   const debouncedSearch = useCallback(
@@ -122,6 +152,31 @@ export default function Search() {
         timeoutId = setTimeout(() => {
           performSearch(query)
         }, 500)
+      }
+    })(),
+    []
+  )
+
+  // Debounced suggestions function
+  const debouncedSuggestions = useCallback(
+    (() => {
+      let timeoutId
+      return (query) => {
+        clearTimeout(timeoutId)
+        timeoutId = setTimeout(async () => {
+          if (query.length > 2) {
+            try {
+              const suggestionsData = await searchService.getSuggestions(query)
+              setSuggestions(suggestionsData)
+              setShowSuggestions(true)
+            } catch (error) {
+              console.error('Error loading suggestions:', error)
+            }
+          } else {
+            setSuggestions([])
+            setShowSuggestions(false)
+          }
+        }, 300)
       }
     })(),
     []
@@ -140,45 +195,32 @@ export default function Search() {
   const performSearch = async (query) => {
     try {
       setIsLoading(true)
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800))
       
-      // Filter results based on query
-      const filteredResults = {}
-      Object.keys(dummySearchResults).forEach(category => {
-        filteredResults[category] = dummySearchResults[category].filter(item => {
-          const matchesQuery =
-            item.name.toLowerCase().includes(query.toLowerCase()) ||
-            item.bio.toLowerCase().includes(query.toLowerCase()) ||
-            item.location.toLowerCase().includes(query.toLowerCase())
-
-          // Advanced filters (apply only where relevant)
-          const matchesName = filters.name
-            ? item.name.toLowerCase().includes(filters.name.toLowerCase())
-            : true
-          const matchesLocation = filters.location
-            ? item.location.toLowerCase().includes(filters.location.toLowerCase())
-            : true
-          const matchesAge = (() => {
-            if (typeof item.age !== 'number') return true
-            const minOk = filters.ageMin ? item.age >= Number(filters.ageMin) : true
-            const maxOk = filters.ageMax ? item.age <= Number(filters.ageMax) : true
-            return minOk && maxOk
-          })()
-          const matchesPlayerRole = (() => {
-            if (category !== 'players' || !filters.playerRole) return true
-            return (item.playerRole || '').toLowerCase() === filters.playerRole.toLowerCase()
-          })()
-
-          return matchesQuery && matchesName && matchesLocation && matchesAge && matchesPlayerRole
-        })
-      })
+      // Save search to history
+      if (user?.id) {
+        await searchService.saveSearchHistory(user.id, query)
+      }
       
-      setSearchResults(filteredResults)
+      // Perform global search
+      const searchResults = await searchService.globalSearch(query, page, pageSize)
+      
+      // Organize results by category
+      const organizedResults = {
+        players: searchResults.users?.filter(user => user.role === 'Player') || [],
+        academies: searchResults.users?.filter(user => user.role === 'Academy') || [],
+        clubs: searchResults.users?.filter(user => user.role === 'Club') || [],
+        scouts: searchResults.users?.filter(user => user.role === 'Scout') || [],
+        posts: searchResults.posts || [],
+        tournaments: searchResults.tournaments || []
+      }
+      
+      setSearchResults(organizedResults)
       setPage(1)
-      // initialize visible results for current active filter
-      const all = Object.values(filteredResults).flat()
+      
+      // Initialize visible results for current active filter
+      const all = Object.values(organizedResults).flat()
       setVisibleResults(all.slice(0, pageSize))
+      
     } catch (error) {
       console.error('Search error:', error)
       toast({
@@ -259,7 +301,7 @@ export default function Search() {
   const filteredResults = getFilteredResults()
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
         {/* Header */}
         <div className="mb-6">
@@ -272,21 +314,123 @@ export default function Search() {
         </div>
 
         {/* Search Bar */}
-        <div className="mb-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
+        >
           <div className="relative">
             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
               type="text"
               placeholder="Search for players, academies, clubs, scouts..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-3 text-lg"
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                debouncedSuggestions(e.target.value)
+              }}
+              onFocus={() => {
+                if (searchQuery.length > 2) {
+                  setShowSuggestions(true)
+                }
+              }}
+              onBlur={() => {
+                setTimeout(() => setShowSuggestions(false), 200)
+              }}
+              className="pl-10 pr-4 py-3 text-lg glass-input dark:glass-input rounded-xl border-0 shadow-lg"
             />
             {isLoading && (
               <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
             )}
+            
+            {/* Autocomplete Suggestions */}
+            <AnimatePresence>
+              {showSuggestions && (suggestions.length > 0 || searchHistory.length > 0 || trendingSearches.length > 0) && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto"
+                >
+                  {/* Suggestions */}
+                  {suggestions.length > 0 && (
+                    <div className="p-2">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 px-2">Suggestions</div>
+                      {suggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            setSearchQuery(suggestion.name)
+                            setShowSuggestions(false)
+                            performSearch(suggestion.name)
+                          }}
+                          className="w-full text-left px-2 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center space-x-2"
+                        >
+                          <SearchIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm">{suggestion.name}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {suggestion.type}
+                          </Badge>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Search History */}
+                  {searchHistory.length > 0 && (
+                    <div className="p-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 px-2 flex items-center">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Recent searches
+                      </div>
+                      {searchHistory.slice(0, 3).map((item, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            setSearchQuery(item.query)
+                            setShowSuggestions(false)
+                            performSearch(item.query)
+                          }}
+                          className="w-full text-left px-2 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center space-x-2"
+                        >
+                          <Clock className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm">{item.query}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Trending Searches */}
+                  {trendingSearches.length > 0 && (
+                    <div className="p-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 px-2 flex items-center">
+                        <TrendingUp className="w-3 h-3 mr-1" />
+                        Trending
+                      </div>
+                      {trendingSearches.slice(0, 3).map((item, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            setSearchQuery(item.query)
+                            setShowSuggestions(false)
+                            performSearch(item.query)
+                          }}
+                          className="w-full text-left px-2 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center space-x-2"
+                        >
+                          <TrendingUp className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm">{item.query}</span>
+                          <Badge variant="secondary" className="text-xs">
+                            {item.count}
+                          </Badge>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        </div>
+        </motion.div>
 
         {/* Filters */}
         <div className="mb-6">
@@ -506,12 +650,25 @@ export default function Search() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {visibleResults.map((result) => (
-              <Card 
-                key={result.id} 
-                className="bg-white dark:bg-gray-800 border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
-              >
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+          >
+            <AnimatePresence>
+              {visibleResults.map((result, index) => (
+                <motion.div
+                  key={result.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Card 
+                    className="glass-card dark:glass-card-dark border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden"
+                  >
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
                     {/* Avatar */}
@@ -579,14 +736,16 @@ export default function Search() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+                </motion.div>
+              ))}
+            </AnimatePresence>
             {/* Infinite scroll sentinel */}
             {visibleResults.length < filteredResults.length && (
               <div ref={loadMoreRef} className="col-span-full flex justify-center py-6">
                 <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
               </div>
             )}
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

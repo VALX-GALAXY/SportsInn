@@ -1,15 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
-import { Heart, MessageCircle, Share, MoreHorizontal, Loader2, Plus, Users, Globe, Send, ChevronDown, ChevronUp, Image, Video, X, Upload, Flag, Filter } from 'lucide-react'
+import { Heart, MessageCircle, Share, MoreHorizontal, Loader2, Plus, Users, Globe, Send, ChevronDown, ChevronUp, Image, Video, X, Upload, Flag, Filter, AlertTriangle, CheckCircle } from 'lucide-react'
 import reportService from '../api/reportService'
 import feedService from '../api/feedService'
 import socketService from '../api/socketService'
 import { useToast } from '../components/ui/simple-toast'
 import { FeedSkeleton } from '../components/SkeletonLoaders'
+import { useAuth } from '../contexts/AuthContext'
+import ReportConfirmationModal from '../components/ReportConfirmationModal'
 
 export default function FeedSimple() {
+  const { user } = useAuth()
   const [posts, setPosts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
@@ -34,6 +38,10 @@ export default function FeedSimple() {
   const [reportReason, setReportReason] = useState('spam')
   const [reportDetails, setReportDetails] = useState('')
   const [isReporting, setIsReporting] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [reportReasons, setReportReasons] = useState([])
+  const [hasReported, setHasReported] = useState(false)
+  const [reportingPost, setReportingPost] = useState(null)
   
   // Infinite scroll state
   const [hasMore, setHasMore] = useState(true)
@@ -52,6 +60,19 @@ export default function FeedSimple() {
   useEffect(() => {
     fetchFeed(true) // Reset feed
   }, [feedType, filters])
+
+  // Load report reasons on mount
+  useEffect(() => {
+    const loadReportReasons = async () => {
+      try {
+        const reasons = await reportService.getReportReasons('post')
+        setReportReasons(reasons)
+      } catch (error) {
+        console.error('Error loading report reasons:', error)
+      }
+    }
+    loadReportReasons()
+  }, [])
 
   // Real-time updates via mock socket
   useEffect(() => {
@@ -353,7 +374,8 @@ export default function FeedSimple() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="w-full max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 space-y-4 lg:space-y-0">
@@ -481,10 +503,19 @@ export default function FeedSimple() {
 
         {/* Posts */}
         <div className="space-y-4">
-          {filteredPosts.map((post, index) => {
-            console.log('Feed.jsx - Post data:', post);
-            return (
-            <Card key={post.id} className="sportsin-card sportsin-fade-in">
+          <AnimatePresence>
+            {filteredPosts.map((post, index) => {
+              console.log('Feed.jsx - Post data:', post);
+              return (
+              <motion.div
+                key={post.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ scale: 1.02, y: -2 }}
+              >
+                <Card className="glass-card-premium dark:glass-card-premium-dark border-0 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader className="p-4 sm:p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -514,7 +545,15 @@ export default function FeedSimple() {
                 </p>
                 {/* Post actions dropdown (inline simple) */}
                 <div className="flex justify-end -mt-2 mb-2">
-                  <Button variant="outline" size="sm" onClick={() => setReportingPostId(post.id)} className="text-gray-600 dark:text-gray-300">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      setReportingPostId(post.id)
+                      setReportingPost(post)
+                    }} 
+                    className="text-gray-600 dark:text-gray-300"
+                  >
                     <Flag className="w-4 h-4 mr-2" /> Report Post
                   </Button>
                 </div>
@@ -668,8 +707,10 @@ export default function FeedSimple() {
                 )}
               </CardContent>
             </Card>
+            </motion.div>
             );
           })}
+          </AnimatePresence>
           
           {/* Infinite Scroll Trigger */}
           {filteredPosts.length > 0 && (
@@ -715,9 +756,11 @@ export default function FeedSimple() {
             </div>
           )}
         </div>
+      </div>
+    </div>
 
-        {/* Create Post Modal */}
-        {showCreateModal && (
+    {/* Create Post Modal */}
+    {showCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -819,73 +862,58 @@ export default function FeedSimple() {
           </div>
         )}
 
-        {/* Report Post Modal */}
-        {reportingPostId && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report Post</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reason</label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-white"
-                    value={reportReason}
-                    onChange={(e) => setReportReason(e.target.value)}
-                  >
-                    <option value="spam">Spam</option>
-                    <option value="abusive">Abusive</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                {reportReason === 'other' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Details</label>
-                    <textarea
-                      value={reportDetails}
-                      onChange={(e) => setReportDetails(e.target.value)}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      placeholder="Describe the issue"
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-6">
-                <Button 
-                  onClick={() => setReportingPostId(null)} 
-                  variant="outline" 
-                  disabled={isReporting}
-                  className="w-full sm:w-auto"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={async () => {
-                    try {
-                      setIsReporting(true)
-                      await reportService.reportPost({ postId: reportingPostId, reason: reportReason, details: reportDetails })
-                      setReportingPostId(null)
-                      setReportDetails('')
-                      setReportReason('spam')
-                      toast({ title: 'Reported', description: 'Thanks for your feedback.' })
-                    } catch (e) {
-                      toast({ title: 'Error', description: 'Failed to submit report', variant: 'destructive' })
-                    } finally {
-                      setIsReporting(false)
-                    }
-                  }}
-                  disabled={isReporting}
-                  className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
-                >
-                  {isReporting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                  {isReporting ? 'Submitting...' : 'Submit Report'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+        {/* Report Confirmation Modal */}
+        <ReportConfirmationModal
+          isOpen={!!reportingPostId}
+          onClose={() => {
+            setReportingPostId(null)
+            setReportingPost(null)
+            setReportDetails('')
+            setReportReason('spam')
+          }}
+          onConfirm={async (reportData) => {
+            try {
+              setIsReporting(true)
+              console.log('🚨 Submitting report:', reportData)
+              
+              await reportService.reportPost({
+                postId: reportData.postId,
+                reason: reportData.reason,
+                details: reportData.details,
+                reporterId: user?.id
+              })
+              
+              setReportingPostId(null)
+              setReportingPost(null)
+              setReportDetails('')
+              setReportReason('spam')
+              
+              toast({ 
+                title: 'Report Submitted', 
+                description: 'Thank you for your feedback. We will review this report.',
+                variant: 'default'
+              })
+            } catch (error) {
+              console.error('Report submission error:', error)
+              toast({ 
+                title: 'Error', 
+                description: 'Failed to submit report. Please try again.',
+                variant: 'destructive' 
+              })
+            } finally {
+              setIsReporting(false)
+            }
+          }}
+          postId={reportingPostId}
+          postAuthor={reportingPost?.author}
+          isLoading={isReporting}
+          reportReasons={reportReasons}
+          selectedReason={reportReason}
+          onReasonChange={setReportReason}
+          reportDetails={reportDetails}
+          onDetailsChange={setReportDetails}
+        />
+    </>
   )
 }
 

@@ -5,6 +5,7 @@ class SocketService {
     this.socket = null
     this.isConnected = false
     this.listeners = new Map()
+    this.hasLoggedConnectionError = false
   }
 
   connect(userId) {
@@ -14,33 +15,56 @@ class SocketService {
 
     try {
       // Connect to Socket.IO server
-      this.socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001', {
+      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'
+      console.log('🔌 Connecting to Socket.IO server:', socketUrl)
+      
+      this.socket = io(socketUrl, {
         auth: {
           userId: userId
         },
-        transports: ['websocket', 'polling']
+        transports: ['websocket', 'polling'],
+        timeout: 10000,
+        forceNew: true,
+        reconnection: true,
+        reconnectionAttempts: 3,
+        reconnectionDelay: 1000
       })
 
       this.socket.on('connect', () => {
-        console.log('Socket connected:', this.socket.id)
+        console.log('✅ Socket connected successfully:', this.socket.id)
         this.isConnected = true
         this.emit('user:connected', { userId })
       })
 
-      this.socket.on('disconnect', () => {
-        console.log('Socket disconnected')
+      this.socket.on('disconnect', (reason) => {
+        console.log('❌ Socket disconnected:', reason)
         this.isConnected = false
       })
 
       this.socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error)
+        // Only log the error once, not repeatedly
+        if (!this.hasLoggedConnectionError) {
+          console.warn('⚠️ Socket.IO server unavailable, using mock connection')
+          this.hasLoggedConnectionError = true
+        }
         this.isConnected = false
+        
+        // Immediate fallback to mock connection
+        this.connectMock(userId)
       })
+
+      // Add timeout to detect connection issues
+      setTimeout(() => {
+        if (!this.isConnected && !this.hasLoggedConnectionError) {
+          console.log('⏰ Socket connection timeout, using mock connection')
+          this.connectMock(userId)
+        }
+      }, 5000)
 
       return this.socket
     } catch (error) {
-      console.error('Failed to connect to socket:', error)
-      return null
+      console.warn('⚠️ Socket connection failed, using mock connection')
+      return this.connectMock(userId)
     }
   }
 
@@ -83,13 +107,32 @@ class SocketService {
 
   // Mock implementation for development
   connectMock(userId) {
-    console.log('Mock socket connected for user:', userId)
+    console.log('🔄 Mock socket connected for user:', userId)
     this.isConnected = true
     
-    return {
+    // Create a mock socket object with basic functionality
+    const mockSocket = {
       id: 'mock_socket_id',
-      connected: true
+      connected: true,
+      emit: (event, data) => {
+        console.log(`📤 Mock emit: ${event}`, data)
+      },
+      on: (event, callback) => {
+        console.log(`👂 Mock listener added: ${event}`)
+        this.listeners.set(event, callback)
+      },
+      off: (event) => {
+        console.log(`🔇 Mock listener removed: ${event}`)
+        this.listeners.delete(event)
+      },
+      disconnect: () => {
+        console.log('🔌 Mock socket disconnected')
+        this.isConnected = false
+      }
     }
+    
+    this.socket = mockSocket
+    return mockSocket
   }
 
   getNotificationIcon(type) {

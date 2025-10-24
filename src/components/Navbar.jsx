@@ -97,7 +97,7 @@ const Navbar = ({ onMenuClick }) => {
 
   if (!isAuthenticated) {
     return (
-      <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 dark:bg-gray-900/95 dark:border-gray-700 shadow-sm w-full h-16 flex items-center">
+      <nav className="glass-navbar dark:glass-navbar-dark border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm w-full h-16 flex items-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -128,7 +128,7 @@ const Navbar = ({ onMenuClick }) => {
   }
 
   return (
-    <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 dark:bg-gray-900/95 dark:border-gray-700 shadow-sm w-full h-16 flex items-center fixed top-0 left-0 right-0 z-50">
+    <nav className="glass-navbar dark:glass-navbar-dark border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm w-full h-16 flex items-center fixed top-0 left-0 right-0 z-50">
       <div className="w-full px-3 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Left side - Logo and Desktop Navigation */}
@@ -195,9 +195,9 @@ const Navbar = ({ onMenuClick }) => {
               </Link>
             </div>
             
-            {/* Search Bar */}
+            {/* Enhanced Search Bar */}
             {showSearch && (
-              <div className="absolute top-full left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-50">
+              <div className="absolute top-full left-0 right-0 glass-card-premium dark:glass-card-premium-dark border-b border-gray-200/50 dark:border-gray-700/50 shadow-lg z-50 backdrop-blur-xl">
                 <form onSubmit={handleSearch} className="p-4">
                   <div className="flex items-center space-x-2">
                     <Search className="w-4 h-4 text-gray-400" />
@@ -207,7 +207,7 @@ const Navbar = ({ onMenuClick }) => {
                       placeholder="Search players, academies, clubs, tournaments..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="flex-1"
+                      className="flex-1 glass-input dark:glass-input"
                       autoFocus
                     />
                     <Button type="submit" size="sm" className="sportsin-gradient-button">
@@ -218,6 +218,7 @@ const Navbar = ({ onMenuClick }) => {
                       variant="ghost" 
                       size="sm"
                       onClick={() => setShowSearch(false)}
+                      className="hover:bg-gray-100 dark:hover:bg-gray-800"
                     >
                       <X className="w-4 h-4" />
                     </Button>

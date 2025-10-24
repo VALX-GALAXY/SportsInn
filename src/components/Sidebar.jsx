@@ -141,7 +141,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* Sidebar */}
       <div className={`
         ${isCollapsed ? 'w-16' : 'w-72 sm:w-80'} 
-        bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-r border-gray-200/50 dark:border-gray-700/50 
+        glass-sidebar dark:glass-sidebar-dark
         transform transition-all duration-300 ease-in-out shadow-xl
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:z-auto lg:shadow-none lg:block

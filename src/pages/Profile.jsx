@@ -33,7 +33,7 @@ export default function Profile() {
     yearsOfExperience: user?.yearsOfExperience || ''
   })
   const [errors, setErrors] = useState({})
-  const [imagePreview, setImagePreview] = useState(user?.profilePic || null)
+  const [imagePreview, setImagePreview] = useState(user?.profilePic || user?.profilePicture || null)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [editingSection, setEditingSection] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -207,13 +207,24 @@ export default function Profile() {
               setGalleryImages(profileData.galleryImages)
             }
             
-            // Update image preview
-            if (profileData.profilePic || profileData.profilePicture) {
-              setImagePreview(profileData.profilePic || profileData.profilePicture)
+            // Update image preview - prioritize profilePic from user object
+            const profilePic = user.profilePic || profileData.profilePic || profileData.profilePicture
+            if (profilePic) {
+              setImagePreview(profilePic)
+            }
+            
+            // Update user context with complete profile data if needed
+            if (profileData.profilePic && !user.profilePic) {
+              const updatedUser = { ...user, profilePic: profileData.profilePic }
+              updateUser(updatedUser)
             }
           }
         } catch (error) {
           console.error('Error loading user profile:', error)
+          // Fallback to user data from context
+          if (user.profilePic) {
+            setImagePreview(user.profilePic)
+          }
         }
       }
     }
@@ -612,7 +623,7 @@ export default function Profile() {
       organization: user?.organization || '',
       yearsOfExperience: user?.yearsOfExperience || ''
     })
-    setImagePreview(user?.profilePicture || null)
+    setImagePreview(user?.profilePic || user?.profilePicture || null)
   }
 
   const handleChange = (e) => {

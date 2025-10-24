@@ -45,6 +45,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import tournamentService from '../../api/tournamentService'
 import feedService from '../../api/feedService'
 import statsService from '../../api/statsService'
+import NoApiAvailable from '../../components/NoApiAvailable'
 
 export default function AcademyDashboard() {
   const { user } = useAuth()
@@ -53,6 +54,7 @@ export default function AcademyDashboard() {
   const [scoutSuggestions, setScoutSuggestions] = useState([])
   const [recentPosts, setRecentPosts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [apiAvailable, setApiAvailable] = useState(true)
 
   useEffect(() => {
     fetchDashboardData()
@@ -79,6 +81,26 @@ export default function AcademyDashboard() {
       
       // Fetch academy statistics
       if (user?.id) {
+        try {
+          // Test API availability
+          const response = await fetch(`http://localhost:3000/api/dashboard/${user.id}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          
+          if (response.ok) {
+            setApiAvailable(true)
+          } else {
+            setApiAvailable(false)
+          }
+        } catch (error) {
+          console.log('API not available:', error.message)
+          setApiAvailable(false)
+        }
+        
         const academyStats = await statsService.getAcademyStats(user.id)
         setStats(academyStats)
       } else {
@@ -156,6 +178,35 @@ export default function AcademyDashboard() {
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show API not available message
+  if (!apiAvailable) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              Academy Dashboard
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Dashboard for {user?.name || 'Academy'} - API Not Available
+            </p>
+          </div>
+          
+          <NoApiAvailable 
+            title="Academy Dashboard API Not Available"
+            description="The backend API for academy dashboard data is not available. The dashboard is showing mock data for demonstration purposes."
+            onRetry={() => {
+              setApiAvailable(true)
+              fetchDashboardData()
+            }}
+            showMockDataInfo={true}
+          />
         </div>
       </div>
     )

@@ -90,7 +90,7 @@ export default function Dashboard() {
           {/* Role Selection Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
             <Card 
-              className="bg-white dark:bg-gray-800 shadow-sm border-0 cursor-pointer hover:shadow-md transition-shadow"
+              className="glass-card-premium dark:glass-card-premium-dark border-0 cursor-pointer hover:shadow-md transition-all duration-300"
               onClick={() => navigate('/dashboard/player')}
             >
               <CardContent className="p-4 sm:p-6">
@@ -110,7 +110,7 @@ export default function Dashboard() {
             </Card>
 
             <Card 
-              className="bg-white dark:bg-gray-800 shadow-sm border-0 cursor-pointer hover:shadow-md transition-shadow"
+              className="glass-card-premium dark:glass-card-premium-dark border-0 cursor-pointer hover:shadow-md transition-all duration-300"
               onClick={() => navigate('/dashboard/academy')}
             >
               <CardContent className="p-4 sm:p-6">
@@ -130,7 +130,7 @@ export default function Dashboard() {
             </Card>
 
             <Card 
-              className="bg-white dark:bg-gray-800 shadow-sm border-0 cursor-pointer hover:shadow-md transition-shadow"
+              className="glass-card-premium dark:glass-card-premium-dark border-0 cursor-pointer hover:shadow-md transition-all duration-300"
               onClick={() => navigate('/dashboard/club')}
             >
               <CardContent className="p-4 sm:p-6">
@@ -150,7 +150,7 @@ export default function Dashboard() {
             </Card>
 
             <Card 
-              className="bg-white dark:bg-gray-800 shadow-sm border-0 cursor-pointer hover:shadow-md transition-shadow"
+              className="glass-card-premium dark:glass-card-premium-dark border-0 cursor-pointer hover:shadow-md transition-all duration-300"
               onClick={() => navigate('/dashboard/scout')}
             >
               <CardContent className="p-4 sm:p-6">

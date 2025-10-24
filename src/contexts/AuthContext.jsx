@@ -1,5 +1,6 @@
 import { createContext, useContext, useReducer, useEffect } from 'react'
 import authService from '../api/authService'
+import profileService from '../api/profileService'
 import { useToast } from '../components/ui/simple-toast'
 
 const AuthContext = createContext()
@@ -147,10 +148,40 @@ export const AuthProvider = ({ children }) => {
       const authData = await authService.login(credentials)
       authService.storeAuthData(authData)
       
-      dispatch({
-        type: 'LOGIN',
-        payload: { user: authData.user, token: authData.token }
-      })
+      // Fetch complete profile data including profile picture
+      try {
+        const userId = authData.user._id || authData.user.id
+        if (userId) {
+          const profileData = await profileService.getProfile(userId)
+          // Merge profile data with user data to ensure profile picture is included
+          const completeUserData = {
+            ...authData.user,
+            ...profileData,
+            // Ensure profile picture is properly set
+            profilePic: profileData.profilePic || profileData.profilePicture || authData.user.profilePic
+          }
+          
+          // Update stored user data with complete profile
+          localStorage.setItem('user', JSON.stringify(completeUserData))
+          
+          dispatch({
+            type: 'LOGIN',
+            payload: { user: completeUserData, token: authData.token }
+          })
+        } else {
+          dispatch({
+            type: 'LOGIN',
+            payload: { user: authData.user, token: authData.token }
+          })
+        }
+      } catch (profileError) {
+        console.warn('Could not fetch complete profile data:', profileError)
+        // Fallback to basic user data
+        dispatch({
+          type: 'LOGIN',
+          payload: { user: authData.user, token: authData.token }
+        })
+      }
       
       toast({
         title: "Login successful",
@@ -345,13 +376,49 @@ export const AuthProvider = ({ children }) => {
               googleId: userInfo.id
             })
             
-            dispatch({
-              type: 'LOGIN',
-              payload: {
-                user: result.user,
-                token: result.token
+            // Fetch complete profile data including profile picture
+            try {
+              const userId = result.user._id || result.user.id
+              if (userId) {
+                const profileData = await profileService.getProfile(userId)
+                // Merge profile data with user data to ensure profile picture is included
+                const completeUserData = {
+                  ...result.user,
+                  ...profileData,
+                  // Ensure profile picture is properly set
+                  profilePic: profileData.profilePic || profileData.profilePicture || result.user.profilePic
+                }
+                
+                // Update stored user data with complete profile
+                localStorage.setItem('user', JSON.stringify(completeUserData))
+                
+                dispatch({
+                  type: 'LOGIN',
+                  payload: {
+                    user: completeUserData,
+                    token: result.token
+                  }
+                })
+              } else {
+                dispatch({
+                  type: 'LOGIN',
+                  payload: {
+                    user: result.user,
+                    token: result.token
+                  }
+                })
               }
-            })
+            } catch (profileError) {
+              console.warn('Could not fetch complete profile data for Google user:', profileError)
+              // Fallback to basic user data
+              dispatch({
+                type: 'LOGIN',
+                payload: {
+                  user: result.user,
+                  token: result.token
+                }
+              })
+            }
             
             toast({
               title: "Google login successful",
@@ -442,10 +509,40 @@ export const AuthProvider = ({ children }) => {
       
       authService.storeAuthData(authData)
       
-      dispatch({
-        type: 'LOGIN',
-        payload: { user: authData.user, token: authData.token }
-      })
+      // Fetch complete profile data including profile picture
+      try {
+        const userId = authData.user._id || authData.user.id
+        if (userId) {
+          const profileData = await profileService.getProfile(userId)
+          // Merge profile data with user data to ensure profile picture is included
+          const completeUserData = {
+            ...authData.user,
+            ...profileData,
+            // Ensure profile picture is properly set
+            profilePic: profileData.profilePic || profileData.profilePicture || authData.user.profilePic
+          }
+          
+          // Update stored user data with complete profile
+          localStorage.setItem('user', JSON.stringify(completeUserData))
+          
+          dispatch({
+            type: 'LOGIN',
+            payload: { user: completeUserData, token: authData.token }
+          })
+        } else {
+          dispatch({
+            type: 'LOGIN',
+            payload: { user: authData.user, token: authData.token }
+          })
+        }
+      } catch (profileError) {
+        console.warn('Could not fetch complete profile data for new user:', profileError)
+        // Fallback to basic user data
+        dispatch({
+          type: 'LOGIN',
+          payload: { user: authData.user, token: authData.token }
+        })
+      }
       
       toast({
         title: "Account created successfully",

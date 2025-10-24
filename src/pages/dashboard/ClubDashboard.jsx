@@ -19,39 +19,90 @@ import {
   Building,
   Handshake
 } from 'lucide-react'
-// import { useAuth } from '../../contexts/AuthContext' // Not used
+import { useAuth } from '../../contexts/AuthContext'
 import tournamentService from '../../api/tournamentService'
 import feedService from '../../api/feedService'
+import statsService from '../../api/statsService'
+import NoApiAvailable from '../../components/NoApiAvailable'
 
 export default function ClubDashboard() {
-  const [stats] = useState({
-    totalMembers: 120,
-    activeTeams: 8,
-    tournamentsHosted: 5,
-    partnerships: 12,
-    upcomingEvents: 7,
-    totalRevenue: 450000
-  })
+  const { user } = useAuth()
+  const [stats, setStats] = useState(null)
   const [upcomingTournaments, setUpcomingTournaments] = useState([])
   const [scoutSuggestions, setScoutSuggestions] = useState([])
   const [recentPosts, setRecentPosts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [apiAvailable, setApiAvailable] = useState(true)
 
   useEffect(() => {
     fetchDashboardData()
-  }, [])
+  }, [user?.id]) // Re-fetch when user changes
+
+  // Add refresh functionality
+  const handleRefresh = async () => {
+    if (user?.id) {
+      setIsLoading(true)
+      try {
+        const clubStats = await statsService.getClubStats(user.id)
+        setStats(clubStats)
+      } catch (error) {
+        console.error('Error refreshing dashboard:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+  }
 
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true)
       
+      // Fetch club statistics
+      if (user?.id) {
+        try {
+          // Test API availability
+          const response = await fetch(`http://localhost:3000/api/dashboard/${user.id}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          
+          if (response.ok) {
+            setApiAvailable(true)
+          } else {
+            setApiAvailable(false)
+          }
+        } catch (error) {
+          console.log('API not available:', error.message)
+          setApiAvailable(false)
+        }
+        
+        const clubStats = await statsService.getClubStats(user.id)
+        setStats(clubStats)
+      } else {
+        // Clear stats when no user
+        setStats(null)
+      }
+      
       // Fetch upcoming tournaments
-      const tournaments = await tournamentService.getTournaments({ limit: 3 })
-      setUpcomingTournaments(tournaments.tournaments || [])
+      try {
+        const tournaments = await tournamentService.getTournaments({ limit: 3 })
+        setUpcomingTournaments(tournaments.tournaments || [])
+      } catch (error) {
+        console.info('Tournament service unavailable, using mock data')
+        setUpcomingTournaments([])
+      }
       
       // Fetch recent posts
-      const feed = await feedService.getFeed(1, 3)
-      setRecentPosts(feed.posts || [])
+      try {
+        const feed = await feedService.getFeed(1, 3)
+        setRecentPosts(feed.posts || [])
+      } catch (error) {
+        console.info('Feed service unavailable, using mock data')
+        setRecentPosts([])
+      }
       
       // Mock scout suggestions
       setScoutSuggestions([
@@ -119,6 +170,35 @@ export default function ClubDashboard() {
     )
   }
 
+  // Show API not available message
+  if (!apiAvailable) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              Club Dashboard
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Dashboard for {user?.name || 'Club'} - API Not Available
+            </p>
+          </div>
+          
+          <NoApiAvailable 
+            title="Club Dashboard API Not Available"
+            description="The backend API for club dashboard data is not available. The dashboard is showing mock data for demonstration purposes."
+            onRetry={() => {
+              setApiAvailable(true)
+              fetchDashboardData()
+            }}
+            showMockDataInfo={true}
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -135,11 +215,11 @@ export default function ClubDashboard() {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <Users className="w-5 h-5" />
-                <span className="font-semibold">{stats.totalMembers} Total Members</span>
+                <span className="font-semibold">{stats?.totalMembers || 0} Total Members</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Target className="w-5 h-5" />
-                <span className="font-semibold">{stats.activeTeams} Active Teams</span>
+                <span className="font-semibold">{stats?.activeTeams || 0} Active Teams</span>
               </div>
             </div>
           </div>
@@ -152,7 +232,7 @@ export default function ClubDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Members</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalMembers}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.totalMembers || 0}</p>
                   <div className="flex items-center mt-2">
                     <TrendingUp className="w-4 h-4 text-emerald-500 mr-1" />
                     <span className="text-sm text-emerald-600 dark:text-emerald-400">+18%</span>
@@ -170,7 +250,7 @@ export default function ClubDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Teams</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.activeTeams}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.activeTeams || 0}</p>
                 </div>
                 <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
                   <Target className="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -184,7 +264,7 @@ export default function ClubDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Partnerships</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.partnerships}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.partnerships || 0}</p>
                 </div>
                 <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
                   <Handshake className="w-6 h-6 text-purple-600 dark:text-purple-400" />
@@ -198,7 +278,7 @@ export default function ClubDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.totalRevenue)}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats?.totalRevenue || 0)}</p>
                 </div>
                 <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-full">
                   <DollarSign className="w-6 h-6 text-orange-600 dark:text-orange-400" />

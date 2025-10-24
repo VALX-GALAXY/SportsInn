@@ -121,20 +121,20 @@ export const NotificationProvider = ({ children }) => {
 
       // Listen for connection errors
       socketService.on('connect_error', (error) => {
-        console.error('Socket connection error:', error)
+        console.error('❌ Socket connection error:', error)
         setIsConnected(false)
         setIsReconnecting(true)
         
-        toast({
-          title: "Connection Lost",
-          description: "Attempting to reconnect...",
-          variant: "destructive"
-        })
+        // Don't show error toast immediately, let the socket service handle fallback
+        console.log('🔄 Socket service will handle fallback to mock connection')
         
-        // Attempt reconnection
+        // Attempt reconnection after a delay
         setTimeout(() => {
-          connectWithRetry()
-        }, 3000)
+          if (!socketService.isConnected) {
+            console.log('🔄 Attempting reconnection...')
+            connectWithRetry()
+          }
+        }, 2000)
       })
 
       // Listen for disconnection
