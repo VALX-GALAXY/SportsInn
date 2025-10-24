@@ -314,9 +314,6 @@ class SearchService {
   // Global search (all types)
   async globalSearch(query, page = 1, limit = 20) {
     try {
-      console.log('🔍 Attempting backend search API call:', `/api/search`)
-      console.log('📝 Search query:', query)
-      
       // Use the correct backend endpoint
       const response = await axiosInstance.get('/api/search', {
         params: { 
@@ -326,11 +323,8 @@ class SearchService {
         }
       })
       
-      console.log('✅ Backend search response:', response.data)
-      
       if (response.data.success) {
         const backendUsers = response.data.data || []
-        console.log('📊 Real search results from backend:', backendUsers.length, 'users found')
         
         return {
           users: backendUsers,
@@ -344,23 +338,35 @@ class SearchService {
         throw new Error('Backend returned success: false')
       }
     } catch (error) {
-      console.warn('⚠️ Backend search API unavailable, using mock data:', error.message)
-      console.warn('Error details:', error.response?.data || error.message)
+      console.warn('Backend search API unavailable, using mock data:', error.message)
       
       // Fallback to mock data
       await new Promise(resolve => setTimeout(resolve, 500))
       
-      const [usersResult, postsResult, tournamentsResult] = await Promise.all([
-        this.searchUsers(query, {}, page, Math.ceil(limit / 3)),
-        this.searchPosts(query, {}, page, Math.ceil(limit / 3)),
-        this.searchTournaments(query, {}, page, Math.ceil(limit / 3))
-      ])
+      const mockUsers = [
+        {
+          _id: 'mock1',
+          name: 'Jay Kumar',
+          role: 'Player',
+          location: 'Mumbai, India',
+          age: 22,
+          profilePic: 'https://i.pravatar.cc/150?img=32'
+        },
+        {
+          _id: 'mock2', 
+          name: 'Ankit Kumar',
+          role: 'Academy',
+          location: 'Delhi, India',
+          age: 25,
+          profilePic: 'https://i.pravatar.cc/150?img=45'
+        }
+      ]
       
       return {
-        users: usersResult.users || [],
-        posts: postsResult.posts || [],
-        tournaments: tournamentsResult.tournaments || [],
-        total: (usersResult.total || 0) + (postsResult.total || 0) + (tournamentsResult.total || 0),
+        users: mockUsers,
+        posts: [],
+        tournaments: [],
+        total: mockUsers.length,
         page,
         limit
       }
