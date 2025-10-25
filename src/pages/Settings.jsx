@@ -33,9 +33,13 @@ import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 
 export default function Settings() {
+  console.log('Settings component rendering')
+  
   const { user } = useAuth()
   const { toast } = useToast()
   const { theme, primaryColor, accentColor, setTheme, setPrimaryColor, setAccentColor } = useTheme()
+  
+  console.log('Settings hooks loaded:', { user, theme, primaryColor, accentColor })
   
   // Website settings
   const [websiteName, setWebsiteName] = useState('SportsHub')

@@ -23,6 +23,9 @@ import AcademyDashboard from './pages/dashboard/AcademyDashboard'
 import ClubDashboard from './pages/dashboard/ClubDashboard'
 import ScoutDashboard from './pages/dashboard/ScoutDashboard'
 import Settings from './pages/Settings'
+import SettingsTest from './pages/SettingsTest'
+import SettingsDebug from './pages/SettingsDebug'
+import SettingsMinimal from './pages/SettingsMinimal'
 import TestConnection from './pages/TestConnection'
 import './App.css'
 
@@ -186,6 +189,27 @@ function AppRoutes() {
         <AuthenticatedLayout>
           <ErrorBoundary>
             <Settings />
+          </ErrorBoundary>
+        </AuthenticatedLayout>
+      } />
+      <Route path="/settings-test" element={
+        <AuthenticatedLayout>
+          <ErrorBoundary>
+            <SettingsTest />
+          </ErrorBoundary>
+        </AuthenticatedLayout>
+      } />
+      <Route path="/settings-debug" element={
+        <AuthenticatedLayout>
+          <ErrorBoundary>
+            <SettingsDebug />
+          </ErrorBoundary>
+        </AuthenticatedLayout>
+      } />
+      <Route path="/settings-minimal" element={
+        <AuthenticatedLayout>
+          <ErrorBoundary>
+            <SettingsMinimal />
           </ErrorBoundary>
         </AuthenticatedLayout>
       } />
