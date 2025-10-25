@@ -91,14 +91,28 @@ const io = new Server(server, {
 io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth?.token || socket.handshake.query?.token;
-    if (!token) return next(new Error("Auth token missing"));
+    if (!token) {
+      console.log("Socket auth failed: No token provided");
+      return next(new Error("Auth token missing"));
+    }
+    
     const decoded = verifyAccessToken(token);
-    if (!decoded) return next(new Error("Invalid token"));
-    const user = await User.findById(decoded.id).select("_id name");
-    if (!user) return next(new Error("User not found"));
+    if (!decoded) {
+      console.log("Socket auth failed: Invalid token");
+      return next(new Error("Invalid token"));
+    }
+    
+    const user = await User.findById(decoded.id).select("_id name role");
+    if (!user) {
+      console.log("Socket auth failed: User not found");
+      return next(new Error("User not found"));
+    }
+    
     socket.user = user;
+    console.log(`Socket auth successful: ${user.name} (${user.role})`);
     next();
   } catch (err) {
+    console.log("Socket auth error:", err.message);
     next(err);
   }
 });
@@ -106,11 +120,41 @@ io.use(async (socket, next) => {
 io.on("connection", (socket) => {
   // join a room unique to the user id
   const room = socket.user._id.toString();
+  const userName = socket.user.name;
   
-  console.log(`Socket connected: ${socket.user.name} (${room})`);
+  console.log(`Socket connected: ${userName} (${room})`);
+  
+  // Join user-specific room for notifications and messages
+  socket.join(room);
+  
+  // Join role-based rooms for broadcast notifications
+  socket.join(`role:${socket.user.role}`);
 
-  socket.on("disconnect", () => {
-    console.log("Socket disconnected:", room);
+  // Handle reconnection
+  socket.on("reconnect", () => {
+    console.log(`Socket reconnected: ${userName} (${room})`);
+    socket.join(room);
+    socket.join(`role:${socket.user.role}`);
+  });
+
+  // Handle auth errors
+  socket.on("auth_error", (error) => {
+    console.log(`Socket auth error for ${userName}:`, error);
+    socket.emit("auth_failed", { message: "Authentication failed", error: error.message });
+  });
+
+  // Handle ping/pong for connection health
+  socket.on("ping", () => {
+    socket.emit("pong", { timestamp: Date.now() });
+  });
+
+  socket.on("disconnect", (reason) => {
+    console.log(`Socket disconnected: ${userName} (${room}) - Reason: ${reason}`);
+  });
+
+  // Handle errors
+  socket.on("error", (error) => {
+    console.log(`Socket error for ${userName}:`, error);
   });
 });
 

@@ -5,12 +5,33 @@ async function sendMessage(req, res) {
     const { receiverId, text } = req.body;
     if (!receiverId || !text) return res.status(400).json({ success: false, message: "receiverId and text required" });
 
+    // Validate text length
+    if (text.length > 1000) {
+      return res.status(400).json({ success: false, message: "Message too long (max 1000 characters)" });
+    }
+
     const msg = await messageService.sendMessage(req.user, receiverId, text);
 
     // real-time delivery via socket
     const io = req.app.get("io");
     if (io) {
-      io.to(String(receiverId)).emit("message:new", msg);
+      // Send to receiver's room
+      io.to(String(receiverId)).emit("message:new", {
+        ...msg.toObject(),
+        sender: {
+          _id: req.user._id,
+          name: req.user.name,
+          role: req.user.role,
+          profilePic: req.user.profilePic
+        }
+      });
+      
+      // Send delivery confirmation to sender
+      io.to(String(req.user._id)).emit("message:sent", {
+        messageId: msg._id,
+        receiverId,
+        sentAt: msg.sentAt
+      });
     }
 
     res.json({ success: true, data: msg });

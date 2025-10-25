@@ -61,9 +61,20 @@ async function createTournament(user, data, io) {
     try { await Notification.insertMany(notes); } catch (e) { console.warn("Notification insertMany failed:", e && e.message ? e.message : e); }
   }
 
-  // emit socket event
+  // emit socket event to all players
   if (io) {
-    try { io.emit("notification:new", { message: `New tournament: ${doc.title}`, type: "tournament" }); } catch (e) {}
+    try { 
+      io.to("role:player").emit("notification:new", { 
+        message: `New tournament: ${doc.title}`, 
+        type: "tournament",
+        tournamentId: doc._id,
+        title: doc.title,
+        entryFee: doc.entryFee,
+        location: doc.location
+      }); 
+    } catch (e) {
+      console.warn("Socket emit error:", e && e.message ? e.message : e);
+    }
   }
 
   // Invalidate cache

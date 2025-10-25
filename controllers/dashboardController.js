@@ -41,33 +41,156 @@ async function getDashboardStats(req, res, next) {
       const tournaments = await Tournament.find({ 'applicants.userId': userId }).lean();
       let tournamentsApplied = tournaments.length;
       let selectedCount = 0;
+      let rejectedCount = 0;
+      let pendingCount = 0;
+      
       tournaments.forEach(t => {
         const app = t.applicants.find(a => String(a.userId) === String(userId));
-        if (app && app.status === 'selected') selectedCount += 1;
+        if (app) {
+          if (app.status === 'selected') selectedCount += 1;
+          else if (app.status === 'rejected') rejectedCount += 1;
+          else if (app.status === 'applied') pendingCount += 1;
+        }
       });
 
-      // connectionCount: we keep followers/following in user model
-      const connectionCount = (user.followers ? user.followers.length : 0) + (user.following ? user.following.length : 0);
+      // Calculate percentages with zero-division protection
+      const selectionRate = tournamentsApplied > 0 ? Math.round((selectedCount / tournamentsApplied) * 100) : 0;
+      const rejectionRate = tournamentsApplied > 0 ? Math.round((rejectedCount / tournamentsApplied) * 100) : 0;
 
-      return res.json({ success: true, data: { tournamentsApplied, selectedCount, connectionCount } });
+      // connectionCount: followers + following
+      const followersCount = user.followers ? user.followers.length : 0;
+      const followingCount = user.following ? user.following.length : 0;
+      const connectionCount = followersCount + followingCount;
+
+      // Posts count
+      const Post = require('../models/postModel');
+      const postsCount = await Post.countDocuments({ authorId: userId });
+
+      return res.json({ 
+        success: true, 
+        data: { 
+          tournamentsApplied, 
+          selectedCount, 
+          rejectedCount,
+          pendingCount,
+          selectionRate,
+          rejectionRate,
+          connectionCount,
+          followersCount,
+          followingCount,
+          postsCount
+        } 
+      });
     }
 
     if (user.role === 'academy') {
-      // academy stats: total players scouted (maybe number of followers who are players), tournaments hosted
-      const trainees = user.followers ? user.followers.length : 0;
+      // academy stats: total players scouted, tournaments hosted
+      const followersCount = user.followers ? user.followers.length : 0;
       const tournamentsHosted = await Tournament.countDocuments({ createdBy: userId });
-      return res.json({ success: true, data: { trainees, tournamentsHosted } });
+      
+      // Get total applications received across all tournaments
+      const tournaments = await Tournament.find({ createdBy: userId }).lean();
+      let totalApplications = 0;
+      let totalSelected = 0;
+      let totalRejected = 0;
+      
+      tournaments.forEach(t => {
+        totalApplications += t.applicants.length;
+        t.applicants.forEach(app => {
+          if (app.status === 'selected') totalSelected += 1;
+          else if (app.status === 'rejected') totalRejected += 1;
+        });
+      });
+
+      // Calculate selection rate
+      const selectionRate = totalApplications > 0 ? Math.round((totalSelected / totalApplications) * 100) : 0;
+
+      return res.json({ 
+        success: true, 
+        data: { 
+          trainees: followersCount, 
+          tournamentsHosted,
+          totalApplications,
+          totalSelected,
+          totalRejected,
+          selectionRate
+        } 
+      });
     }
 
     if (user.role === 'scout') {
-      // scout stats: applications reviewed - approximate by counting decisions where decision made by this scout? fallback: 0
-      const applicationsReviewed = 0; // placeholder
-      return res.json({ success: true, data: { applicationsReviewed } });
+      // scout stats: applications reviewed, players scouted
+      const followersCount = user.followers ? user.followers.length : 0;
+      
+      // Count tournaments where this scout made decisions
+      const tournaments = await Tournament.find({ 'applicants.decidedBy': userId }).lean();
+      let applicationsReviewed = 0;
+      let decisionsMade = 0;
+      
+      tournaments.forEach(t => {
+        t.applicants.forEach(app => {
+          if (app.decidedBy && String(app.decidedBy) === String(userId)) {
+            applicationsReviewed += 1;
+            if (app.status === 'selected' || app.status === 'rejected') {
+              decisionsMade += 1;
+            }
+          }
+        });
+      });
+
+      return res.json({ 
+        success: true, 
+        data: { 
+          applicationsReviewed,
+          decisionsMade,
+          playersScouted: followersCount
+        } 
+      });
+    }
+
+    if (user.role === 'club') {
+      // club stats: tournaments hosted, players recruited
+      const tournamentsHosted = await Tournament.countDocuments({ createdBy: userId });
+      const followersCount = user.followers ? user.followers.length : 0;
+      
+      return res.json({ 
+        success: true, 
+        data: { 
+          tournamentsHosted,
+          playersRecruited: followersCount
+        } 
+      });
+    }
+
+    if (user.role === 'admin') {
+      // admin stats: total users, tournaments, reports
+      const totalUsers = await User.countDocuments();
+      const totalTournaments = await Tournament.countDocuments();
+      const Report = require('../models/reportModel');
+      const totalReports = await Report.countDocuments();
+      
+      // User breakdown by role
+      const userBreakdown = await User.aggregate([
+        { $group: { _id: '$role', count: { $sum: 1 } } }
+      ]);
+
+      return res.json({ 
+        success: true, 
+        data: { 
+          totalUsers,
+          totalTournaments,
+          totalReports,
+          userBreakdown
+        } 
+      });
     }
 
     // default
     res.json({ success: true, data: {} });
-  } catch (err) { next(err); }
+  } catch (err) { 
+    console.error('Dashboard stats error:', err);
+    next(err); 
+  }
 }
 
 module.exports = { academyFollowers, scoutSearchPlayers, getDashboardStats };
