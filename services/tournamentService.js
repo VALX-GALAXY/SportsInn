@@ -54,7 +54,7 @@ async function createTournament(user, data, io) {
     userId: p._id,
     message: `New tournament: ${doc.title}`,
     type: "tournament",
-    isRead: false,
+    read: false,
     createdAt: new Date()
   }));
   if (notes.length) {
@@ -152,7 +152,7 @@ async function applyTournament(user, tournamentId) {
       message: `${user.name} applied to ${t.title}`,
       type: "application",
       fromUserId: user._id,
-      isRead: false,
+      read: false,
       createdAt: new Date()
     });
   } catch (e) {
@@ -201,12 +201,12 @@ async function decideApplication(tournamentId, playerId, decision, adminUser, io
 
   // notify player
   const msg = decision === "selected" ? `You have been selected for ${t.title}` : `You have been rejected for ${t.title}`;
-  const note = await Notification.create({
+  const note =   await Notification.create({
     userId: playerId,
     message: msg,
     type: "decision",
     fromUserId: adminUser._id,
-    isRead: false,
+    read: false,
     createdAt: new Date()
   });
 
