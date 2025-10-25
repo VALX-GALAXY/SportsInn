@@ -120,7 +120,7 @@ export default function NoApiAvailable({
               To connect to a real backend API, ensure:
             </p>
             <ul className="space-y-1 ml-4">
-              <li>• Backend server is running on <code className="bg-gray-200 dark:bg-gray-800 px-1 rounded">http://localhost:3000</code></li>
+              <li>• Backend server is running and accessible</li>
               <li>• Dashboard API endpoints are implemented</li>
               <li>• User authentication is working</li>
               <li>• Database contains user data</li>

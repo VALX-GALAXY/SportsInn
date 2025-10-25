@@ -33,7 +33,8 @@ export default function TestConnection() {
 
     try {
       // Test backend connection
-      const backendResponse = await fetch('http://localhost:3000/api/health', {
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+      const backendResponse = await fetch(`${backendUrl}/api/health`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -52,7 +53,8 @@ export default function TestConnection() {
 
     try {
       // Test database connection (through backend)
-      const dbResponse = await fetch('http://localhost:3000/api/test-db', {
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+      const dbResponse = await fetch(`${backendUrl}/api/test-db`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -71,7 +73,8 @@ export default function TestConnection() {
 
     try {
       // Test API endpoints
-      const apiResponse = await fetch('http://localhost:3000/api/tournaments', {
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+      const apiResponse = await fetch(`${backendUrl}/api/tournaments`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'

@@ -61,7 +61,8 @@ export default function ClubDashboard() {
       if (user?.id) {
         try {
           // Test API availability
-          const response = await fetch(`http://localhost:3000/api/dashboard/${user.id}`, {
+          const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+          const response = await fetch(`${backendUrl}/api/dashboard/${user.id}`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`,
