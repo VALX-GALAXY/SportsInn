@@ -86,8 +86,61 @@ export default function ScoutDashboard() {
         setRecentPosts([])
       }
       
-      // No mock recommended players - use real data only
-      setRecommendedPlayers([])
+      // Mock recommended players
+      setRecommendedPlayers([
+        {
+          id: 'player_1',
+          name: 'Arjun Singh',
+          age: 19,
+          position: 'Forward',
+          sport: 'Football',
+          location: 'Mumbai',
+          rating: 4.8,
+          experience: '3 years',
+          achievements: ['State Champion 2023', 'Best Player Award'],
+          image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+          lastActive: '2 hours ago'
+        },
+        {
+          id: 'player_2',
+          name: 'Priya Sharma',
+          age: 17,
+          position: 'Batsman',
+          sport: 'Cricket',
+          location: 'Delhi',
+          rating: 4.9,
+          experience: '4 years',
+          achievements: ['U-19 National Team', 'Century in Finals'],
+          image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+          lastActive: '1 day ago'
+        },
+        {
+          id: 'player_3',
+          name: 'Rahul Kumar',
+          age: 20,
+          position: 'Point Guard',
+          sport: 'Basketball',
+          location: 'Bangalore',
+          rating: 4.7,
+          experience: '5 years',
+          achievements: ['College MVP', 'All-Star Selection'],
+          image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+          lastActive: '3 hours ago'
+        },
+        {
+          id: 'player_4',
+          name: 'Sneha Patel',
+          age: 18,
+          position: 'Singles',
+          sport: 'Tennis',
+          location: 'Chennai',
+          rating: 4.6,
+          experience: '6 years',
+          achievements: ['Junior National Champion', 'ITF Ranking'],
+          image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+          lastActive: '5 hours ago'
+        }
+      ])
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error)

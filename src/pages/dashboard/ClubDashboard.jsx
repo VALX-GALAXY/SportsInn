@@ -105,8 +105,36 @@ export default function ClubDashboard() {
         setRecentPosts([])
       }
       
-      // No mock scout suggestions - use real data only
-      setScoutSuggestions([])
+      // Mock scout suggestions
+      setScoutSuggestions([
+        {
+          id: 'scout_1',
+          name: 'Trisha',
+          role: 'Scout',
+          location: 'Mumbai',
+          specialties: ['Football', 'Cricket'],
+          rating: 4.8,
+          playersScouted: 25
+        },
+        {
+          id: 'scout_2',
+          name: 'Rajesh Kumar',
+          role: 'Scout',
+          location: 'Delhi',
+          specialties: ['Basketball', 'Tennis'],
+          rating: 4.6,
+          playersScouted: 18
+        },
+        {
+          id: 'scout_3',
+          name: 'Priya Sharma',
+          role: 'Scout',
+          location: 'Bangalore',
+          specialties: ['Badminton', 'Table Tennis'],
+          rating: 4.9,
+          playersScouted: 32
+        }
+      ])
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error)

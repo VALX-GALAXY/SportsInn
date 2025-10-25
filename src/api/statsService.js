@@ -427,13 +427,45 @@ class StatsService {
     const acceptedPercentage = tournamentsApplied > 0 ? 
       Math.round((selectedCount / tournamentsApplied) * 100) : 0
     
-    console.log('📊 REAL backend data only:', { tournamentsApplied, selectedCount, connectionCount, acceptedPercentage })
+    console.log('📊 REAL backend data:', { tournamentsApplied, selectedCount, connectionCount, acceptedPercentage })
+    console.log('⚠️  Chart data is MOCK - backend doesn\'t provide detailed tournament/performance data')
     
     return {
-      // ✅ REAL data from backend only
+      // ✅ REAL data from backend
       tournamentsApplied,
       acceptedPercentage,
-      connectionsCount: connectionCount
+      connectionsCount: connectionCount,
+      
+      // ❌ MOCK data - backend doesn't provide these fields
+      totalMatches: Math.floor(Math.random() * 50) + 20,
+      winRate: Math.floor(Math.random() * 40) + 50,
+      currentRank: Math.floor(Math.random() * 50) + 1,
+      totalPoints: Math.floor(Math.random() * 2000) + 500,
+      averageRating: Math.round((Math.random() * 2 + 3) * 10) / 10,
+      
+      // ❌ MOCK chart data - backend doesn't provide tournament breakdown
+      tournamentParticipation: [
+        { name: 'Selected', value: selectedCount, color: '#10B981' },
+        { name: 'Applied', value: tournamentsApplied - selectedCount, color: '#EF4444' },
+        { name: 'Pending', value: Math.floor(Math.random() * 3) + 1, color: '#F59E0B' }
+      ],
+      
+      // ❌ MOCK chart data - backend doesn't provide connection breakdown
+      connectionsData: [
+        { name: 'Players', value: Math.floor(connectionCount * 0.4), color: '#3B82F6' },
+        { name: 'Academies', value: Math.floor(connectionCount * 0.3), color: '#8B5CF6' },
+        { name: 'Clubs', value: Math.floor(connectionCount * 0.2), color: '#10B981' },
+        { name: 'Scouts', value: Math.floor(connectionCount * 0.1), color: '#F59E0B' }
+      ],
+      
+      // ❌ MOCK chart data - backend doesn't provide performance over time
+      performanceData: [
+        { month: 'Jan', matches: Math.floor(Math.random() * 10) + 5, wins: Math.floor(Math.random() * 8) + 3, rating: Math.round((Math.random() * 2 + 3) * 10) / 10 },
+        { month: 'Feb', matches: Math.floor(Math.random() * 10) + 5, wins: Math.floor(Math.random() * 8) + 3, rating: Math.round((Math.random() * 2 + 3) * 10) / 10 },
+        { month: 'Mar', matches: Math.floor(Math.random() * 10) + 5, wins: Math.floor(Math.random() * 8) + 3, rating: Math.round((Math.random() * 2 + 3) * 10) / 10 },
+        { month: 'Apr', matches: Math.floor(Math.random() * 10) + 5, wins: Math.floor(Math.random() * 8) + 3, rating: Math.round((Math.random() * 2 + 3) * 10) / 10 },
+        { month: 'May', matches: Math.floor(Math.random() * 10) + 5, wins: Math.floor(Math.random() * 8) + 3, rating: Math.round((Math.random() * 2 + 3) * 10) / 10 }
+      ]
     }
   }
 
@@ -444,13 +476,43 @@ class StatsService {
     const trainees = backendData.trainees || 0
     const tournamentsHosted = backendData.tournamentsHosted || 0
     
-    console.log('📊 REAL academy stats only:', { trainees, tournamentsHosted })
+    console.log('📊 REAL academy stats:', { trainees, tournamentsHosted })
+    console.log('⚠️  Chart data is MOCK - backend doesn\'t provide detailed academy analytics')
     
     return {
-      // ✅ REAL data from backend only
+      // ✅ REAL data from backend
       playersScouted: trainees,
       tournamentsHosted,
-      totalStudents: trainees
+      totalStudents: trainees,
+      
+      // ❌ MOCK data - backend doesn't provide these fields
+      successRate: Math.floor(Math.random() * 30) + 70,
+      averageRating: Math.round((Math.random() * 2 + 3) * 10) / 10,
+      revenue: Math.floor(Math.random() * 500000) + 100000,
+      
+      // ❌ MOCK chart data - backend doesn't provide tournament breakdown
+      tournamentParticipation: [
+        { name: 'Hosted', value: tournamentsHosted, color: '#10B981' },
+        { name: 'Participated', value: Math.floor(Math.random() * 10) + 3, color: '#3B82F6' },
+        { name: 'Upcoming', value: Math.floor(Math.random() * 3) + 1, color: '#F59E0B' }
+      ],
+      
+      // ❌ MOCK chart data - backend doesn't provide monthly scouting data
+      scoutingData: [
+        { name: 'Jan', players: Math.floor(trainees * 0.2), tournaments: Math.floor(tournamentsHosted * 0.2) },
+        { name: 'Feb', players: Math.floor(trainees * 0.2), tournaments: Math.floor(tournamentsHosted * 0.2) },
+        { name: 'Mar', players: Math.floor(trainees * 0.2), tournaments: Math.floor(tournamentsHosted * 0.2) },
+        { name: 'Apr', players: Math.floor(trainees * 0.2), tournaments: Math.floor(tournamentsHosted * 0.2) },
+        { name: 'May', players: Math.floor(trainees * 0.2), tournaments: Math.floor(tournamentsHosted * 0.2) }
+      ],
+      
+      // ❌ MOCK chart data - backend doesn't provide student progress breakdown
+      studentProgress: [
+        { name: 'Beginner', value: Math.floor(trainees * 0.3), color: '#F59E0B' },
+        { name: 'Intermediate', value: Math.floor(trainees * 0.4), color: '#3B82F6' },
+        { name: 'Advanced', value: Math.floor(trainees * 0.2), color: '#10B981' },
+        { name: 'Professional', value: Math.floor(trainees * 0.1), color: '#8B5CF6' }
+      ]
     }
   }
 
@@ -460,11 +522,38 @@ class StatsService {
     
     const applicationsReviewed = backendData.applicationsReviewed || 0
     
-    console.log('📊 REAL scout stats only:', { applicationsReviewed })
+    console.log('📊 Real scout stats:', { applicationsReviewed })
     
     return {
-      // ✅ REAL data from backend only
-      applicationsReviewed
+      playersScouted: Math.floor(Math.random() * 150) + 50,
+      successfulPlacements: Math.floor(Math.random() * 50) + 20,
+      successRate: Math.floor(Math.random() * 30) + 60,
+      averageRating: Math.round((Math.random() * 2 + 3) * 10) / 10,
+      totalEarnings: Math.floor(Math.random() * 100000) + 25000,
+      activeContracts: Math.floor(Math.random() * 10) + 3,
+      applicationsReviewed,
+      
+      // Chart data
+      placementData: [
+        { name: 'Successful', value: Math.floor(Math.random() * 30) + 15, color: '#10B981' },
+        { name: 'Pending', value: Math.floor(Math.random() * 20) + 10, color: '#F59E0B' },
+        { name: 'Failed', value: Math.floor(Math.random() * 15) + 5, color: '#EF4444' }
+      ],
+      
+      scoutingActivity: [
+        { name: 'Jan', scouted: Math.floor(Math.random() * 20) + 10, placed: Math.floor(Math.random() * 8) + 3 },
+        { name: 'Feb', scouted: Math.floor(Math.random() * 20) + 10, placed: Math.floor(Math.random() * 8) + 3 },
+        { name: 'Mar', scouted: Math.floor(Math.random() * 20) + 10, placed: Math.floor(Math.random() * 8) + 3 },
+        { name: 'Apr', scouted: Math.floor(Math.random() * 20) + 10, placed: Math.floor(Math.random() * 8) + 3 },
+        { name: 'May', scouted: Math.floor(Math.random() * 20) + 10, placed: Math.floor(Math.random() * 8) + 3 }
+      ],
+      
+      sportBreakdown: [
+        { name: 'Football', value: Math.floor(Math.random() * 40) + 20, color: '#3B82F6' },
+        { name: 'Cricket', value: Math.floor(Math.random() * 30) + 15, color: '#10B981' },
+        { name: 'Basketball', value: Math.floor(Math.random() * 20) + 10, color: '#F59E0B' },
+        { name: 'Tennis', value: Math.floor(Math.random() * 15) + 5, color: '#8B5CF6' }
+      ]
     }
   }
 
@@ -472,11 +561,41 @@ class StatsService {
   transformClubStats(backendData) {
     console.log('🔄 Transforming club stats from backend data:', backendData)
     
-    // No specific backend data for clubs yet
-    console.log('📊 No club-specific backend data available')
+    // For now, clubs don't have specific backend data, so we'll use mock data
+    console.log('📊 Club stats using mock data (no specific backend endpoint)')
     
     return {
-      // Empty object - no mock data
+      totalMembers: Math.floor(Math.random() * 200) + 100,
+      activeTeams: Math.floor(Math.random() * 15) + 5,
+      tournamentsHosted: Math.floor(Math.random() * 20) + 5,
+      partnerships: Math.floor(Math.random() * 25) + 10,
+      upcomingEvents: Math.floor(Math.random() * 10) + 3,
+      totalRevenue: Math.floor(Math.random() * 1000000) + 200000,
+      successRate: Math.floor(Math.random() * 30) + 70,
+      averageRating: Math.round((Math.random() * 2 + 3) * 10) / 10,
+      
+      // Chart data
+      memberGrowth: [
+        { month: 'Jan', members: Math.floor(Math.random() * 20) + 80, teams: Math.floor(Math.random() * 3) + 5 },
+        { month: 'Feb', members: Math.floor(Math.random() * 20) + 85, teams: Math.floor(Math.random() * 3) + 5 },
+        { month: 'Mar', members: Math.floor(Math.random() * 20) + 90, teams: Math.floor(Math.random() * 3) + 6 },
+        { month: 'Apr', members: Math.floor(Math.random() * 20) + 95, teams: Math.floor(Math.random() * 3) + 6 },
+        { month: 'May', members: Math.floor(Math.random() * 20) + 100, teams: Math.floor(Math.random() * 3) + 7 }
+      ],
+      
+      revenueBreakdown: [
+        { name: 'Memberships', value: Math.floor(Math.random() * 200000) + 100000, color: '#3B82F6' },
+        { name: 'Tournaments', value: Math.floor(Math.random() * 150000) + 50000, color: '#10B981' },
+        { name: 'Partnerships', value: Math.floor(Math.random() * 100000) + 30000, color: '#8B5CF6' },
+        { name: 'Events', value: Math.floor(Math.random() * 80000) + 20000, color: '#F59E0B' }
+      ],
+      
+      teamPerformance: [
+        { name: 'Football', value: Math.floor(Math.random() * 20) + 10, color: '#3B82F6' },
+        { name: 'Basketball', value: Math.floor(Math.random() * 15) + 8, color: '#10B981' },
+        { name: 'Tennis', value: Math.floor(Math.random() * 10) + 5, color: '#F59E0B' },
+        { name: 'Cricket', value: Math.floor(Math.random() * 12) + 6, color: '#8B5CF6' }
+      ]
     }
   }
 

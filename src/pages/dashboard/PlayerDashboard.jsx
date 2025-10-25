@@ -102,12 +102,12 @@ export default function PlayerDashboard() {
         setStats(null)
       }
       
-      // Fetch tournament invites from backend
+      // Fetch tournament invites (mock data for now)
       try {
         const tournaments = await tournamentService.getTournaments({ limit: 3 })
         setTournamentInvites(tournaments.tournaments || [])
       } catch (error) {
-        console.info('Tournament service unavailable')
+        console.info('Tournament service unavailable, using mock data')
         setTournamentInvites([])
       }
       
@@ -116,7 +116,7 @@ export default function PlayerDashboard() {
         const feed = await feedService.getFeed(1, 3)
         setRecentPosts(feed.posts || [])
       } catch (error) {
-        console.info('Feed service unavailable')
+        console.info('Feed service unavailable, using mock data')
         setRecentPosts([])
       }
       
@@ -273,8 +273,145 @@ export default function PlayerDashboard() {
             </CardContent>
           </Card>
 
+          <Card className="sportsin-card sportsin-fade-in">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Win Rate</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.winRate || 0}%</p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center mt-1">
+                    <Zap className="w-3 h-3 mr-1" />
+                    Performance
+                  </p>
+                </div>
+                <div className="p-2 sm:p-3 bg-orange-100 dark:bg-orange-900 rounded-full">
+                  <Award className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-8">
+          {/* Tournament Participation Pie Chart */}
+          <Card className="sportsin-card sportsin-fade-in">
+            <CardHeader className="p-6 pb-4">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Tournament Participation</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Applied vs Accepted breakdown</p>
+            </CardHeader>
+            <CardContent className="p-6 pt-0">
+              <div className="h-48 sm:h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <Pie
+                      data={stats?.tournamentParticipation || []}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {(stats?.tournamentParticipation || []).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--tooltip-bg)', 
+                        border: '1px solid var(--tooltip-border)', 
+                        color: 'var(--tooltip-text)',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}
+                      formatter={(value, name) => [value, name]}
+                      labelFormatter={(label) => `${label}:`}
+                    />
+                    <Legend />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Connections vs Interactions Bar Chart */}
+          <Card className="sportsin-card sportsin-fade-in">
+            <CardHeader className="p-6 pb-4">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Connections vs Interactions</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Network activity breakdown</p>
+            </CardHeader>
+            <CardContent className="p-6 pt-0">
+              <div className="h-48 sm:h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stats?.connectionsData || []}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                    <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} />
+                    <YAxis stroke="#9CA3AF" fontSize={12} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--tooltip-bg)', 
+                        border: '1px solid var(--tooltip-border)', 
+                        color: 'var(--tooltip-text)',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}
+                      formatter={(value, name) => [value, name]}
+                      labelFormatter={(label) => `${label}:`}
+                    />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {(stats?.connectionsData || []).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Performance Chart */}
+        <div className="mb-8">
+          <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+            <CardHeader className="p-4 sm:p-6 pb-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Performance Over Time</h2>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Monthly performance metrics and trends</p>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="h-64 sm:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={stats?.performanceData || []}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                    <XAxis dataKey="month" stroke="#9CA3AF" fontSize={12} />
+                    <YAxis stroke="#9CA3AF" fontSize={12} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--tooltip-bg)', 
+                        border: '1px solid var(--tooltip-border)', 
+                        color: 'var(--tooltip-text)',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}
+                      formatter={(value, name) => [value, name]}
+                      labelFormatter={(label) => `${label}:`}
+                    />
+                    <Legend />
+                    <Area type="monotone" dataKey="matches" stackId="1" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.6} />
+                    <Area type="monotone" dataKey="wins" stackId="2" stroke="#10B981" fill="#10B981" fillOpacity={0.6} />
+                    <Line type="monotone" dataKey="rating" stroke="#F59E0B" strokeWidth={3} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
       </div>
     </div>
