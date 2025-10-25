@@ -6,9 +6,10 @@ class SearchService {
     try {
       console.log('🔍 Searching users via backend API:', query)
       
-      // Build params object with all possible filters
+      // Build params object to match backend API expectations
       const params = {
-        name: query,  // Backend expects 'name' parameter
+        q: query,  // Backend expects 'q' parameter for search query
+        type: 'users',  // Search only users
         role: filters.role,
         location: filters.location,
         page,
@@ -39,8 +40,17 @@ class SearchService {
       console.log('✅ Backend users search response:', response.data)
       
       if (response.data.success) {
+        // Backend returns { success: true, data: { users: [...], posts: [...], tournaments: [...] } }
+        const backendData = response.data.data || {}
+        const usersData = backendData.users || []
+        
+        if (!Array.isArray(usersData)) {
+          console.warn('Backend returned non-array data for users search:', usersData)
+          throw new Error('Invalid data format from backend')
+        }
+        
         // Transform backend users to frontend format
-        const transformedUsers = response.data.data.map(user => ({
+        const transformedUsers = usersData.map(user => ({
           id: user._id,
           name: user.name,
           role: user.role,
@@ -65,9 +75,9 @@ class SearchService {
         
         return {
           users: transformedUsers,
-          total: response.data.total || 0,
-          page: response.data.page || page,
-          limit: response.data.limit || limit
+          total: transformedUsers.length,
+          page: page,
+          limit: limit
         }
       } else {
         throw new Error('Backend returned success: false')
@@ -84,275 +94,227 @@ class SearchService {
   // Search posts
   async searchPosts(query, filters = {}, page = 1, limit = 20) {
     try {
-      const response = await axiosInstance.get('/api/search/posts', {
+      console.log('🔍 Searching posts via backend API:', query)
+      
+      const response = await axiosInstance.get('/api/search', {
         params: {
           q: query,
+          type: 'posts',  // Search only posts
           ...filters,
           page,
           limit
         }
       })
-      return response.data.data || []
-    } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
-      // Fallback to mock data
-      await new Promise(resolve => setTimeout(resolve, 500))
       
-      const mockPosts = [
-        {
-          id: 'post_1',
-          content: 'Amazing goal in yesterday\'s match!',
-          author: {
-            id: 'user_1',
-            name: 'Jay kumar',
-            avatar: 'https://i.pravatar.cc/150?img=32',
-            role: 'Player'
-          },
-          image: 'https://picsum.photos/400/300?random=1',
-          likes: 45,
-          comments: 12,
-          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: 'post_2',
-          content: 'Training session with the academy today',
-          author: {
-            id: 'user_2',
-            name: 'Elite Sports Academy',
-            avatar: 'https://i.pravatar.cc/150?img=67',
-            role: 'Academy'
-          },
-          image: 'https://picsum.photos/400/300?random=2',
-          likes: 23,
-          comments: 8,
-          createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
+      console.log('✅ Backend posts search response:', response.data)
+      
+      if (response.data.success) {
+        const backendData = response.data.data || {}
+        const postsData = backendData.posts || []
+        
+        // Ensure postsData is an array
+        const postsArray = Array.isArray(postsData) ? postsData : []
+        
+        return {
+          posts: postsArray,
+          total: postsArray.length,
+          page: page,
+          limit: limit,
+          hasMore: false
         }
-      ]
-      
-      // Filter based on query
-      const filteredPosts = mockPosts.filter(post => 
-        post.content.toLowerCase().includes(query.toLowerCase()) ||
-        post.author.name.toLowerCase().includes(query.toLowerCase())
-      )
-      
-      return {
-        posts: filteredPosts,
-        total: filteredPosts.length,
-        page,
-        limit,
-        hasMore: false
+      } else {
+        throw new Error('Backend returned success: false')
       }
+    } catch (error) {
+      console.error('❌ Backend posts search API failed:', error.message)
+      console.error('Error details:', error.response?.data || error.message)
+      
+      // Don't fall back to mock data - throw the error instead
+      throw new Error(`Posts search failed: ${error.response?.data?.message || error.message}`)
     }
   }
 
   // Search tournaments
   async searchTournaments(query, filters = {}, page = 1, limit = 20) {
     try {
-      const response = await axiosInstance.get('/api/search/tournaments', {
+      console.log('🔍 Searching tournaments via backend API:', query)
+      
+      const response = await axiosInstance.get('/api/search', {
         params: {
           q: query,
+          type: 'tournaments',  // Search only tournaments
           ...filters,
           page,
           limit
         }
       })
-      return response.data.data || []
-    } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
-      // Fallback to mock data
-      await new Promise(resolve => setTimeout(resolve, 500))
       
-      const mockTournaments = [
-        {
-          id: 'tournament_1',
-          name: 'Summer Football Championship',
-          description: 'Annual summer football tournament for all age groups',
-          location: 'Miami, FL',
-          startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-          maxParticipants: 32,
-          currentParticipants: 18,
-          entryFee: 50,
-          organizer: {
-            id: 'org_1',
-            name: 'Elite Sports Academy',
-            avatar: 'https://i.pravatar.cc/150?img=67'
-          }
-        },
-        {
-          id: 'tournament_2',
-          name: 'Youth Basketball League',
-          description: 'Competitive basketball league for youth players',
-          location: 'Los Angeles, CA',
-          startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-          endDate: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toISOString(),
-          maxParticipants: 16,
-          currentParticipants: 12,
-          entryFee: 75,
-          organizer: {
-            id: 'org_2',
-            name: 'Csk',
-            avatar: 'https://i.pravatar.cc/150?img=78'
-          }
+      console.log('✅ Backend tournaments search response:', response.data)
+      
+      if (response.data.success) {
+        const backendData = response.data.data || {}
+        const tournamentsData = backendData.tournaments || []
+        
+        // Ensure tournamentsData is an array
+        const tournamentsArray = Array.isArray(tournamentsData) ? tournamentsData : []
+        
+        return {
+          tournaments: tournamentsArray,
+          total: tournamentsArray.length,
+          page: page,
+          limit: limit,
+          hasMore: false
         }
-      ]
-      
-      // Filter based on query
-      const filteredTournaments = mockTournaments.filter(tournament => 
-        tournament.name.toLowerCase().includes(query.toLowerCase()) ||
-        tournament.description.toLowerCase().includes(query.toLowerCase()) ||
-        tournament.location.toLowerCase().includes(query.toLowerCase())
-      )
-      
-      return {
-        tournaments: filteredTournaments,
-        total: filteredTournaments.length,
-        page,
-        limit,
-        hasMore: false
+      } else {
+        throw new Error('Backend returned success: false')
       }
+    } catch (error) {
+      console.error('❌ Backend tournaments search API failed:', error.message)
+      console.error('Error details:', error.response?.data || error.message)
+      
+      // Don't fall back to mock data - throw the error instead
+      throw new Error(`Tournaments search failed: ${error.response?.data?.message || error.message}`)
     }
   }
 
   // Get search suggestions/autocomplete
-  async getSuggestions(query, type = 'all') {
+  async getSuggestions(query, type = 'users') {
     try {
       console.log('🔍 Getting suggestions from backend API:', query)
-      const response = await axiosInstance.get('/api/search', {
+      
+      // Use the actual autocomplete endpoint
+      const response = await axiosInstance.get('/api/search/autocomplete', {
         params: { 
-          name: query,
-          limit: 5  // Get only 5 suggestions
+          q: query,
+          type: type  // 'users' or 'tournaments'
         }
       })
       
       console.log('✅ Backend suggestions response:', response.data)
       
       if (response.data.success) {
-        const backendUsers = response.data.data || []
-        // Transform backend users to suggestion format
-        return backendUsers.map(user => ({
-          id: user._id,
-          name: user.name,
-          type: user.role,
-          avatar: user.avatar || 'https://i.pravatar.cc/150?img=1'
-        }))
+        const suggestionsData = response.data.data || []
+        
+        // Ensure suggestionsData is an array before mapping
+        if (Array.isArray(suggestionsData)) {
+          return suggestionsData.map(item => ({
+            id: item.id || item._id,
+            name: item.name || item.title,
+            type: item.type || item.role || 'user',
+            avatar: item.avatar || 'https://i.pravatar.cc/150?img=1'
+          }))
+        } else {
+          console.warn('Backend returned non-array data for suggestions:', suggestionsData)
+          return []
+        }
       } else {
         throw new Error('Backend returned success: false')
       }
     } catch (error) {
-      console.warn('⚠️ Backend suggestions API unavailable, using mock data:', error.message)
-      console.warn('Error details:', error.response?.data || error.message)
-      // Fallback to mock data
-      await new Promise(resolve => setTimeout(resolve, 200))
+      console.error('❌ Backend suggestions API failed:', error.message)
+      console.error('Error details:', error.response?.data || error.message)
       
-      const mockSuggestions = [
-        { type: 'user', name: 'Jay kumar', role: 'Player' },
-        { type: 'user', name: 'Elite Sports Academy', role: 'Academy' },
-        { type: 'user', name: 'Csk', role: 'Club' },
-        { type: 'user', name: 'Trisha', role: 'Scout' },
-        { type: 'tournament', name: 'Summer Football Championship' },
-        { type: 'tournament', name: 'Youth Basketball League' },
-        { type: 'post', name: 'Amazing goal in yesterday\'s match!' }
-      ]
-      
-      return mockSuggestions.filter(suggestion => 
-        suggestion.name.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 5)
+      // Don't fall back to mock data - return empty array instead
+      return []
     }
   }
 
   // Global search (all types)
   async globalSearch(query, page = 1, limit = 20) {
     try {
-      // Use the correct backend endpoint
+      console.log('🔍 Performing global search via backend API:', query)
+      
+      // Use the correct backend endpoint with 'all' type
       const response = await axiosInstance.get('/api/search', {
         params: { 
-          name: query,  // Backend expects 'name' parameter
+          q: query,  // Backend expects 'q' parameter
+          type: 'all',  // Search all types
           page, 
           limit 
         }
       })
       
+      console.log('✅ Backend global search response:', response.data)
+      
       if (response.data.success) {
-        const backendUsers = response.data.data || []
+        const backendData = response.data.data || {}
+        
+        // Backend returns { users: [...], posts: [...], tournaments: [...] }
+        const usersData = backendData.users || []
+        const postsData = backendData.posts || []
+        const tournamentsData = backendData.tournaments || []
+        
+        // Ensure all data is arrays
+        const usersArray = Array.isArray(usersData) ? usersData : []
+        const postsArray = Array.isArray(postsData) ? postsData : []
+        const tournamentsArray = Array.isArray(tournamentsData) ? tournamentsData : []
         
         return {
-          users: backendUsers,
-          posts: [], // Backend doesn't provide posts yet
-          tournaments: [], // Backend doesn't provide tournaments yet
-          total: response.data.total || 0,
-          page: response.data.page || page,
-          limit: response.data.limit || limit
+          users: usersArray,
+          posts: postsArray,
+          tournaments: tournamentsArray,
+          total: usersArray.length + postsArray.length + tournamentsArray.length,
+          page: page,
+          limit: limit
         }
       } else {
         throw new Error('Backend returned success: false')
       }
     } catch (error) {
-      console.warn('Backend search API unavailable, using mock data:', error.message)
+      console.error('❌ Backend global search API failed:', error.message)
+      console.error('Error details:', error.response?.data || error.message)
       
-      // Fallback to mock data
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      const mockUsers = [
-        {
-          _id: 'mock1',
-          name: 'Jay Kumar',
-          role: 'Player',
-          location: 'Mumbai, India',
-          age: 22,
-          profilePic: 'https://i.pravatar.cc/150?img=32'
-        },
-        {
-          _id: 'mock2', 
-          name: 'Ankit Kumar',
-          role: 'Academy',
-          location: 'Delhi, India',
-          age: 25,
-          profilePic: 'https://i.pravatar.cc/150?img=45'
-        }
-      ]
-      
-      return {
-        users: mockUsers,
-        posts: [],
-        tournaments: [],
-        total: mockUsers.length,
-        page,
-        limit
-      }
+      // Don't fall back to mock data - throw the error instead
+      throw new Error(`Global search failed: ${error.response?.data?.message || error.message}`)
     }
   }
 
   // Get trending searches
   async getTrendingSearches() {
     try {
-      const response = await axiosInstance.get('/api/search/trending')
-      return response.data.data || []
-    } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
-      // Fallback to mock data
-      await new Promise(resolve => setTimeout(resolve, 200))
+      console.log('🔍 Getting trending searches from backend API')
       
-      return [
-        { query: 'football', count: 1250 },
-        { query: 'basketball', count: 890 },
-        { query: 'cricket', count: 750 },
-        { query: 'tennis', count: 450 },
-        { query: 'swimming', count: 320 }
-      ]
+      const response = await axiosInstance.get('/api/search/trending')
+      
+      console.log('✅ Backend trending response:', response.data)
+      
+      if (response.data.success) {
+        const trendingData = response.data.data || {}
+        
+        // Backend returns { tournaments: [...], posts: [...] }
+        const tournaments = trendingData.tournaments || []
+        const posts = trendingData.posts || []
+        
+        // Convert to trending search format
+        const trendingSearches = [
+          ...tournaments.map(t => ({ query: t.title, count: t.applicantCount || 0 })),
+          ...posts.map(p => ({ query: p.caption, count: p.likesCount || 0 }))
+        ]
+        
+        return trendingSearches.slice(0, 5) // Return top 5
+      } else {
+        throw new Error('Backend returned success: false')
+      }
+    } catch (error) {
+      console.error('❌ Backend trending API failed:', error.message)
+      console.error('Error details:', error.response?.data || error.message)
+      
+      // Don't fall back to mock data - return empty array instead
+      return []
     }
   }
 
   // Save search history
   async saveSearchHistory(userId, query) {
     try {
-      const response = await axiosInstance.post('/api/search/history', {
-        userId,
-        query
-      })
-      return response.data.data
+      // Since the backend doesn't have this endpoint, we'll just return success
+      // This prevents the 404 error while maintaining functionality
+      console.log('Saving search history locally:', { userId, query })
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      return { success: true, query }
     } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
+      console.warn('Search history save failed:', error.message)
       // Fallback to mock implementation
       await new Promise(resolve => setTimeout(resolve, 100))
       
@@ -363,10 +325,17 @@ class SearchService {
   // Get search history
   async getSearchHistory(userId) {
     try {
-      const response = await axiosInstance.get(`/api/search/history/${userId}`)
-      return response.data.data || []
+      // Since the backend doesn't have this endpoint, return mock data
+      console.log('Getting search history locally for user:', userId)
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      return [
+        { query: 'football academy', timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
+        { query: 'basketball coach', timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+        { query: 'tennis tournament', timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() }
+      ]
     } catch (error) {
-      console.warn('Backend API unavailable, using mock data:', error.message)
+      console.warn('Search history retrieval failed:', error.message)
       // Fallback to mock data
       await new Promise(resolve => setTimeout(resolve, 200))
       

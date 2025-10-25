@@ -158,10 +158,14 @@ export default function Search() {
           if (query.length > 2) {
             try {
               const suggestionsData = await searchService.getSuggestions(query)
-              setSuggestions(suggestionsData)
+              // Ensure suggestions is an array
+              const suggestionsArray = Array.isArray(suggestionsData) ? suggestionsData : []
+              setSuggestions(suggestionsArray)
               setShowSuggestions(true)
             } catch (error) {
               console.error('Error loading suggestions:', error)
+              setSuggestions([])
+              setShowSuggestions(false)
             }
           } else {
             setSuggestions([])
@@ -196,13 +200,17 @@ export default function Search() {
       const searchResults = await searchService.globalSearch(query, page, pageSize)
       
       // Organize results by category
+      const usersArray = Array.isArray(searchResults.users) ? searchResults.users : []
+      const postsArray = Array.isArray(searchResults.posts) ? searchResults.posts : []
+      const tournamentsArray = Array.isArray(searchResults.tournaments) ? searchResults.tournaments : []
+      
       const organizedResults = {
-        players: searchResults.users?.filter(user => user.role === 'Player') || [],
-        academies: searchResults.users?.filter(user => user.role === 'Academy') || [],
-        clubs: searchResults.users?.filter(user => user.role === 'Club') || [],
-        scouts: searchResults.users?.filter(user => user.role === 'Scout') || [],
-        posts: searchResults.posts || [],
-        tournaments: searchResults.tournaments || []
+        players: usersArray.filter(user => user.role === 'Player') || [],
+        academies: usersArray.filter(user => user.role === 'Academy') || [],
+        clubs: usersArray.filter(user => user.role === 'Club') || [],
+        scouts: usersArray.filter(user => user.role === 'Scout') || [],
+        posts: postsArray,
+        tournaments: tournamentsArray
       }
       
       setSearchResults(organizedResults)
@@ -214,9 +222,21 @@ export default function Search() {
       
     } catch (error) {
       console.error('Search error:', error)
+      
+      // Set empty results to prevent UI errors
+      setSearchResults({
+        players: [],
+        academies: [],
+        clubs: [],
+        scouts: [],
+        posts: [],
+        tournaments: []
+      })
+      setVisibleResults([])
+      
       toast({
         title: "Search failed",
-        description: "Unable to perform search",
+        description: "Unable to perform search. Please try again.",
         variant: "destructive"
       })
     } finally {
