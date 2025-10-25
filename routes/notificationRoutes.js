@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get("/", authMiddleware, notificationController.getNotifications);       // ?page=&limit=
 // unread count
-router.get("/unread-count", authMiddleware, notificationController.getUnreadCount)
+router.get("/unread-count", authMiddleware, notificationController.getUnreadCount);
 
 router.get('/:userId', authMiddleware, notificationController.getNotifications);
 
