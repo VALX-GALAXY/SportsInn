@@ -4,11 +4,6 @@ const jwt = require("jsonwebtoken");
 const ACCESS_SECRET = process.env.JWT_SECRET;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
-<<<<<<< HEAD
-  // Access token expires in 7 days for better user experience
-  const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
-  const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: "30d" });
-=======
 if (!ACCESS_SECRET || !REFRESH_SECRET) {
   console.warn("⚠️ JWT_SECRET or JWT_REFRESH_SECRET not set in environment.");
 }
@@ -23,7 +18,6 @@ function generateTokens(user) {
 
   const accessToken = jwt.sign(payload, ACCESS_SECRET, { expiresIn: ACCESS_EXP });
   const refreshToken = jwt.sign(payload, REFRESH_SECRET, { expiresIn: REFRESH_EXP });
->>>>>>> origin/backend/day2-auth
 
   return { accessToken, refreshToken };
 }
@@ -40,12 +34,6 @@ function verifyAccessToken(token) {
   }
 }
 
-<<<<<<< HEAD
-function verifyAccessToken(token) {
-  try {
-    return jwt.verify(token, process.env.JWT_SECRET);
-  } catch (ex) {
-=======
 // returns payload or null
 function verifyRefreshToken(token) {
   try {
@@ -54,13 +42,8 @@ function verifyRefreshToken(token) {
     return payload;
   } catch (err) {
     console.warn("JWT verifyRefreshToken error:", err && err.message);
->>>>>>> origin/backend/day2-auth
     return null;
   }
 }
 
-<<<<<<< HEAD
-module.exports = { generateTokens, verifyRefreshToken, verifyAccessToken };
-=======
 module.exports = { generateTokens, verifyAccessToken, verifyRefreshToken };
->>>>>>> origin/backend/day2-auth
