@@ -302,6 +302,16 @@ export default function FeedSimple() {
       return
     }
 
+    // Check if media is provided
+    if (!newPost.image && !newPost.video) {
+      toast({
+        title: "Error",
+        description: "Please select an image or video to upload",
+        variant: "destructive"
+      })
+      return
+    }
+
     try {
       setIsCreating(true)
       
@@ -318,6 +328,10 @@ export default function FeedSimple() {
       
       const createdPost = await feedService.createPost(postData)
       
+      console.log('Created post received in Feed component:', createdPost)
+      console.log('Post image URL:', createdPost.image)
+      console.log('Post video URL:', createdPost.video)
+      
       setPosts(prev => [createdPost, ...prev])
       // Broadcast via mock socket so other tabs could receive
       socketService.simulatePostCreated(createdPost)
@@ -331,9 +345,37 @@ export default function FeedSimple() {
       })
     } catch (error) {
       console.error('Error creating post:', error)
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
+      
+      let errorMessage = "Failed to create post"
+      
+      if (error.message.includes('Upload endpoint not available')) {
+        errorMessage = "Image upload service is not available. Please contact support."
+      } else if (error.message.includes('Image upload failed')) {
+        errorMessage = "Failed to upload image. Please try again."
+      } else if (error.message.includes('Video upload failed')) {
+        errorMessage = "Failed to upload video. Please try again."
+      } else if (error.message.includes('Image processing failed')) {
+        errorMessage = "Failed to process image. Please try a different image."
+      } else if (error.message.includes('Video processing failed')) {
+        errorMessage = "Failed to process video. Please try a different video."
+      } else if (error.message.includes('File too large')) {
+        errorMessage = error.message // Use the specific error message from the service
+      } else if (error.message.includes('Video too large')) {
+        errorMessage = error.message // Use the specific error message from the service
+      } else if (error.response?.status === 413) {
+        errorMessage = "File too large for upload. Please choose a smaller image or video (max 2MB for images, 5MB for videos)."
+      } else if (error.response?.status === 415) {
+        errorMessage = "Unsupported file type. Please use JPG, PNG, or MP4 files."
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to create post",
+        description: errorMessage,
         variant: "destructive"
       })
     } finally {
@@ -344,7 +386,47 @@ export default function FeedSimple() {
   const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (file) {
+      // Validate file size
+      const maxImageSize = 2 * 1024 * 1024 // 2MB for images
+      const maxVideoSize = 5 * 1024 * 1024 // 5MB for videos
       const fileType = file.type.startsWith('video/') ? 'video' : 'image'
+      const maxSize = fileType === 'video' ? maxVideoSize : maxImageSize
+      
+      console.log('File validation:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileSizeKB: (file.size / 1024).toFixed(2) + 'KB',
+        fileSizeMB: (file.size / 1024 / 1024).toFixed(2) + 'MB',
+        fileType: fileType,
+        maxSize: maxSize,
+        maxSizeMB: (maxSize / 1024 / 1024).toFixed(0) + 'MB',
+        isTooLarge: file.size > maxSize
+      })
+      
+      if (file.size > maxSize) {
+        const sizeInMB = (file.size / 1024 / 1024).toFixed(2)
+        const maxSizeInMB = (maxSize / 1024 / 1024).toFixed(0)
+        
+        console.error('File rejected - too large:', {
+          actualSize: file.size,
+          maxAllowed: maxSize,
+          actualMB: sizeInMB,
+          maxMB: maxSizeInMB
+        })
+        
+        toast({
+          title: "File Too Large",
+          description: `Please choose a ${fileType} smaller than ${maxSizeInMB}MB. Current size: ${sizeInMB}MB`,
+          variant: "destructive"
+        })
+        
+        // Reset the file input
+        e.target.value = ''
+        return
+      }
+      
+      console.log('File accepted - proceeding with upload')
+      
       const reader = new FileReader()
       reader.onload = (e) => {
         setNewPost(prev => ({
@@ -560,27 +642,66 @@ export default function FeedSimple() {
                 
                 {post.image && (
                   <div className="mb-4">
-                    <img
-                      src={post.image}
-                      alt="Post"
-                      className="w-full h-64 object-cover rounded-lg"
-                      onError={(e) => {
-                        console.error('Image failed to load:', post.image)
-                        // Try to load a fallback image
-                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNTAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2NjY2NjYyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM2NjY2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBOb3QgQXZhaWxhYmxlPC90ZXh0Pjwvc3ZnPg=='
-                      }}
-                      onLoad={() => console.log('Image loaded successfully:', post.image)}
-                    />
+                    {console.log('Rendering image for post:', post.id, 'Image URL:', post.image)}
+                    {console.log('Image URL type:', typeof post.image, 'Is valid URL:', post.image && post.image.startsWith('http'))}
+                    {(() => {
+                      // Validate and potentially fix the image URL
+                      let imageUrl = post.image
+                      if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
+                        // If it's a relative URL, try to make it absolute
+                        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+                        imageUrl = imageUrl.startsWith('/') ? `${baseUrl}${imageUrl}` : `${baseUrl}/${imageUrl}`
+                        console.log('Fixed image URL:', imageUrl)
+                      }
+                      return (
+                        <img
+                          src={imageUrl}
+                          alt="Post"
+                          className="w-full h-64 object-cover rounded-lg"
+                          onError={(e) => {
+                            console.error('Image failed to load:', imageUrl)
+                            console.error('Original URL:', post.image)
+                            console.error('Post data:', post)
+                            console.error('Image element:', e.target)
+                            // Try to load a fallback image
+                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNTAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2NjY2NjYyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM2NjY2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBOb3QgQXZhaWxhYmxlPC90ZXh0Pjwvc3ZnPg=='
+                          }}
+                          onLoad={() => console.log('Image loaded successfully:', imageUrl)}
+                        />
+                      )
+                    })()}
                   </div>
                 )}
                 
                 {post.video && (
                   <div className="mb-4">
-                    <video
-                      src={post.video}
-                      controls
-                      className="w-full h-64 object-cover rounded-lg"
-                    />
+                    {console.log('Rendering video for post:', post.id, 'Video URL:', post.video)}
+                    {console.log('Video URL type:', typeof post.video, 'Is valid URL:', post.video && post.video.startsWith('http'))}
+                    {(() => {
+                      // Validate and potentially fix the video URL
+                      let videoUrl = post.video
+                      if (videoUrl && !videoUrl.startsWith('http') && !videoUrl.startsWith('data:')) {
+                        // If it's a relative URL, try to make it absolute
+                        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+                        videoUrl = videoUrl.startsWith('/') ? `${baseUrl}${videoUrl}` : `${baseUrl}/${videoUrl}`
+                        console.log('Fixed video URL:', videoUrl)
+                      }
+                      return (
+                        <video
+                          src={videoUrl}
+                          controls
+                          className="w-full h-64 object-cover rounded-lg"
+                          onError={(e) => {
+                            console.error('Video failed to load:', videoUrl)
+                            console.error('Original URL:', post.video)
+                            console.error('Post data:', post)
+                            console.error('Video element:', e.target)
+                          }}
+                          onLoadStart={() => console.log('Video loading started:', videoUrl)}
+                          onLoadedData={() => console.log('Video loaded successfully:', videoUrl)}
+                        />
+                      )
+                    })()}
                   </div>
                 )}
                 
@@ -783,7 +904,7 @@ export default function FeedSimple() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Media (Optional)
+                    Media (Required) *
                   </label>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
@@ -801,6 +922,11 @@ export default function FeedSimple() {
                         <Upload className="w-4 h-4" />
                         <span className="text-sm">Choose Image or Video</span>
                       </label>
+                    </div>
+                    
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <p>• Images: Max 2MB (will be automatically compressed)</p>
+                      <p>• Videos: Max 5MB</p>
                     </div>
                     
                     {newPost.imagePreview && (

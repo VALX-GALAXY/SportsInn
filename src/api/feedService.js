@@ -236,25 +236,34 @@ class FeedService {
       console.log('Backend getFeed response:', response.data)
       
       // Transform backend posts to match frontend structure
-      const transformedPosts = (response.data.data || []).map(post => ({
-        id: post._id,
-        author: {
-          id: post.authorId._id,
-          name: post.authorId.name,
-          avatar: post.authorId.profilePic || null,
-          role: post.authorId.role
-        },
-        caption: post.caption,
-        image: post.mediaType === 'image' ? post.mediaUrl : null,
-        video: post.mediaType === 'video' ? post.mediaUrl : null,
-        timestamp: post.createdAt,
-        stats: {
-          likes: post.likes?.length || 0,
-          comments: post.comments?.length || 0,
-          shares: 0 // Backend doesn't track shares yet
-        },
-        liked: post.likes?.includes(post.authorId._id) || false
-      }))
+      const transformedPosts = (response.data.data || []).map(post => {
+        console.log('Transforming post:', post)
+        console.log('Media type:', post.mediaType)
+        console.log('Media URL:', post.mediaUrl)
+        
+        const transformedPost = {
+          id: post._id,
+          author: {
+            id: post.authorId._id,
+            name: post.authorId.name,
+            avatar: post.authorId.profilePic || null,
+            role: post.authorId.role
+          },
+          caption: post.caption,
+          image: post.mediaType === 'image' ? post.mediaUrl : null,
+          video: post.mediaType === 'video' ? post.mediaUrl : null,
+          timestamp: post.createdAt,
+          stats: {
+            likes: post.likes?.length || 0,
+            comments: post.comments?.length || 0,
+            shares: 0 // Backend doesn't track shares yet
+          },
+          liked: post.likes?.includes(post.authorId._id) || false
+        }
+        
+        console.log('Transformed post:', transformedPost)
+        return transformedPost
+      })
       
       return {
         posts: transformedPosts,
@@ -314,30 +323,124 @@ class FeedService {
     try {
       console.log('FeedService.createPost called with:', postData)
       
+      // Check if upload endpoint exists, if not, use alternative approach
+      let uploadEndpointExists = false
+      if (postData.image || postData.video) {
+        console.log('Testing upload endpoint availability...')
+        try {
+          // Test with a small dummy request to see if endpoint exists
+          const testResponse = await axiosInstance.get('/api/feed/upload')
+          console.log('Upload endpoint test response:', testResponse.data)
+          uploadEndpointExists = true
+        } catch (testError) {
+          console.log('Upload endpoint test failed (expected for GET):', testError.response?.status)
+          if (testError.response?.status === 404) {
+            console.warn('Upload endpoint /api/feed/upload does not exist! Using alternative approach...')
+            uploadEndpointExists = false
+          }
+        }
+      }
+      
       let mediaUrl = null
       let mediaType = null
       
       // Handle media upload if files are provided
       if (postData.image && postData.image instanceof File) {
-        console.log('Uploading image to backend...')
-        const formData = new FormData()
-        formData.append('media', postData.image)
-        const uploadResponse = await axiosInstance.post('/api/feed/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+        console.log('Processing image upload...')
+        console.log('Image file details:', {
+          name: postData.image.name,
+          size: postData.image.size,
+          type: postData.image.type
         })
-        mediaUrl = uploadResponse.data.data.url
-        mediaType = uploadResponse.data.data.type
-        console.log('Image upload successful:', { mediaUrl, mediaType })
+        
+        if (uploadEndpointExists) {
+          // Use the dedicated upload endpoint
+          try {
+            const formData = new FormData()
+            formData.append('media', postData.image)
+            
+            console.log('Calling /api/feed/upload endpoint...')
+            const uploadResponse = await axiosInstance.post('/api/feed/upload', formData, {
+              headers: { 'Content-Type': 'multipart/form-data' }
+            })
+            
+            console.log('Upload response:', uploadResponse.data)
+            
+            if (uploadResponse.data && uploadResponse.data.success) {
+              mediaUrl = uploadResponse.data.data.url
+              mediaType = uploadResponse.data.data.type
+              console.log('Image upload successful:', { mediaUrl, mediaType })
+            } else {
+              console.error('Upload failed - no success response:', uploadResponse.data)
+              throw new Error('Upload failed - invalid response')
+            }
+          } catch (uploadError) {
+            console.error('Image upload error:', uploadError)
+            console.error('Upload error response:', uploadError.response?.data)
+            console.error('Upload error status:', uploadError.response?.status)
+            throw new Error(`Image upload failed: ${uploadError.message}`)
+          }
+        } else {
+          // Use alternative approach - convert to base64 and send with post
+          console.log('Using base64 approach for image upload...')
+          try {
+            const base64String = await this.fileToBase64(postData.image)
+            mediaUrl = base64String
+            mediaType = 'image'
+            console.log('Image converted to base64 successfully')
+          } catch (base64Error) {
+            console.error('Base64 conversion error:', base64Error)
+            throw new Error(`Image processing failed: ${base64Error.message}`)
+          }
+        }
       } else if (postData.video && postData.video instanceof File) {
-        console.log('Uploading video to backend...')
-        const formData = new FormData()
-        formData.append('media', postData.video)
-        const uploadResponse = await axiosInstance.post('/api/feed/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+        console.log('Processing video upload...')
+        console.log('Video file details:', {
+          name: postData.video.name,
+          size: postData.video.size,
+          type: postData.video.type
         })
-        mediaUrl = uploadResponse.data.data.url
-        mediaType = uploadResponse.data.data.type
-        console.log('Video upload successful:', { mediaUrl, mediaType })
+        
+        if (uploadEndpointExists) {
+          // Use the dedicated upload endpoint
+          try {
+            const formData = new FormData()
+            formData.append('media', postData.video)
+            
+            console.log('Calling /api/feed/upload endpoint...')
+            const uploadResponse = await axiosInstance.post('/api/feed/upload', formData, {
+              headers: { 'Content-Type': 'multipart/form-data' }
+            })
+            
+            console.log('Upload response:', uploadResponse.data)
+            
+            if (uploadResponse.data && uploadResponse.data.success) {
+              mediaUrl = uploadResponse.data.data.url
+              mediaType = uploadResponse.data.data.type
+              console.log('Video upload successful:', { mediaUrl, mediaType })
+            } else {
+              console.error('Upload failed - no success response:', uploadResponse.data)
+              throw new Error('Upload failed - invalid response')
+            }
+          } catch (uploadError) {
+            console.error('Video upload error:', uploadError)
+            console.error('Upload error response:', uploadError.response?.data)
+            console.error('Upload error status:', uploadError.response?.status)
+            throw new Error(`Video upload failed: ${uploadError.message}`)
+          }
+        } else {
+          // Use alternative approach - convert to base64 and send with post
+          console.log('Using base64 approach for video upload...')
+          try {
+            const base64String = await this.fileToBase64(postData.video)
+            mediaUrl = base64String
+            mediaType = 'video'
+            console.log('Video converted to base64 successfully')
+          } catch (base64Error) {
+            console.error('Base64 conversion error:', base64Error)
+            throw new Error(`Video processing failed: ${base64Error.message}`)
+          }
+        }
       }
       
       console.log('Creating post with data:', { caption: postData.caption, mediaUrl, mediaType })
@@ -351,7 +454,11 @@ class FeedService {
       
       // Transform backend response to match frontend structure
       const post = response.data.data
-      return {
+      console.log('Raw post data from backend:', post)
+      console.log('Media type:', post.mediaType)
+      console.log('Media URL:', post.mediaUrl)
+      
+      const transformedPost = {
         id: post._id,
         author: {
           id: post.authorId._id,
@@ -370,6 +477,9 @@ class FeedService {
         },
         liked: false
       }
+      
+      console.log('Transformed post for frontend:', transformedPost)
+      return transformedPost
     } catch (error) {
       console.error('FeedService.createPost error:', error)
       console.error('Error response:', error.response?.data)
@@ -542,6 +652,229 @@ class FeedService {
     } catch (error) {
       throw new Error(error.message || 'Failed to upload image')
     }
+  }
+
+  // Helper function to convert file to base64 with compression
+  fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      console.log('feedService.fileToBase64 called with:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileSizeKB: (file.size / 1024).toFixed(2) + 'KB',
+        fileType: file.type
+      })
+      
+      // File size validation is already done in the frontend
+      // No need to validate again here
+
+      // For images, compress them before converting to base64
+      if (file.type.startsWith('image/')) {
+        console.log('Starting image compression...')
+        
+        // Try multiple compression levels to get the smallest possible size
+        this.compressImageAggressively(file)
+          .then(compressedFile => {
+            console.log('Image compression successful:', {
+              originalSize: file.size,
+              compressedSize: compressedFile.size,
+              sizeReduction: ((file.size - compressedFile.size) / file.size * 100).toFixed(1) + '%'
+            })
+            
+            // Check if compressed file is still too large for base64
+            const estimatedBase64Size = compressedFile.size * 1.37 // Base64 is ~37% larger
+            console.log('Estimated base64 size:', estimatedBase64Size, 'bytes')
+            
+            if (estimatedBase64Size > 1024 * 1024) { // If estimated > 1MB
+              console.warn('Compressed file still too large for base64, trying more aggressive compression...')
+              return this.compressImageAggressively(file, true) // Ultra compression
+            }
+            
+            if (estimatedBase64Size > 512 * 1024) { // If estimated > 512KB
+              console.warn('File still quite large, using ultra compression...')
+              return this.compressImageAggressively(file, true) // Ultra compression
+            }
+            
+            return compressedFile
+          })
+          .then(finalCompressedFile => {
+            const reader = new FileReader()
+            reader.onload = () => {
+              const base64Size = reader.result.length
+              console.log('Base64 conversion successful, length:', base64Size)
+              console.log('Final base64 size:', (base64Size / 1024).toFixed(2) + 'KB')
+              
+              // Final check - if still too large, create a tiny image
+              if (base64Size > 1024 * 1024) { // Still > 1MB
+                console.error('Base64 still too large, creating minimal image...')
+                return this.createMinimalImage(file)
+                  .then(minimalBlob => {
+                    const minimalReader = new FileReader()
+                    minimalReader.onload = () => {
+                      console.log('Minimal image created, size:', (minimalReader.result.length / 1024).toFixed(2) + 'KB')
+                      resolve(minimalReader.result)
+                    }
+                    minimalReader.readAsDataURL(minimalBlob)
+                  })
+              }
+              
+              resolve(reader.result)
+            }
+            reader.onerror = (error) => {
+              console.error('Base64 conversion failed:', error)
+              reject(error)
+            }
+            reader.readAsDataURL(finalCompressedFile)
+          })
+          .catch(error => {
+            console.error('Image compression failed:', error)
+            reject(error)
+          })
+      } else {
+        // For videos, just convert directly (but warn about size)
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit for videos
+          reject(new Error(`Video too large. Please choose a video smaller than 5MB. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`))
+          return
+        }
+        
+        const reader = new FileReader()
+        reader.onload = () => {
+          resolve(reader.result)
+        }
+        reader.onerror = (error) => {
+          reject(error)
+        }
+        reader.readAsDataURL(file)
+      }
+    })
+  }
+
+  // Helper function for aggressive image compression
+  compressImageAggressively(file, ultraCompression = false) {
+    if (ultraCompression) {
+      console.log('Using ultra compression mode')
+      return this.compressImage(file, 0.3, 400, 300) // 30% quality, 400x300 max
+    } else {
+      console.log('Using standard aggressive compression')
+      return this.compressImage(file, 0.5, 600, 450) // 50% quality, 600x450 max
+    }
+  }
+
+  // Create a minimal image as last resort
+  createMinimalImage(file) {
+    return new Promise((resolve, reject) => {
+      console.log('Creating minimal image as last resort...')
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+
+      img.onload = () => {
+        // Create a very small image (200x150 max)
+        const maxWidth = 200
+        const maxHeight = 150
+        let { width, height } = img
+        
+        const ratio = Math.min(maxWidth / width, maxHeight / height)
+        width *= ratio
+        height *= ratio
+
+        canvas.width = width
+        canvas.height = height
+
+        // Draw with very low quality
+        ctx.drawImage(img, 0, 0, width, height)
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              console.log('Minimal image created:', {
+                width: width,
+                height: height,
+                size: blob.size
+              })
+              resolve(blob)
+            } else {
+              reject(new Error('Failed to create minimal image'))
+            }
+          },
+          'image/jpeg', // Force JPEG for smallest size
+          0.1 // 10% quality
+        )
+      }
+
+      img.onerror = () => {
+        reject(new Error('Failed to load image for minimal creation'))
+      }
+
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
+  // Helper function to compress images
+  compressImage(file, quality = 0.7, maxWidth = 800, maxHeight = 600) {
+    return new Promise((resolve, reject) => {
+      console.log('compressImage called with:', {
+        fileName: file.name,
+        fileSize: file.size,
+        quality: quality,
+        maxWidth: maxWidth,
+        maxHeight: maxHeight
+      })
+      
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+
+      img.onload = () => {
+        console.log('Image loaded for compression:', {
+          originalWidth: img.width,
+          originalHeight: img.height
+        })
+        
+        // Calculate new dimensions
+        let { width, height } = img
+        
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height)
+          width *= ratio
+          height *= ratio
+          console.log('Image will be resized to:', { width, height })
+        } else {
+          console.log('Image dimensions are within limits, no resizing needed')
+        }
+
+        // Set canvas dimensions
+        canvas.width = width
+        canvas.height = height
+
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height)
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              console.log('Compression completed:', {
+                originalSize: file.size,
+                compressedSize: blob.size,
+                compressionRatio: (blob.size / file.size * 100).toFixed(1) + '%'
+              })
+              resolve(blob)
+            } else {
+              console.error('Canvas.toBlob returned null')
+              reject(new Error('Image compression failed'))
+            }
+          },
+          file.type,
+          quality
+        )
+      }
+
+      img.onerror = (error) => {
+        console.error('Failed to load image for compression:', error)
+        reject(new Error('Failed to load image for compression'))
+      }
+
+      img.src = URL.createObjectURL(file)
+    })
   }
 }
 
