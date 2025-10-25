@@ -519,12 +519,12 @@ export default function Messages() {
                   <div className="flex items-center space-x-3">
                     <div className="relative">
                       <Avatar className="w-10 h-10">
-                        <AvatarImage src={conversation.avatar} />
+                        <AvatarImage src={conversation?.profilePic} />
                         <AvatarFallback>
-                          {conversation.name.charAt(0)}
+                          {conversation?.name?.charAt(0) || 'U'}
                         </AvatarFallback>
                       </Avatar>
-                      {conversation.isOnline && (
+                      {conversation?.isOnline && (
                         <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
                       )}
                     </div>
@@ -534,11 +534,11 @@ export default function Messages() {
                           {conversation.name}
                         </h3>
                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {conversation.timestamp}
+                          {new Date(conversation.lastMessage.timestamp).toLocaleDateString()}
                         </span>
                       </div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                        {conversation.lastMessage}
+                        {conversation.lastMessage.content}
                       </p>
                       {conversation.unreadCount > 0 && (
                         <Badge variant="destructive" className="mt-1 text-xs">
@@ -735,17 +735,17 @@ export default function Messages() {
                     <ArrowLeft className="w-4 h-4" />
                   </Button>
                   <Avatar className="w-8 h-8">
-                    <AvatarImage src={selectedConversation.avatar} />
+                    <AvatarImage src={selectedConversation.profilePic} />
                     <AvatarFallback>
                       {selectedConversation.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                      {selectedConversation.name}
+                      {selectedConversation?.name || 'Unknown User'}
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {selectedConversation.isOnline ? 'Online' : 'Offline'}
+                      {selectedConversation?.isOnline ? 'Online' : 'Offline'}
                     </p>
                   </div>
                 </div>
@@ -807,7 +807,7 @@ export default function Messages() {
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      onFocus={handleTypingStart}
+                      onFocus={handleTyping}
                       onBlur={handleTypingStop}
                       placeholder="Type a message..."
                       className="flex-1 border-0 bg-transparent focus:ring-0"

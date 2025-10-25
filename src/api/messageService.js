@@ -4,10 +4,10 @@ class MessageService {
   // Get conversations for a user
   async getConversations(userId) {
     try {
-      // Backend doesn't have conversations endpoint, return empty array
-      return []
+      const response = await axiosInstance.get(`/api/messages/conversations/${userId}`)
+      return response.data.data || []
     } catch (error) {
-      console.warn('⚠️ Backend API unavailable:', error.message)
+      console.warn('Backend API unavailable:', error.message)
       return []
     }
   }
@@ -16,12 +16,6 @@ class MessageService {
   async getMessages(otherUserId, page = 1, limit = 50) {
     try {
       console.log('📡 Fetching messages from backend for user:', otherUserId)
-      
-      // Check if otherUserId is a valid MongoDB ObjectId format
-      if (!otherUserId || otherUserId === 'user_1' || otherUserId === 'user_2' || otherUserId === 'user_3') {
-        console.log('⚠️ Invalid user ID format')
-        throw new Error('Invalid user ID format')
-      }
       
       const response = await axiosInstance.get(`/api/messages/${otherUserId}`, {
         params: { page, limit }
@@ -39,12 +33,6 @@ class MessageService {
   async sendMessage(receiverId, messageData) {
     try {
       console.log('📤 Sending message to backend:', { receiverId, messageData })
-      
-      // Check if receiverId is a valid MongoDB ObjectId format
-      if (!receiverId || receiverId === 'user_1' || receiverId === 'user_2' || receiverId === 'user_3') {
-        console.log('⚠️ Invalid receiver ID format')
-        throw new Error('Invalid receiver ID format')
-      }
       
       const response = await axiosInstance.post(`/api/messages`, {
         receiverId: receiverId,
