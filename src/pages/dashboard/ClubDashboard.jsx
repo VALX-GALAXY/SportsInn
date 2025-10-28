@@ -23,7 +23,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import tournamentService from '../../api/tournamentService'
 import feedService from '../../api/feedService'
 import statsService from '../../api/statsService'
-import NoApiAvailable from '../../components/NoApiAvailable'
+// Removed NoApiAvailable import - no longer used
 
 export default function ClubDashboard() {
   const { user } = useAuth()
@@ -32,7 +32,7 @@ export default function ClubDashboard() {
   const [scoutSuggestions, setScoutSuggestions] = useState([])
   const [recentPosts, setRecentPosts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  const [apiAvailable, setApiAvailable] = useState(true)
+  // Removed apiAvailable state - no longer needed
 
   useEffect(() => {
     fetchDashboardData()
@@ -59,26 +59,7 @@ export default function ClubDashboard() {
       
       // Fetch club statistics
       if (user?.id) {
-        try {
-          // Test API availability
-          const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-          const response = await fetch(`${backendUrl}/api/dashboard/${user.id}`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-              'Content-Type': 'application/json'
-            }
-          })
-          
-          if (response.ok) {
-            setApiAvailable(true)
-          } else {
-            setApiAvailable(false)
-          }
-        } catch (error) {
-          console.log('API not available:', error.message)
-          setApiAvailable(false)
-        }
+        // Removed API availability testing
         
         const clubStats = await statsService.getClubStats(user.id)
         setStats(clubStats)
@@ -171,34 +152,7 @@ export default function ClubDashboard() {
     )
   }
 
-  // Show API not available message
-  if (!apiAvailable) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Club Dashboard
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Dashboard for {user?.name || 'Club'} - API Not Available
-            </p>
-          </div>
-          
-          <NoApiAvailable 
-            title="Club Dashboard API Not Available"
-            description="The backend API for club dashboard data is not available. The dashboard is showing mock data for demonstration purposes."
-            onRetry={() => {
-              setApiAvailable(true)
-              fetchDashboardData()
-            }}
-            showMockDataInfo={true}
-          />
-        </div>
-      </div>
-    )
-  }
+  // Removed API availability check - always show dashboard
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
