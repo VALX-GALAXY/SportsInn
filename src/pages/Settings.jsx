@@ -42,7 +42,7 @@ export default function Settings() {
   console.log('Settings hooks loaded:', { user, theme, primaryColor, accentColor })
   
   // Website settings
-  const [websiteName, setWebsiteName] = useState('SportsHub')
+  const [websiteName, setWebsiteName] = useState('SportsInn')
   const [websiteDescription, setWebsiteDescription] = useState('Connect with sports professionals worldwide')
   const [websiteLogo, setWebsiteLogo] = useState('')
   const [websiteFavicon, setWebsiteFavicon] = useState('')
@@ -172,7 +172,7 @@ export default function Settings() {
     setTheme('system')
     setPrimaryColor('blue')
     setAccentColor('emerald')
-    setWebsiteName('SportsHub')
+    setWebsiteName('SportsInn')
     setWebsiteDescription('Connect with sports professionals worldwide')
     setEmailNotifications(true)
     setPushNotifications(true)
@@ -212,7 +212,7 @@ export default function Settings() {
                 Settings
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                Customize your SportsHub experience
+                Customize your SportsInn experience
               </p>
             </div>
           </div>

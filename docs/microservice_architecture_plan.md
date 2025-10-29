@@ -1,4 +1,4 @@
-# SportsHub Microservice Architecture Plan
+# SportsInn Microservice Architecture Plan
 
 ## Current Modular Monolith Analysis
 

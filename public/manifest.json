@@ -1,6 +1,6 @@
 {
-  "name": "SportsHub - Sports Community Platform",
-  "short_name": "SportsHub",
+  "name": "SportsInn - Sports Community Platform",
+  "short_name": "SportsInn",
   "description": "Connect with athletes, scouts, academies, and clubs in the sports community",
   "start_url": "/",
   "display": "standalone",
@@ -125,14 +125,14 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "SportsHub Dashboard"
+      "label": "SportsInn Dashboard"
     },
     {
       "src": "/screenshot-narrow.png",
       "sizes": "750x1334",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "SportsHub Mobile"
+      "label": "SportsInn Mobile"
     }
   ],
   "related_applications": [],

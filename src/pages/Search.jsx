@@ -317,7 +317,7 @@ export default function Search() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:text-3xl">
-            Search SportsHub
+            Search SportsInn
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 sm:text-base">
             Find players, academies, clubs, and scouts

@@ -49,7 +49,7 @@
 
 @layer base {
   :root {
-    /* SportsIn Theme Variables */
+    /* SportsInn Theme Variables */
     --sportsin-primary: #3b82f6;      /* Blue */
     --sportsin-secondary: #10b981;    /* Emerald */
     --sportsin-accent: #ef4444;       /* Red for alerts */
@@ -90,7 +90,7 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem}
   .dark {
-    /* SportsIn Dark Theme Variables */
+    /* SportsInn Dark Theme Variables */
     --sportsin-primary: #60a5fa;      /* Lighter blue for dark mode */
     --sportsin-secondary: #34d399;    /* Lighter emerald for dark mode */
     --sportsin-accent: #f87171;       /* Lighter red for dark mode */
@@ -141,7 +141,7 @@
 }
 
 @layer components {
-  /* SportsIn Theme Enhancements */
+  /* SportsInn Theme Enhancements */
   .sportshub-gradient {
     @apply bg-gradient-to-r from-blue-600 to-purple-600;
   }
@@ -591,7 +591,7 @@
   }
 }
 
-/* SportsIn Theme Colors */
+/* SportsInn Theme Colors */
 :root {
   --sportsin-primary: #3b82f6;
   --sportsin-secondary: #10b981;
@@ -606,7 +606,7 @@
   --theme-gradient-hover: linear-gradient(135deg, #2563eb 0%, #059669 100%);
 }
 
-/* Dark mode SportsIn theme */
+/* Dark mode SportsInn theme */
 .dark {
   --sportsin-primary: #60a5fa;
   --sportsin-secondary: #34d399;
@@ -678,7 +678,7 @@
   --theme-gradient-hover: linear-gradient(135deg, #0d9488 0%, #2563eb 100%);
 }
 
-/* SportsIn Gradient Button */
+/* SportsInn Gradient Button */
 .sportsin-gradient-button {
   background: var(--sportsin-gradient);
   color: white;

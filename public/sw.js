@@ -1,4 +1,4 @@
-// Enhanced Service Worker for SportsHub PWA
+// Enhanced Service Worker for SportsInn PWA
 const CACHE_NAME = 'sportshub-v2';
 const STATIC_CACHE = 'sportshub-static-v2';
 const DYNAMIC_CACHE = 'sportshub-dynamic-v2';
@@ -169,8 +169,8 @@ self.addEventListener('push', (event) => {
   console.log('Push notification received:', event);
   
   let notificationData = {
-    title: 'SportsHub',
-    body: 'New notification from SportsHub',
+    title: 'SportsInn',
+    body: 'New notification from SportsInn',
     icon: '/icon-192x192.png',
     badge: '/icon-192x192.png',
     tag: 'sportshub-notification',

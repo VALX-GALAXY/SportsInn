@@ -80,7 +80,7 @@ export default function Dashboard() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Welcome to SportsHub Dashboard
+              Welcome to SportsInn Dashboard
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
               Choose your role to access your personalized dashboard

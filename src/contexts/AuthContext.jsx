@@ -332,9 +332,16 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Real Google OAuth login using implicit flow
+  // Real Google OAuth login using authorization code flow
   const loginWithGoogle = async () => {
+    // Prevent multiple simultaneous calls
+    if (window.googleLoginInProgress) {
+      console.warn('Google login already in progress')
+      return
+    }
+    
     try {
+      window.googleLoginInProgress = true
       dispatch({ type: 'SET_LOADING', payload: true })
       
       // Load Google Identity Services library
@@ -345,61 +352,79 @@ export const AuthProvider = ({ children }) => {
       // Debug environment variable
       console.log('Google Client ID from env:', import.meta.env.VITE_GOOGLE_CLIENT_ID)
       
-      // Get client ID with fallback
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '828898440872-d0jvss4hghjr7q3quqmcj5ft1a840bev.apps.googleusercontent.com'
+      // CORRECT CLIENT ID - CACHE BUST v4: 2024-01-29-15:50 - TIMESTAMP: 1735467000000
+      const clientId = '803784325771-4g94k625haelb93ogq34mgiuthag0270.apps.googleusercontent.com'
+      
+      // Validate we're using the correct client ID
+      if (clientId.includes('828898440872')) {
+        console.error('ERROR: Wrong client ID detected! This should not happen.')
+        throw new Error('Invalid Google Client ID configuration')
+      }
       
       if (!clientId) {
         throw new Error('Google Client ID not found in environment variables')
       }
       
-      console.log('Using Google Client ID:', clientId)
+      console.log('✅ Using CORRECT Google Client ID:', clientId)
+      console.log('🚨 CACHE BUST v4 - If you see old ID (828898440872), CLEAR BROWSER CACHE NOW!')
+      console.log('🔍 Client ID verification:', clientId === '803784325771-4g94k625haelb93ogq34mgiuthag0270.apps.googleusercontent.com' ? 'PASS' : 'FAIL')
       
-      // Use Google Identity Services with implicit flow
-      const client = window.google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: 'email profile',
-        callback: async (response) => {
-          try {
-            console.log('Google OAuth response:', response)
-            
-            // Get user info directly from Google
-            const userResponse = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${response.access_token}`)
-            const userInfo = await userResponse.json()
-            
-            console.log('Google user info:', userInfo)
-            
-            // Send Google data to backend using existing signup/login API
-            const result = await authService.googleLogin({
-              email: userInfo.email,
-              name: userInfo.name,
-              picture: userInfo.picture,
-              googleId: userInfo.id
-            })
-            
-            // Fetch complete profile data including profile picture
+      // Use Google Identity Services with authorization code flow to get idToken
+      return new Promise((resolve, reject) => {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: async (response) => {
             try {
-              const userId = result.user._id || result.user.id
-              if (userId) {
-                const profileData = await profileService.getProfile(userId)
-                // Merge profile data with user data to ensure profile picture is included
-                const completeUserData = {
-                  ...result.user,
-                  ...profileData,
-                  // Ensure profile picture is properly set
-                  profilePic: profileData.profilePic || profileData.profilePicture || result.user.profilePic
-                }
-                
-                // Update stored user data with complete profile
-                localStorage.setItem('user', JSON.stringify(completeUserData))
-                
-                dispatch({
-                  type: 'LOGIN',
-                  payload: {
-                    user: completeUserData,
-                    token: result.token
+              console.log('Google OAuth response:', response)
+              
+              // Decode the idToken to get user info (for display purposes)
+              const payload = JSON.parse(atob(response.credential.split('.')[1]))
+              console.log('Google user info from idToken:', payload)
+              
+              // Send Google data to backend using proper Google OAuth endpoint
+              const result = await authService.googleLogin({
+                idToken: response.credential,
+                email: payload.email,
+                name: payload.name,
+                picture: payload.picture,
+                googleId: payload.sub
+              })
+              
+              // Fetch complete profile data including profile picture
+              try {
+                const userId = result.user._id || result.user.id
+                if (userId) {
+                  const profileData = await profileService.getProfile(userId)
+                  // Merge profile data with user data to ensure profile picture is included
+                  const completeUserData = {
+                    ...result.user,
+                    ...profileData,
+                    // Ensure profile picture is properly set
+                    profilePic: profileData.profilePic || profileData.profilePicture || result.user.profilePic
                   }
-                })
-              } else {
+                  
+                  // Update stored user data with complete profile
+                  localStorage.setItem('user', JSON.stringify(completeUserData))
+                  
+                  dispatch({
+                    type: 'LOGIN',
+                    payload: {
+                      user: completeUserData,
+                      token: result.token
+                    }
+                  })
+                } else {
+                  dispatch({
+                    type: 'LOGIN',
+                    payload: {
+                      user: result.user,
+                      token: result.token
+                    }
+                  })
+                }
+              } catch (profileError) {
+                console.warn('Could not fetch complete profile data for Google user:', profileError)
+                // Fallback to basic user data
                 dispatch({
                   type: 'LOGIN',
                   payload: {
@@ -408,51 +433,80 @@ export const AuthProvider = ({ children }) => {
                   }
                 })
               }
-            } catch (profileError) {
-              console.warn('Could not fetch complete profile data for Google user:', profileError)
-              // Fallback to basic user data
-              dispatch({
-                type: 'LOGIN',
-                payload: {
-                  user: result.user,
-                  token: result.token
-                }
+              
+              toast({
+                title: "Google login successful",
+                description: `Welcome, ${result.user.name}!`,
+                variant: "success"
               })
+              
+              dispatch({ type: 'SET_LOADING', payload: false })
+              window.googleLoginInProgress = false
+              resolve(result.user)
+            } catch (error) {
+              console.error('Google authentication error:', error)
+              toast({
+                title: "Google authentication failed",
+                description: error.message || "Failed to authenticate with Google",
+                variant: "destructive"
+              })
+              dispatch({ type: 'SET_LOADING', payload: false })
+              window.googleLoginInProgress = false
+              reject(error)
             }
-            
-            toast({
-              title: "Google login successful",
-              description: `Welcome, ${result.user.name}!`,
-              variant: "success"
-            })
-            
-            return result.user
-          } catch (error) {
-            console.error('Google authentication error:', error)
-            toast({
-              title: "Google authentication failed",
-              description: error.message || "Failed to authenticate with Google",
-              variant: "destructive"
-            })
-            dispatch({ type: 'SET_LOADING', payload: false })
-            throw error
           }
-        }
+        })
+        
+        // Use prompt() to trigger Google sign-in
+        // This will show One Tap if available, otherwise opens popup
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed()) {
+            const reasons = [
+              notification.getNotDisplayedReason(),
+              notification.getSkippedReason(),
+              notification.getDismissedReason()
+            ]
+            console.log('Google One Tap not displayed. Reasons:', reasons)
+            
+            // If One Tap is not available, show popup manually
+            // This uses the popup flow which will request idToken
+            const client = window.google.accounts.oauth2.initTokenClient({
+              client_id: clientId,
+              scope: 'openid email profile',
+              callback: async (tokenResponse) => {
+                try {
+                  // For popup flow, we need to get idToken using the access token
+                  // But the backend expects idToken, not access_token
+                  // So we'll show a helpful error message
+                  reject(new Error('Google sign-in popup flow is not fully supported. Please ensure your Google Cloud Console has http://localhost:5173 configured as an authorized origin and try again.'))
+                } catch (error) {
+                  reject(error)
+                }
+              }
+            })
+            
+            // Trigger the popup
+            client.requestAccessToken()
+          } else if (notification.isSkippedMoment()) {
+            console.log('Google One Tap was skipped')
+            reject(new Error('Google sign-in was skipped. Please click the button again.'))
+          } else if (notification.isDismissedMoment()) {
+            console.log('Google One Tap was dismissed')
+            reject(new Error('Google sign-in was dismissed. Please try again.'))
+          }
+        })
       })
-      
-      // Request access token
-      client.requestAccessToken()
       
     } catch (error) {
       console.error('Google login error:', error)
+      window.googleLoginInProgress = false
       toast({
         title: "Google login failed",
         description: error.message || "Failed to login with Google",
         variant: "destructive"
       })
-      throw error
-    } finally {
       dispatch({ type: 'SET_LOADING', payload: false })
+      throw error
     }
   }
   
@@ -546,7 +600,7 @@ export const AuthProvider = ({ children }) => {
       
       toast({
         title: "Account created successfully",
-        description: `Welcome to SportsHub, ${authData.user.name}!`,
+        description: `Welcome to SportsInn, ${authData.user.name}!`,
         variant: "success"
       })
       

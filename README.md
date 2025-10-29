@@ -1,4 +1,4 @@
-# SportsHub - Sports Community Platform
+# SportsInn - Sports Community Platform
 
 A modern React-based sports community platform that connects players, academies, clubs, and scouts. Built with React, Vite, Tailwind CSS, Framer Motion, and integrated with a Node.js backend API.
 
