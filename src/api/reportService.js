@@ -21,7 +21,7 @@ class ReportService {
   // Report a post
   async reportPost({ postId, reason, details, reporterId }) {
     try {
-      console.log('🚨 Submitting report to backend:', { postId, reason, details })
+      console.log(' Submitting report to backend:', { postId, reason, details })
       
       const response = await axiosInstance.post('/api/reports', {
         postId,
@@ -30,10 +30,10 @@ class ReportService {
         reporterId: reporterId || JSON.parse(localStorage.getItem('user'))?.id
       })
       
-      console.log('✅ Report submitted successfully:', response.data)
+      console.log('Report submitted successfully:', response.data)
       return response.data.data
     } catch (error) {
-      console.warn('⚠️ Backend report API unavailable, using mock data:', error.message)
+      console.warn('Backend report API unavailable, using mock data:', error.message)
       console.warn('Error details:', error.response?.data || error.message)
       
       // Fallback to mock implementation

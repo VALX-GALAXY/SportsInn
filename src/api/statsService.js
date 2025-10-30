@@ -21,7 +21,7 @@ class StatsService {
         
         if (response.data && response.data.success) {
           const playerStats = this.transformPlayerStats(response.data.data)
-          console.log('✅ Player stats fetched from backend:', playerStats)
+          console.log(' Player stats fetched from backend:', playerStats)
           return playerStats
         } else {
           console.warn('Backend returned success: false')
@@ -62,7 +62,7 @@ class StatsService {
         
         if (response.data && response.data.success) {
           const academyStats = this.transformAcademyStats(response.data.data)
-          console.log('✅ Academy stats fetched from backend:', academyStats)
+          console.log(' Academy stats fetched from backend:', academyStats)
           return academyStats
         } else {
           console.warn('Backend returned success: false')
@@ -103,7 +103,7 @@ class StatsService {
         
         if (response.data && response.data.success) {
           const scoutStats = this.transformScoutStats(response.data.data)
-          console.log('✅ Scout stats fetched from backend:', scoutStats)
+          console.log('Scout stats fetched from backend:', scoutStats)
           return scoutStats
         } else {
           console.warn('Backend returned success: false')
@@ -144,7 +144,7 @@ class StatsService {
         
         if (response.data && response.data.success) {
           const clubStats = this.transformClubStats(response.data.data)
-          console.log('✅ Club stats fetched from backend:', clubStats)
+          console.log('Club stats fetched from backend:', clubStats)
           return clubStats
         } else {
           console.warn('Backend returned success: false')
@@ -431,26 +431,26 @@ class StatsService {
     console.log('⚠️  Chart data is MOCK - backend doesn\'t provide detailed tournament/performance data')
     
     return {
-      // ✅ REAL data from backend
+      //  REAL data from backend
       tournamentsApplied,
       acceptedPercentage,
       connectionsCount: connectionCount,
       
-      // ❌ MOCK data - backend doesn't provide these fields
+      // MOCK data - backend doesn't provide these fields
       totalMatches: Math.floor(Math.random() * 50) + 20,
       winRate: Math.floor(Math.random() * 40) + 50,
       currentRank: Math.floor(Math.random() * 50) + 1,
       totalPoints: Math.floor(Math.random() * 2000) + 500,
       averageRating: Math.round((Math.random() * 2 + 3) * 10) / 10,
       
-      // ❌ MOCK chart data - backend doesn't provide tournament breakdown
+      //  MOCK chart data - backend doesn't provide tournament breakdown
       tournamentParticipation: [
         { name: 'Selected', value: selectedCount, color: '#10B981' },
         { name: 'Applied', value: tournamentsApplied - selectedCount, color: '#EF4444' },
         { name: 'Pending', value: Math.floor(Math.random() * 3) + 1, color: '#F59E0B' }
       ],
       
-      // ❌ MOCK chart data - backend doesn't provide connection breakdown
+      // MOCK chart data - backend doesn't provide connection breakdown
       connectionsData: [
         { name: 'Players', value: Math.floor(connectionCount * 0.4), color: '#3B82F6' },
         { name: 'Academies', value: Math.floor(connectionCount * 0.3), color: '#8B5CF6' },
@@ -458,7 +458,7 @@ class StatsService {
         { name: 'Scouts', value: Math.floor(connectionCount * 0.1), color: '#F59E0B' }
       ],
       
-      // ❌ MOCK chart data - backend doesn't provide performance over time
+      //  MOCK chart data - backend doesn't provide performance over time
       performanceData: [
         { month: 'Jan', matches: Math.floor(Math.random() * 10) + 5, wins: Math.floor(Math.random() * 8) + 3, rating: Math.round((Math.random() * 2 + 3) * 10) / 10 },
         { month: 'Feb', matches: Math.floor(Math.random() * 10) + 5, wins: Math.floor(Math.random() * 8) + 3, rating: Math.round((Math.random() * 2 + 3) * 10) / 10 },
@@ -471,33 +471,33 @@ class StatsService {
 
   // Transform backend academy data to frontend format
   transformAcademyStats(backendData) {
-    console.log('🔄 Transforming academy stats from backend data:', backendData)
+    console.log(' Transforming academy stats from backend data:', backendData)
     
     const trainees = backendData.trainees || 0
     const tournamentsHosted = backendData.tournamentsHosted || 0
     
-    console.log('📊 REAL academy stats:', { trainees, tournamentsHosted })
-    console.log('⚠️  Chart data is MOCK - backend doesn\'t provide detailed academy analytics')
+    console.log(' REAL academy stats:', { trainees, tournamentsHosted })
+    console.log(' Chart data is MOCK - backend doesn\'t provide detailed academy analytics')
     
     return {
-      // ✅ REAL data from backend
+      // REAL data from backend
       playersScouted: trainees,
       tournamentsHosted,
       totalStudents: trainees,
       
-      // ❌ MOCK data - backend doesn't provide these fields
+      //  MOCK data - backend doesn't provide these fields
       successRate: Math.floor(Math.random() * 30) + 70,
       averageRating: Math.round((Math.random() * 2 + 3) * 10) / 10,
       revenue: Math.floor(Math.random() * 500000) + 100000,
       
-      // ❌ MOCK chart data - backend doesn't provide tournament breakdown
+      //  MOCK chart data - backend doesn't provide tournament breakdown
       tournamentParticipation: [
         { name: 'Hosted', value: tournamentsHosted, color: '#10B981' },
         { name: 'Participated', value: Math.floor(Math.random() * 10) + 3, color: '#3B82F6' },
         { name: 'Upcoming', value: Math.floor(Math.random() * 3) + 1, color: '#F59E0B' }
       ],
       
-      // ❌ MOCK chart data - backend doesn't provide monthly scouting data
+      //  MOCK chart data - backend doesn't provide monthly scouting data
       scoutingData: [
         { name: 'Jan', players: Math.floor(trainees * 0.2), tournaments: Math.floor(tournamentsHosted * 0.2) },
         { name: 'Feb', players: Math.floor(trainees * 0.2), tournaments: Math.floor(tournamentsHosted * 0.2) },
@@ -506,7 +506,7 @@ class StatsService {
         { name: 'May', players: Math.floor(trainees * 0.2), tournaments: Math.floor(tournamentsHosted * 0.2) }
       ],
       
-      // ❌ MOCK chart data - backend doesn't provide student progress breakdown
+      //  MOCK chart data - backend doesn't provide student progress breakdown
       studentProgress: [
         { name: 'Beginner', value: Math.floor(trainees * 0.3), color: '#F59E0B' },
         { name: 'Intermediate', value: Math.floor(trainees * 0.4), color: '#3B82F6' },
@@ -518,11 +518,11 @@ class StatsService {
 
   // Transform backend scout data to frontend format
   transformScoutStats(backendData) {
-    console.log('🔄 Transforming scout stats from backend data:', backendData)
+    console.log('Transforming scout stats from backend data:', backendData)
     
     const applicationsReviewed = backendData.applicationsReviewed || 0
     
-    console.log('📊 Real scout stats:', { applicationsReviewed })
+    console.log('Real scout stats:', { applicationsReviewed })
     
     return {
       playersScouted: Math.floor(Math.random() * 150) + 50,
@@ -559,10 +559,10 @@ class StatsService {
 
   // Transform backend club data to frontend format
   transformClubStats(backendData) {
-    console.log('🔄 Transforming club stats from backend data:', backendData)
+    console.log('Transforming club stats from backend data:', backendData)
     
     // For now, clubs don't have specific backend data, so we'll use mock data
-    console.log('📊 Club stats using mock data (no specific backend endpoint)')
+    console.log('Club stats using mock data (no specific backend endpoint)')
     
     return {
       totalMembers: Math.floor(Math.random() * 200) + 100,

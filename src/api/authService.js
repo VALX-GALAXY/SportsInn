@@ -23,7 +23,7 @@ class AuthService {
       
       // If backend is not running, throw a clear error
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
-        throw new Error('Backend server is not running. Please start the server and try again.')
+        throw new Error('Login failed')
       }
       
       // For other errors, throw the original error
@@ -57,7 +57,7 @@ class AuthService {
       
       // If backend is not running, throw a clear error
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
-        throw new Error('Backend server is not running. Please start the server and try again.')
+        throw new Error('Signup failed')
       }
       
       // For other errors, throw the original error
@@ -96,7 +96,7 @@ class AuthService {
       
       // If backend is not running, throw a clear error
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
-        throw new Error('Backend server is not running. Please start the server and try again.')
+        throw new Error('Google login failed')
       }
       
       // For other errors, throw the original error
@@ -121,7 +121,7 @@ class AuthService {
     } catch (error) {
       // If backend is not running, throw a clear error
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
-        throw new Error('Backend server is not running. Please start the server and try again.')
+        throw new Error('')
       }
       
       // For other errors, throw the original error
@@ -152,7 +152,7 @@ class AuthService {
       
       // If backend is not running, still allow logout but show warning
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
-        console.warn('Backend server is not running, but user has been logged out locally.')
+        console.warn('')
         return { message: 'Logged out successfully (local only)' }
       }
       
@@ -193,7 +193,7 @@ class AuthService {
     } catch (error) {
       // If backend is not running, throw a clear error
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
-        throw new Error('Backend server is not running. Please start the server and try again.')
+        throw new Error('server is not running.')
       }
       
       // For other errors, throw the original error

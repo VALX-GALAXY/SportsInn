@@ -37,7 +37,7 @@ class SearchService {
       
       const response = await axiosInstance.get('/api/search', { params })
       
-      console.log('✅ Backend users search response:', response.data)
+      console.log('Backend users search response:', response.data)
       
       if (response.data.success) {
         // Backend returns { success: true, data: { users: [...], posts: [...], tournaments: [...] } }
@@ -83,7 +83,7 @@ class SearchService {
         throw new Error('Backend returned success: false')
       }
     } catch (error) {
-      console.error('❌ Backend users search API failed:', error.message)
+      console.error('Backend users search API failed:', error.message)
       console.error('Error details:', error.response?.data || error.message)
       
       // Don't fall back to mock data - throw the error instead
@@ -106,7 +106,7 @@ class SearchService {
         }
       })
       
-      console.log('✅ Backend posts search response:', response.data)
+      console.log('Backend posts search response:', response.data)
       
       if (response.data.success) {
         const backendData = response.data.data || {}
@@ -126,7 +126,7 @@ class SearchService {
         throw new Error('Backend returned success: false')
       }
     } catch (error) {
-      console.error('❌ Backend posts search API failed:', error.message)
+      console.error('Backend posts search API failed:', error.message)
       console.error('Error details:', error.response?.data || error.message)
       
       // Don't fall back to mock data - throw the error instead
@@ -137,7 +137,7 @@ class SearchService {
   // Search tournaments
   async searchTournaments(query, filters = {}, page = 1, limit = 20) {
     try {
-      console.log('🔍 Searching tournaments via backend API:', query)
+      console.log(' Searching tournaments via backend API:', query)
       
       const response = await axiosInstance.get('/api/search', {
         params: {
@@ -149,7 +149,7 @@ class SearchService {
         }
       })
       
-      console.log('✅ Backend tournaments search response:', response.data)
+      console.log('Backend tournaments search response:', response.data)
       
       if (response.data.success) {
         const backendData = response.data.data || {}
@@ -169,7 +169,7 @@ class SearchService {
         throw new Error('Backend returned success: false')
       }
     } catch (error) {
-      console.error('❌ Backend tournaments search API failed:', error.message)
+      console.error('Backend tournaments search API failed:', error.message)
       console.error('Error details:', error.response?.data || error.message)
       
       // Don't fall back to mock data - throw the error instead
@@ -180,7 +180,7 @@ class SearchService {
   // Get search suggestions/autocomplete
   async getSuggestions(query, type = 'users') {
     try {
-      console.log('🔍 Getting suggestions from backend API:', query)
+      console.log('Getting suggestions from backend API:', query)
       
       // Use the actual autocomplete endpoint
       const response = await axiosInstance.get('/api/search/autocomplete', {
@@ -190,7 +190,7 @@ class SearchService {
         }
       })
       
-      console.log('✅ Backend suggestions response:', response.data)
+      console.log('Backend suggestions response:', response.data)
       
       if (response.data.success) {
         const suggestionsData = response.data.data || []
@@ -211,7 +211,7 @@ class SearchService {
         throw new Error('Backend returned success: false')
       }
     } catch (error) {
-      console.error('❌ Backend suggestions API failed:', error.message)
+      console.error('Backend suggestions API failed:', error.message)
       console.error('Error details:', error.response?.data || error.message)
       
       // Don't fall back to mock data - return empty array instead
@@ -222,7 +222,7 @@ class SearchService {
   // Global search (all types)
   async globalSearch(query, page = 1, limit = 20) {
     try {
-      console.log('🔍 Performing global search via backend API:', query)
+      console.log(' Performing global search via backend API:', query)
       
       // Use the correct backend endpoint with 'all' type
       const response = await axiosInstance.get('/api/search', {
@@ -234,7 +234,7 @@ class SearchService {
         }
       })
       
-      console.log('✅ Backend global search response:', response.data)
+      console.log('Backend global search response:', response.data)
       
       if (response.data.success) {
         const backendData = response.data.data || {}
@@ -261,7 +261,7 @@ class SearchService {
         throw new Error('Backend returned success: false')
       }
     } catch (error) {
-      console.error('❌ Backend global search API failed:', error.message)
+      console.error(' Backend global search API failed:', error.message)
       console.error('Error details:', error.response?.data || error.message)
       
       // Don't fall back to mock data - throw the error instead
@@ -272,11 +272,11 @@ class SearchService {
   // Get trending searches
   async getTrendingSearches() {
     try {
-      console.log('🔍 Getting trending searches from backend API')
+      console.log('Getting trending searches from backend API')
       
       const response = await axiosInstance.get('/api/search/trending')
       
-      console.log('✅ Backend trending response:', response.data)
+      console.log('Backend trending response:', response.data)
       
       if (response.data.success) {
         const trendingData = response.data.data || {}
@@ -296,7 +296,7 @@ class SearchService {
         throw new Error('Backend returned success: false')
       }
     } catch (error) {
-      console.error('❌ Backend trending API failed:', error.message)
+      console.error('Backend trending API failed:', error.message)
       console.error('Error details:', error.response?.data || error.message)
       
       // Don't fall back to mock data - return empty array instead

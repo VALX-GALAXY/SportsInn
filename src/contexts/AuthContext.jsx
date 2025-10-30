@@ -349,25 +349,13 @@ export const AuthProvider = ({ children }) => {
         await loadGoogleScript()
       }
       
-      // Debug environment variable
-      console.log('Google Client ID from env:', import.meta.env.VITE_GOOGLE_CLIENT_ID)
-      
-      // CORRECT CLIENT ID - CACHE BUST v4: 2024-01-29-15:50 - TIMESTAMP: 1735467000000
-      const clientId = '803784325771-4g94k625haelb93ogq34mgiuthag0270.apps.googleusercontent.com'
-      
-      // Validate we're using the correct client ID
-      if (clientId.includes('828898440872')) {
-        console.error('ERROR: Wrong client ID detected! This should not happen.')
-        throw new Error('Invalid Google Client ID configuration')
+      // Read client ID from environment
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+      console.log('AuthContext - VITE_GOOGLE_CLIENT_ID:', clientId)
+
+      if (!clientId || typeof clientId !== 'string' || !clientId.includes('.apps.googleusercontent.com')) {
+        throw new Error('Missing or invalid VITE_GOOGLE_CLIENT_ID. Define it in a .env file and restart the dev server.')
       }
-      
-      if (!clientId) {
-        throw new Error('Google Client ID not found in environment variables')
-      }
-      
-      console.log('✅ Using CORRECT Google Client ID:', clientId)
-      console.log('🚨 CACHE BUST v4 - If you see old ID (828898440872), CLEAR BROWSER CACHE NOW!')
-      console.log('🔍 Client ID verification:', clientId === '803784325771-4g94k625haelb93ogq34mgiuthag0270.apps.googleusercontent.com' ? 'PASS' : 'FAIL')
       
       // Use Google Identity Services with authorization code flow to get idToken
       return new Promise((resolve, reject) => {

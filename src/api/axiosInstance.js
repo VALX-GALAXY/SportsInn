@@ -2,7 +2,7 @@ import axios from 'axios'
 import { clearAuthData, isTokenExpired, validateTokenFormat, cleanupInvalidTokens } from '../utils/tokenUtils'
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000' ||'https://sportsinn-backend.onrender.com',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -98,7 +98,7 @@ axiosInstance.interceptors.response.use(
         
         if (refreshToken) {
           const response = await axios.post(
-            `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/refresh`,
+            `${import.meta.env.VITE_API_URL || 'https://sportsinn-backend.onrender.com' || 'http://localhost:3000'}/api/auth/refresh`,
             { refreshToken }
           )
           
@@ -182,7 +182,7 @@ axiosInstance.interceptors.response.use(
         
         try {
           const response = await axios.post(
-            `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/refresh`,
+            `${import.meta.env.VITE_API_URL || 'https://sportsinn-backend.onrender.com' || 'http://localhost:3000'}/api/auth/refresh`,
             { refreshToken }
           )
           
