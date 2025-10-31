@@ -42,7 +42,7 @@ export default function Settings() {
   console.log('Settings hooks loaded:', { user, theme, primaryColor, accentColor })
   
   // Website settings
-  const [websiteName, setWebsiteName] = useState('SportsInn')
+  const [websiteName, setWebsiteName] = useState('SportsIn')
   const [websiteDescription, setWebsiteDescription] = useState('Connect with sports professionals worldwide')
   const [websiteLogo, setWebsiteLogo] = useState('')
   const [websiteFavicon, setWebsiteFavicon] = useState('')
@@ -172,7 +172,7 @@ export default function Settings() {
     setTheme('system')
     setPrimaryColor('blue')
     setAccentColor('emerald')
-    setWebsiteName('SportsInn')
+    setWebsiteName('SportsIn')
     setWebsiteDescription('Connect with sports professionals worldwide')
     setEmailNotifications(true)
     setPushNotifications(true)
@@ -195,7 +195,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/50">
       <div className="w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
         {/* Header */}
         <motion.div 
@@ -208,11 +208,11 @@ export default function Settings() {
               <SettingsIcon className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
                 Settings
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Customize your SportsInn experience
+              <p className="text-slate-600 dark:text-slate-400">
+                Customize your SportsIn experience
               </p>
             </div>
           </div>
@@ -228,7 +228,7 @@ export default function Settings() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+              <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Palette className="w-5 h-5 text-blue-500" />
@@ -238,7 +238,7 @@ export default function Settings() {
                 <CardContent className="space-y-6">
                   {/* Theme Mode */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-3">
                       Theme Mode
                     </label>
                     <div className="grid grid-cols-3 gap-3">
@@ -266,7 +266,7 @@ export default function Settings() {
 
                   {/* Primary Color */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-3">
                       Primary Color
                     </label>
                     <div className="grid grid-cols-4 gap-3">
@@ -290,7 +290,7 @@ export default function Settings() {
 
                   {/* Accent Color */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-3">
                       Accent Color
                     </label>
                     <div className="grid grid-cols-4 gap-3">
@@ -321,7 +321,7 @@ export default function Settings() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+              <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Globe className="w-5 h-5 text-blue-500" />
@@ -330,7 +330,7 @@ export default function Settings() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-1">
                       Website Name
                     </label>
                     <Input
@@ -341,7 +341,7 @@ export default function Settings() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-1">
                       Website Description
                     </label>
                     <Input
@@ -353,7 +353,7 @@ export default function Settings() {
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-1">
                         Logo URL
                       </label>
                       <Input
@@ -363,7 +363,7 @@ export default function Settings() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-1">
                         Favicon URL
                       </label>
                       <Input
@@ -383,7 +383,7 @@ export default function Settings() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+              <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Bell className="w-5 h-5 text-blue-500" />
@@ -393,10 +393,10 @@ export default function Settings() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-100">
                         Email Notifications
                       </label>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-gray-500 dark:text-slate-400">
                         Receive notifications via email
                       </p>
                     </div>
@@ -408,10 +408,10 @@ export default function Settings() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-100">
                         Push Notifications
                       </label>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-gray-500 dark:text-slate-400">
                         Receive push notifications in browser
                       </p>
                     </div>
@@ -423,10 +423,10 @@ export default function Settings() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-100">
                         SMS Notifications
                       </label>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-gray-500 dark:text-slate-400">
                         Receive notifications via SMS
                       </p>
                     </div>
@@ -438,10 +438,10 @@ export default function Settings() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-100">
                         Marketing Emails
                       </label>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-gray-500 dark:text-slate-400">
                         Receive promotional emails and updates
                       </p>
                     </div>
@@ -460,7 +460,7 @@ export default function Settings() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+              <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Shield className="w-5 h-5 text-blue-500" />
@@ -469,7 +469,7 @@ export default function Settings() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-2">
                       Profile Visibility
                     </label>
                     <div className="grid grid-cols-3 gap-3">
@@ -498,10 +498,10 @@ export default function Settings() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-100">
                           Show Email Address
                         </label>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-gray-500 dark:text-slate-400">
                           Display your email on your profile
                         </p>
                       </div>
@@ -513,10 +513,10 @@ export default function Settings() {
                     
                     <div className="flex items-center justify-between">
                       <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-100">
                           Show Phone Number
                         </label>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-gray-500 dark:text-slate-400">
                           Display your phone number on your profile
                         </p>
                       </div>
@@ -528,10 +528,10 @@ export default function Settings() {
                     
                     <div className="flex items-center justify-between">
                       <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-100">
                           Show Location
                         </label>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-gray-500 dark:text-slate-400">
                           Display your location on your profile
                         </p>
                       </div>
@@ -555,7 +555,7 @@ export default function Settings() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+              <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Languages className="w-5 h-5 text-blue-500" />
@@ -564,11 +564,11 @@ export default function Settings() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-1">
                       Language
                     </label>
                     <select
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-slate-900 dark:border-slate-800 dark:text-gray-100"
                       value={language}
                       onChange={(e) => setLanguage(e.target.value)}
                     >
@@ -586,11 +586,11 @@ export default function Settings() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-1">
                       Timezone
                     </label>
                     <select
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-slate-900 dark:border-slate-800 dark:text-gray-100"
                       value={timezone}
                       onChange={(e) => setTimezone(e.target.value)}
                     >
@@ -609,11 +609,11 @@ export default function Settings() {
                   
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-1">
                         Date Format
                       </label>
                       <select
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-slate-900 dark:border-slate-800 dark:text-gray-100"
                         value={dateFormat}
                         onChange={(e) => setDateFormat(e.target.value)}
                       >
@@ -623,11 +623,11 @@ export default function Settings() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-1">
                         Time Format
                       </label>
                       <select
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-slate-900 dark:border-slate-800 dark:text-gray-100"
                         value={timeFormat}
                         onChange={(e) => setTimeFormat(e.target.value)}
                       >
@@ -681,7 +681,7 @@ export default function Settings() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
             >
-              <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+              <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <User className="w-5 h-5 text-blue-500" />
@@ -691,15 +691,15 @@ export default function Settings() {
                 <CardContent>
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Name:</span>
+                      <span className="text-sm text-slate-600 dark:text-slate-400">Name:</span>
                       <span className="text-sm font-medium">{user?.name || 'N/A'}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Email:</span>
+                      <span className="text-sm text-slate-600 dark:text-slate-400">Email:</span>
                       <span className="text-sm font-medium">{user?.email || 'N/A'}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Role:</span>
+                      <span className="text-sm text-slate-600 dark:text-slate-400">Role:</span>
                       <Badge variant="secondary">{user?.role || 'N/A'}</Badge>
                     </div>
                   </div>

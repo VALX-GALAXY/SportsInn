@@ -282,7 +282,7 @@ export default function Search() {
       case 'Scout':
         return <Users className="w-5 h-5 text-orange-500" />
       default:
-        return <User className="w-5 h-5 text-gray-500" />
+        return <User className="w-5 h-5 text-slate-500" />
     }
   }
 
@@ -297,7 +297,7 @@ export default function Search() {
       case 'Scout':
         return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+        return 'bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100'
     }
   }
 
@@ -312,14 +312,14 @@ export default function Search() {
   const filteredResults = getFilteredResults()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/50">
       <div className="w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:text-3xl">
-            Search SportsInn
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 sm:text-3xl">
+            Search SportsIn
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 sm:text-base">
+          <p className="text-sm text-slate-600 dark:text-slate-400 sm:text-base">
             Find players, academies, clubs, and scouts
           </p>
         </div>
@@ -331,7 +331,7 @@ export default function Search() {
           className="mb-6"
         >
           <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
             <Input
               type="text"
               placeholder="Search for players, academies, clubs, scouts..."
@@ -351,7 +351,7 @@ export default function Search() {
               className="pl-10 pr-4 py-3 text-lg glass-input dark:glass-input rounded-xl border-0 shadow-lg"
             />
             {isLoading && (
-              <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
+              <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5 animate-spin" />
             )}
             
             {/* Autocomplete Suggestions */}
@@ -361,12 +361,12 @@ export default function Search() {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto"
+                  className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto"
                 >
                   {/* Suggestions */}
                   {suggestions.length > 0 && (
                     <div className="p-2">
-                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 px-2">Suggestions</div>
+                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2 px-2">Suggestions</div>
                       {suggestions.map((suggestion, index) => (
                         <button
                           key={index}
@@ -375,9 +375,9 @@ export default function Search() {
                             setShowSuggestions(false)
                             performSearch(suggestion.name)
                           }}
-                          className="w-full text-left px-2 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center space-x-2"
+                          className="w-full text-left px-2 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded flex items-center space-x-2"
                         >
-                          <SearchIcon className="w-4 h-4 text-gray-400" />
+                          <SearchIcon className="w-4 h-4 text-slate-400" />
                           <span className="text-sm">{suggestion.name}</span>
                           <Badge variant="outline" className="text-xs">
                             {suggestion.type}
@@ -389,8 +389,8 @@ export default function Search() {
                   
                   {/* Search History */}
                   {searchHistory.length > 0 && (
-                    <div className="p-2 border-t border-gray-200 dark:border-gray-700">
-                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 px-2 flex items-center">
+                    <div className="p-2 border-t border-gray-200 dark:border-slate-800">
+                      <div className="text-xs font-medium text-gray-500 dark:text-slate-400 mb-2 px-2 flex items-center">
                         <Clock className="w-3 h-3 mr-1" />
                         Recent searches
                       </div>
@@ -402,7 +402,7 @@ export default function Search() {
                             setShowSuggestions(false)
                             performSearch(item.query)
                           }}
-                          className="w-full text-left px-2 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center space-x-2"
+                          className="w-full text-left px-2 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded flex items-center space-x-2"
                         >
                           <Clock className="w-4 h-4 text-gray-400" />
                           <span className="text-sm">{item.query}</span>
@@ -413,8 +413,8 @@ export default function Search() {
                   
                   {/* Trending Searches */}
                   {trendingSearches.length > 0 && (
-                    <div className="p-2 border-t border-gray-200 dark:border-gray-700">
-                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 px-2 flex items-center">
+                    <div className="p-2 border-t border-gray-200 dark:border-slate-800">
+                      <div className="text-xs font-medium text-gray-500 dark:text-slate-400 mb-2 px-2 flex items-center">
                         <TrendingUp className="w-3 h-3 mr-1" />
                         Trending
                       </div>
@@ -426,7 +426,7 @@ export default function Search() {
                             setShowSuggestions(false)
                             performSearch(item.query)
                           }}
-                          className="w-full text-left px-2 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center space-x-2"
+                          className="w-full text-left px-2 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded flex items-center space-x-2"
                         >
                           <TrendingUp className="w-4 h-4 text-gray-400" />
                           <span className="text-sm">{item.query}</span>
@@ -448,7 +448,7 @@ export default function Search() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
               {searchQuery && (
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-slate-600 dark:text-slate-400">
                   {totalResults} results for "{searchQuery}"
                 </div>
               )}
@@ -459,7 +459,7 @@ export default function Search() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setSearchQuery('')}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-gray-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-gray-200"
               >
                 <X className="w-4 h-4 mr-2" />
                 Clear
@@ -469,7 +469,7 @@ export default function Search() {
 
 
           {/* Filter Tabs */}
-          <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <div className="flex space-x-1 bg-slate-100 dark:bg-slate-900 rounded-lg p-1">
             {[
               { key: 'all', label: 'All', count: totalResults },
               { key: 'players', label: 'Players', count: searchResults.players?.length || 0 },
@@ -504,13 +504,13 @@ export default function Search() {
 
         {/* Search Results */}
         {!searchQuery ? (
-          <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+          <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
             <CardContent className="py-12 text-center">
               <SearchIcon className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
                 Start searching
               </h3>
-              <p className="text-gray-500 dark:text-gray-400">
+              <p className="text-gray-500 dark:text-slate-400">
                 Enter a name, location, or keyword to find what you're looking for.
               </p>
             </CardContent>
@@ -518,13 +518,13 @@ export default function Search() {
         ) : isLoading ? (
           <SearchResultsSkeleton />
         ) : filteredResults.length === 0 ? (
-          <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+          <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
             <CardContent className="py-12 text-center">
               <SearchIcon className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
                 No results found
               </h3>
-              <p className="text-gray-500 dark:text-gray-400">
+              <p className="text-gray-500 dark:text-slate-400">
                 Try adjusting your search terms or filters.
               </p>
             </CardContent>
@@ -563,7 +563,7 @@ export default function Search() {
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white truncate">
                           {result.name}
                         </h3>
                         {result.verified && (
@@ -581,31 +581,31 @@ export default function Search() {
                       </div>
 
                       <div className="space-y-1 mb-3">
-                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
                           <MapPin className="w-4 h-4 mr-2" />
                           {result.location}
                         </div>
                         
                         {result.age && (
-                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
                             <Calendar className="w-4 h-4 mr-2" />
                             Age: {result.age}
                           </div>
                         )}
                         
                         {result.position && (
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                          <div className="text-sm text-slate-600 dark:text-slate-400">
                             Position: {result.position}
                           </div>
                         )}
                       </div>
 
-                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-4 line-clamp-2">
+                      <p className="text-sm text-slate-700 dark:text-slate-100 mb-4 line-clamp-2">
                         {result.bio}
                       </p>
 
                       <div className="flex items-center justify-between">
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                        <div className="text-sm text-gray-500 dark:text-slate-400">
                           {result.followers} followers
                         </div>
                         <Button size="sm" variant="outline">

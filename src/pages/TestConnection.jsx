@@ -130,10 +130,10 @@ export default function TestConnection() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
           Connection Test
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-slate-600 dark:text-slate-400">
           Test the connection status of backend services and database
         </p>
       </div>
@@ -152,7 +152,7 @@ export default function TestConnection() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Express.js server running on port 3000
               </p>
               {getStatusBadge(connectionStatus.backend)}
@@ -173,7 +173,7 @@ export default function TestConnection() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 MongoDB connection status
               </p>
               {getStatusBadge(connectionStatus.database)}
@@ -194,7 +194,7 @@ export default function TestConnection() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 REST API endpoints availability
               </p>
               {getStatusBadge(connectionStatus.api)}
@@ -217,7 +217,7 @@ export default function TestConnection() {
                   <p className="font-medium text-green-700 dark:text-green-400">
                     All systems operational
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
                     Backend, database, and API are all connected and working properly.
                   </p>
                 </div>
@@ -229,7 +229,7 @@ export default function TestConnection() {
                   <p className="font-medium text-red-700 dark:text-red-400">
                     Connection issues detected
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
                     Some services are not responding. Check the individual status cards above.
                   </p>
                 </div>
@@ -241,7 +241,7 @@ export default function TestConnection() {
                   <p className="font-medium text-blue-700 dark:text-blue-400">
                     Testing connections...
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
                     Please wait while we check all service connections.
                   </p>
                 </div>

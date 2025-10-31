@@ -48,9 +48,9 @@ const GoogleButton = ({
       onClick={handleGoogleLogin}
       className={`
         w-full flex items-center justify-center gap-3 px-4 py-3
-        bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700
-        border border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500
-        text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white
+        bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800
+        border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600
+        text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white
         font-medium text-sm rounded-lg shadow-sm hover:shadow-md
         transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
         ${className}

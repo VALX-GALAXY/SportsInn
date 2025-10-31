@@ -77,7 +77,7 @@ const Toast = ({ toast, onClose }) => {
       case 'warning':
         return 'bg-yellow-50 border-yellow-200 text-yellow-900 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-100'
       default:
-        return 'bg-white border-gray-200 text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100'
+        return 'bg-white border-slate-200 text-slate-900 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-100'
     }
   }
 
@@ -102,7 +102,7 @@ const Toast = ({ toast, onClose }) => {
         <div className="flex-shrink-0">
           <button
             onClick={onClose}
-            className="inline-flex text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            className="inline-flex text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
           >
             <X className="w-4 h-4" />
           </button>

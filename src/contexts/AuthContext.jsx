@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }) => {
             console.log('AuthContext - Token expiring soon, refreshing...')
             
             // Use the same base URL as axiosInstance and handle both response shapes
-            const refreshUrl = `${import.meta.env.VITE_API_URL || 'https://sportsinn-backend.onrender.com'}/api/auth/refresh`
+            const refreshUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/refresh`
             const response = await fetch(refreshUrl, {
               method: 'POST',
               headers: {
@@ -345,7 +345,7 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Real Google OAuth login using authorization code flow
+  // Real Google OAuth login using Google Identity Services
   const loginWithGoogle = async () => {
     // Prevent multiple simultaneous calls
     if (window.googleLoginInProgress) {
@@ -360,27 +360,46 @@ export const AuthProvider = ({ children }) => {
       // Load Google Identity Services library
       if (!window.google) {
         await loadGoogleScript()
+        // Wait a bit for Google to initialize
+        await new Promise(resolve => setTimeout(resolve, 100))
       }
       
       // Read client ID from environment
       const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
       console.log('AuthContext - VITE_GOOGLE_CLIENT_ID:', clientId)
+      console.log('AuthContext - Client ID type:', typeof clientId)
+      console.log('AuthContext - Client ID length:', clientId?.length)
 
-      if (!clientId || typeof clientId !== 'string' || !clientId.includes('.apps.googleusercontent.com')) {
-        throw new Error('Missing or invalid VITE_GOOGLE_CLIENT_ID. Define it in a .env file and restart the dev server.')
+      // Validate client ID
+      if (!clientId) {
+        const errorMsg = 'Missing VITE_GOOGLE_CLIENT_ID. Define it in frontend/.env file and restart the dev server.'
+        console.error(errorMsg)
+        throw new Error(errorMsg)
       }
       
-      // Use Google Identity Services with authorization code flow to get idToken
+      if (typeof clientId !== 'string' || !clientId.includes('.apps.googleusercontent.com')) {
+        const errorMsg = `Invalid VITE_GOOGLE_CLIENT_ID format. Expected format: "xxx.apps.googleusercontent.com", got: "${clientId}"`
+        console.error(errorMsg)
+        throw new Error(errorMsg)
+      }
+      
+      // Use Google Identity Services with button flow (more reliable than prompt)
       return new Promise((resolve, reject) => {
+        // Initialize Google Identity Services
         window.google.accounts.id.initialize({
-          client_id: clientId,
+          client_id: clientId.trim(),
           callback: async (response) => {
             try {
-              console.log('Google OAuth response:', response)
+              console.log('Google OAuth response received')
               
-              // Decode the idToken to get user info (for display purposes)
-              const payload = JSON.parse(atob(response.credential.split('.')[1]))
-              console.log('Google user info from idToken:', payload)
+              // Decode the idToken to get user info
+              const parts = response.credential.split('.')
+              if (parts.length !== 3) {
+                throw new Error('Invalid idToken format')
+              }
+              
+              const payload = JSON.parse(atob(parts[1]))
+              console.log('Google user info from idToken:', { email: payload.email, name: payload.name })
               
               // Send Google data to backend using proper Google OAuth endpoint
               const result = await authService.googleLogin({
@@ -458,44 +477,53 @@ export const AuthProvider = ({ children }) => {
           }
         })
         
-        // Use prompt() to trigger Google sign-in
-        // This will show One Tap if available, otherwise opens popup
-        window.google.accounts.id.prompt((notification) => {
-          if (notification.isNotDisplayed()) {
-            const reasons = [
-              notification.getNotDisplayedReason(),
-              notification.getSkippedReason(),
-              notification.getDismissedReason()
-            ]
-            console.log('Google One Tap not displayed. Reasons:', reasons)
-            
-            // If One Tap is not available, show popup manually
-            // This uses the popup flow which will request idToken
-            const client = window.google.accounts.oauth2.initTokenClient({
-              client_id: clientId,
-              scope: 'openid email profile',
-              callback: async (tokenResponse) => {
-                try {
-                  // For popup flow, we need to get idToken using the access token
-                  // But the backend expects idToken, not access_token
-                  // So we'll show a helpful error message
-                  reject(new Error('Google sign-in popup flow is not fully supported. Please ensure your Google Cloud Console has http://localhost:5173 configured as an authorized origin and try again.'))
-                } catch (error) {
-                  reject(error)
+        // Trigger Google sign-in using button rendering (more reliable)
+        // Create a temporary invisible button and trigger it programmatically
+        const tempContainer = document.createElement('div')
+        tempContainer.id = 'google-signin-temp-container'
+        tempContainer.style.position = 'fixed'
+        tempContainer.style.top = '-9999px'
+        tempContainer.style.left = '-9999px'
+        tempContainer.style.opacity = '0'
+        tempContainer.style.pointerEvents = 'none'
+        document.body.appendChild(tempContainer)
+        
+        try {
+          // Render the Google sign-in button
+          window.google.accounts.id.renderButton(tempContainer, {
+            type: 'standard',
+            theme: 'outline',
+            size: 'large',
+            text: 'signin_with',
+            width: '300'
+          })
+          
+          // Wait for button to render, then trigger click
+          setTimeout(() => {
+            const googleButton = tempContainer.querySelector('div[role="button"]')
+            if (googleButton) {
+              console.log('Triggering Google sign-in button click')
+              googleButton.click()
+              
+              // Clean up after a delay
+              setTimeout(() => {
+                if (document.body.contains(tempContainer)) {
+                  document.body.removeChild(tempContainer)
                 }
-              }
-            })
-            
-            // Trigger the popup
-            client.requestAccessToken()
-          } else if (notification.isSkippedMoment()) {
-            console.log('Google One Tap was skipped')
-            reject(new Error('Google sign-in was skipped. Please click the button again.'))
-          } else if (notification.isDismissedMoment()) {
-            console.log('Google One Tap was dismissed')
-            reject(new Error('Google sign-in was dismissed. Please try again.'))
+              }, 5000)
+            } else {
+              console.error('Google button not found after rendering')
+              document.body.removeChild(tempContainer)
+              reject(new Error('Could not initialize Google sign-in button. Please check your VITE_GOOGLE_CLIENT_ID and ensure http://localhost:5173 is added to Authorized JavaScript origins in Google Cloud Console.'))
+            }
+          }, 300)
+        } catch (renderError) {
+          console.error('Error rendering Google button:', renderError)
+          if (document.body.contains(tempContainer)) {
+            document.body.removeChild(tempContainer)
           }
-        })
+          reject(new Error(`Failed to render Google sign-in button: ${renderError.message}`))
+        }
       })
       
     } catch (error) {
@@ -545,7 +573,9 @@ export const AuthProvider = ({ children }) => {
         // Role-specific data - match backend field names exactly
         ...(mappedRole.toLowerCase() === 'player' && {
           age: formData.age || '25', // Provide default if empty
-          playingRole: formData.playerRole || 'All-rounder' // Provide default if empty
+          playingRole: formData.playerRole || 'All-rounder', // Provide default if empty
+          gender: formData.gender || '',
+          sports: formData.sports || ''
         }),
         ...(mappedRole.toLowerCase() === 'academy' && {
           location: formData.location || 'Not specified',
@@ -601,7 +631,7 @@ export const AuthProvider = ({ children }) => {
       
       toast({
         title: "Account created successfully",
-        description: `Welcome to SportsInn, ${authData.user.name}!`,
+        description: `Welcome to SportsIn, ${authData.user.name}!`,
         variant: "success"
       })
       

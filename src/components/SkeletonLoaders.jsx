@@ -6,7 +6,7 @@ export function FeedSkeleton() {
   return (
     <div className="space-y-4">
       {[...Array(3)].map((_, i) => (
-        <Card key={i} className="bg-white dark:bg-gray-800 shadow-sm border-0">
+        <Card key={i} className="bg-white dark:bg-slate-900 shadow-sm border-0">
           <CardHeader className="p-4 sm:p-6">
             <div className="flex items-center space-x-3">
               <Skeleton className="w-10 h-10 rounded-full" />
@@ -37,7 +37,7 @@ export function ProfileSkeleton() {
   return (
     <div className="space-y-6">
       {/* Profile Header Skeleton */}
-      <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
+      <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">
         <CardContent className="pt-6">
           <div className="flex items-center space-x-6">
             <Skeleton className="w-24 h-24 rounded-full" />
@@ -65,7 +65,7 @@ export function ProfileSkeleton() {
 
       {/* Profile Sections Skeleton */}
       {[...Array(3)].map((_, i) => (
-        <Card key={i} className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+        <Card key={i} className="bg-white dark:bg-slate-900 border-0 shadow-sm">
           <CardHeader>
             <Skeleton className="h-6 w-32" />
           </CardHeader>
@@ -87,7 +87,7 @@ export function NotificationsSkeleton() {
   return (
     <div className="space-y-3">
       {[...Array(5)].map((_, i) => (
-        <Card key={i} className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+        <Card key={i} className="bg-white dark:bg-slate-900 border-0 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-start space-x-4">
               <Skeleton className="w-5 h-5 rounded" />
@@ -118,7 +118,7 @@ export function SearchResultsSkeleton() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {[...Array(6)].map((_, i) => (
-        <Card key={i} className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+        <Card key={i} className="bg-white dark:bg-slate-900 border-0 shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-start space-x-4">
               <Skeleton className="w-12 h-12 rounded-full" />
@@ -153,7 +153,7 @@ export function SearchResultsSkeleton() {
 // Post Card Skeleton
 export function PostCardSkeleton() {
   return (
-    <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+    <Card className="bg-white dark:bg-slate-900 shadow-sm border-0">
       <CardHeader className="p-4 sm:p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -173,7 +173,7 @@ export function PostCardSkeleton() {
         <Skeleton className="h-4 w-full mb-2" />
         <Skeleton className="h-4 w-3/4 mb-4" />
         <Skeleton className="h-48 w-full rounded-lg mb-4" />
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-slate-800">
           <div className="flex items-center space-x-4">
             <Skeleton className="h-8 w-16" />
             <Skeleton className="h-8 w-16" />
@@ -190,7 +190,7 @@ export function TournamentSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {[...Array(6)].map((_, i) => (
-        <Card key={i} className="bg-white dark:bg-gray-800 shadow-sm border-0">
+        <Card key={i} className="bg-white dark:bg-slate-900 shadow-sm border-0">
           <CardHeader className="p-4 pb-2">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -227,7 +227,7 @@ export function TournamentSkeleton() {
               </div>
               <div className="flex items-center justify-between">
                 <Skeleton className="h-4 w-32" />
-                <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="w-16 bg-gray-200 dark:bg-slate-800 rounded-full h-2">
                   <Skeleton className="h-2 w-8 rounded-full" />
                 </div>
               </div>
@@ -249,7 +249,7 @@ export function DashboardStatsSkeleton() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[...Array(4)].map((_, i) => (
-          <Card key={i} className="bg-white dark:bg-gray-800 shadow-sm border-0">
+          <Card key={i} className="bg-white dark:bg-slate-900 shadow-sm border-0">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -267,7 +267,7 @@ export function DashboardStatsSkeleton() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {[...Array(2)].map((_, i) => (
-          <Card key={i} className="bg-white dark:bg-gray-800 shadow-sm border-0">
+          <Card key={i} className="bg-white dark:bg-slate-900 shadow-sm border-0">
             <CardHeader className="p-6 pb-4">
               <Skeleton className="h-6 w-32 mb-2" />
               <Skeleton className="h-4 w-48" />
@@ -282,7 +282,7 @@ export function DashboardStatsSkeleton() {
       {/* Content Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {[...Array(2)].map((_, i) => (
-          <Card key={i} className="bg-white dark:bg-gray-800 shadow-sm border-0">
+          <Card key={i} className="bg-white dark:bg-slate-900 shadow-sm border-0">
             <CardHeader className="p-6 pb-4">
               <div className="flex items-center justify-between">
                 <Skeleton className="h-6 w-32" />
@@ -292,7 +292,7 @@ export function DashboardStatsSkeleton() {
             <CardContent className="p-6 pt-0">
               <div className="space-y-4">
                 {[...Array(3)].map((_, j) => (
-                  <div key={j} className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div key={j} className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
                     <Skeleton className="w-12 h-12 rounded-lg" />
                     <div className="flex-1">
                       <Skeleton className="h-4 w-32 mb-2" />

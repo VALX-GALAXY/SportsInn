@@ -30,7 +30,7 @@ export default function PlayerDashboard() {
   if (isLoading) return <DashboardStatsSkeleton />
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <div className="relative bg-gradient-to-r from-blue-500 to-emerald-500 rounded-2xl p-8 text-white overflow-hidden mb-8">
           <div className="absolute inset-0 bg-black/10"></div>
@@ -45,8 +45,8 @@ export default function PlayerDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Tournaments Applied</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.tournamentsApplied || 0}</p>
+                  <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">Tournaments Applied</p>
+                  <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{stats?.tournamentsApplied || 0}</p>
                 </div>
                 <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
                   <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
@@ -59,8 +59,8 @@ export default function PlayerDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Accepted %</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.acceptedPercentage || 0}%</p>
+                  <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">Accepted %</p>
+                  <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{stats?.acceptedPercentage || 0}%</p>
                 </div>
                 <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900 rounded-full">
                   <Target className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
@@ -73,8 +73,8 @@ export default function PlayerDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Connections</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats?.connectionsCount || 0}</p>
+                  <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">Connections</p>
+                  <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{stats?.connectionsCount || 0}</p>
                 </div>
                 <div className="p-2 sm:p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
                   <Users className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />

@@ -135,7 +135,7 @@ const TournamentFilters = ({
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 p-6 space-y-6">
               {/* Status Filter */}
               <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-4">
                 <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-3">

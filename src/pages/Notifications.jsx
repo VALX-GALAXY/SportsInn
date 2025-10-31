@@ -142,7 +142,7 @@ export default function Notifications() {
       case 'Scout':
         return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+        return 'bg-slate-100 text-gray-800 dark:bg-slate-950 dark:text-slate-100'
     }
   }
 
@@ -163,13 +163,13 @@ export default function Notifications() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
         <div className="w-full max-w-4xl mx-auto px-3 py-4 sm:px-6 sm:py-8">
           <div className="mb-4 sm:mb-6">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1 sm:text-2xl lg:text-3xl">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-1 sm:text-2xl lg:text-3xl">
               Notifications
             </h1>
-            <p className="text-xs text-gray-600 dark:text-gray-400 sm:text-sm lg:text-base">
+            <p className="text-xs text-slate-600 dark:text-slate-400 sm:text-sm lg:text-base">
               Stay updated with your activity
             </p>
           </div>
@@ -180,7 +180,7 @@ export default function Notifications() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="w-full max-w-4xl mx-auto px-3 py-4 sm:px-6 sm:py-8">
         {/* Header with Sporty Design */}
         <div className="mb-4 sm:mb-6">
@@ -194,7 +194,7 @@ export default function Notifications() {
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-1 sm:text-2xl lg:text-3xl">
                   Notifications
                 </h1>
-                <p className="text-xs text-gray-600 dark:text-gray-400 sm:text-sm lg:text-base font-medium">
+                <p className="text-xs text-slate-600 dark:text-slate-400 sm:text-sm lg:text-base font-medium">
                   Stay updated with your activity
                 </p>
               </motion.div>
@@ -238,7 +238,7 @@ export default function Notifications() {
           </div>
 
           {/* Filter Tabs with Sporty Design */}
-          <div className="flex overflow-x-auto space-x-2 bg-gradient-to-r from-blue-50 to-green-50 dark:from-gray-800 dark:to-gray-700 rounded-xl p-2 scrollbar-hide border border-blue-100 dark:border-gray-600">
+          <div className="flex overflow-x-auto space-x-2 bg-gradient-to-r from-blue-50 to-emerald-50 dark:from-slate-900 dark:to-blue-950/50 rounded-xl p-2 scrollbar-hide border border-blue-100 dark:border-slate-800">
             {[
               { key: 'all', label: 'All', count: notifications.length, color: 'from-blue-500 to-blue-600' },
               { key: 'unread', label: 'Unread', count: unreadCount, color: 'from-red-500 to-red-600' },
@@ -258,7 +258,7 @@ export default function Notifications() {
                   className={`flex items-center space-x-2 transition-all duration-300 whitespace-nowrap text-xs sm:text-sm font-medium ${
                     filter === key 
                       ? `bg-gradient-to-r ${color} text-white shadow-lg hover:shadow-xl transform scale-105` 
-                      : 'hover:bg-white/80 dark:hover:bg-gray-600/80 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                      : 'hover:bg-white/80 dark:hover:bg-gray-600/80 text-slate-700 dark:text-slate-100 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
                   <span className="hidden sm:inline font-semibold">{label}</span>
@@ -289,13 +289,13 @@ export default function Notifications() {
 
         {/* Notifications List */}
         {filteredNotifications.length === 0 ? (
-          <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+          <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
             <CardContent className="py-12 text-center">
               <Bell className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
                 No notifications
               </h3>
-              <p className="text-gray-500 dark:text-gray-400">
+              <p className="text-gray-500 dark:text-slate-400">
                 {filter === 'unread' 
                   ? "You're all caught up! No unread notifications."
                   : "You don't have any notifications yet."
@@ -329,7 +329,7 @@ export default function Notifications() {
                   }}
                 >
                   <Card 
-                    className={`bg-gradient-to-r from-white to-blue-50/30 dark:from-gray-800 dark:to-gray-700 border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl ${
+                    className={`bg-gradient-to-r from-white to-blue-50/30 dark:from-slate-900 dark:to-blue-950/50 border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl ${
                       !notification.isRead 
                         ? 'ring-2 ring-blue-400/50 dark:ring-blue-500/50 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20' 
                         : 'hover:from-blue-50/50 hover:to-green-50/50 dark:hover:from-blue-900/10 dark:hover:to-green-900/10'
@@ -356,7 +356,7 @@ export default function Notifications() {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.05 + 0.1 }}
                               >
-                                <h3 className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
+                                <h3 className="text-xs sm:text-sm font-medium text-slate-900 dark:text-white truncate">
                                   {notification.title}
                                 </h3>
                                 <AnimatePresence>
@@ -373,7 +373,7 @@ export default function Notifications() {
                               </motion.div>
                               
                               <motion.p 
-                                className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-2 leading-relaxed"
+                                className="text-xs sm:text-sm text-slate-600 dark:text-slate-100 mb-2 leading-relaxed"
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.05 + 0.15 }}
@@ -384,12 +384,12 @@ export default function Notifications() {
                               {/* Comment Preview with Animation */}
                               {notification.comment && (
                                 <motion.div 
-                                  className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3 mt-2"
+                                  className="bg-gray-50 dark:bg-slate-800 rounded-lg p-2 sm:p-3 mt-2"
                                   initial={{ opacity: 0, scale: 0.95 }}
                                   animate={{ opacity: 1, scale: 1 }}
                                   transition={{ delay: index * 0.05 + 0.2 }}
                                 >
-                                  <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 italic">
+                                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-100 italic">
                                     "{notification.comment.text}"
                                   </p>
                                 </motion.div>
@@ -398,12 +398,12 @@ export default function Notifications() {
                               {/* Post Preview with Animation */}
                               {notification.post && (
                                 <motion.div 
-                                  className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:p-3 mt-2"
+                                  className="bg-gray-50 dark:bg-slate-800 rounded-lg p-2 sm:p-3 mt-2"
                                   initial={{ opacity: 0, scale: 0.95 }}
                                   animate={{ opacity: 1, scale: 1 }}
                                   transition={{ delay: index * 0.05 + 0.2 }}
                                 >
-                                  <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-100">
                                     {notification.post.preview}
                                   </p>
                                 </motion.div>
@@ -416,7 +416,7 @@ export default function Notifications() {
                                 transition={{ delay: index * 0.05 + 0.25 }}
                               >
                                 <Clock className="w-3 h-3 text-gray-400" />
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                <p className="text-xs text-gray-500 dark:text-slate-400">
                                   {formatTimeAgo(notification.createdAt)}
                                 </p>
                               </motion.div>

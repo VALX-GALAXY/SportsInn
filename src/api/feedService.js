@@ -236,34 +236,50 @@ class FeedService {
       console.log('Backend getFeed response:', response.data)
       
       // Transform backend posts to match frontend structure
-      const transformedPosts = (response.data.data || []).map(post => {
-        console.log('Transforming post:', post)
-        console.log('Media type:', post.mediaType)
-        console.log('Media URL:', post.mediaUrl)
-        
-        const transformedPost = {
-          id: post._id,
-          author: {
-            id: post.authorId._id,
-            name: post.authorId.name,
-            avatar: post.authorId.profilePic || null,
-            role: post.authorId.role
-          },
-          caption: post.caption,
-          image: post.mediaType === 'image' ? post.mediaUrl : null,
-          video: post.mediaType === 'video' ? post.mediaUrl : null,
-          timestamp: post.createdAt,
-          stats: {
-            likes: post.likes?.length || 0,
-            comments: post.comments?.length || 0,
-            shares: 0 // Backend doesn't track shares yet
-          },
-          liked: post.likes?.includes(post.authorId._id) || false
-        }
-        
-        console.log('Transformed post:', transformedPost)
-        return transformedPost
-      })
+      const transformedPosts = (response.data.data || [])
+        .filter(post => {
+          // Filter out posts where authorId is null (deleted users)
+          if (!post || !post.authorId) {
+            console.warn('Skipping post with null authorId:', post?._id)
+            return false
+          }
+          return true
+        })
+        .map(post => {
+          console.log('Transforming post:', post)
+          console.log('Media type:', post.mediaType)
+          console.log('Media URL:', post.mediaUrl)
+          
+          // Additional safety check (though we already filtered)
+          if (!post.authorId) {
+            console.warn('Post has null authorId, skipping:', post._id)
+            return null
+          }
+          
+          const transformedPost = {
+            id: post._id,
+            author: {
+              id: post.authorId._id || 'unknown',
+              name: post.authorId.name || 'Deleted User',
+              avatar: post.authorId.profilePic || null,
+              role: post.authorId.role || 'Unknown'
+            },
+            caption: post.caption || '',
+            image: post.mediaType === 'image' ? post.mediaUrl : null,
+            video: post.mediaType === 'video' ? post.mediaUrl : null,
+            timestamp: post.createdAt,
+            stats: {
+              likes: post.likes?.length || 0,
+              comments: post.comments?.length || 0,
+              shares: 0 // Backend doesn't track shares yet
+            },
+            liked: post.likes?.includes(post.authorId._id) || false
+          }
+          
+          console.log('Transformed post:', transformedPost)
+          return transformedPost
+        })
+        .filter(post => post !== null) // Remove any null entries from the map
       
       return {
         posts: transformedPosts,
@@ -458,15 +474,21 @@ class FeedService {
       console.log('Media type:', post.mediaType)
       console.log('Media URL:', post.mediaUrl)
       
+      // Check if authorId is populated (should always be for new posts, but safety first)
+      if (!post.authorId) {
+        console.error('Post created but authorId is null!', post)
+        throw new Error('Post created but author information is missing')
+      }
+      
       const transformedPost = {
         id: post._id,
         author: {
-          id: post.authorId._id,
-          name: post.authorId.name,
+          id: post.authorId._id || 'unknown',
+          name: post.authorId.name || 'Unknown User',
           avatar: post.authorId.profilePic || null,
-          role: post.authorId.role
+          role: post.authorId.role || 'Unknown'
         },
-        caption: post.caption,
+        caption: post.caption || '',
         image: post.mediaType === 'image' ? post.mediaUrl : null,
         video: post.mediaType === 'video' ? post.mediaUrl : null,
         timestamp: post.createdAt,
@@ -528,17 +550,26 @@ class FeedService {
       const response = await axiosInstance.get(`/api/feed/${postId}/comments`)
       
       // Transform backend comments to match frontend structure
-      return (response.data.data || []).map(comment => ({
-        id: comment._id,
-        postId: postId,
-        author: {
-          id: comment.userId._id,
-          name: comment.userId.name,
-          avatar: comment.userId.profilePic || null
-        },
-        text: comment.text,
-        timestamp: comment.createdAt
-      }))
+      return (response.data.data || [])
+        .filter(comment => {
+          // Filter out comments where userId is null (deleted users)
+          if (!comment || !comment.userId) {
+            console.warn('Skipping comment with null userId:', comment?._id)
+            return false
+          }
+          return true
+        })
+        .map(comment => ({
+          id: comment._id,
+          postId: postId,
+          author: {
+            id: comment.userId._id || 'unknown',
+            name: comment.userId.name || 'Deleted User',
+            avatar: comment.userId.profilePic || null
+          },
+          text: comment.text || '',
+          timestamp: comment.createdAt
+        }))
     } catch (error) {
       console.warn('Backend API unavailable, using mock data:', error.message)
       // Fallback to mock implementation
@@ -559,15 +590,22 @@ class FeedService {
       
       // Transform backend comment to match frontend structure
       const comment = response.data.data
+      
+      // Check if userId is populated (should always be for new comments, but safety first)
+      if (!comment.userId) {
+        console.error('Comment created but userId is null!', comment)
+        throw new Error('Comment created but user information is missing')
+      }
+      
       return {
         id: comment._id,
         postId: postId,
         author: {
-          id: comment.userId._id,
-          name: comment.userId.name,
+          id: comment.userId._id || 'unknown',
+          name: comment.userId.name || 'Unknown User',
           avatar: comment.userId.profilePic || null
         },
-        text: comment.text,
+        text: comment.text || '',
         timestamp: comment.createdAt
       }
     } catch (error) {

@@ -100,22 +100,22 @@ export default function NoApiAvailable({
       )}
 
       {/* Development Information */}
-      <Card className="border-gray-200 bg-gray-50 dark:bg-gray-900/20 dark:border-gray-800">
+      <Card className="border-gray-200 bg-slate-50 dark:bg-slate-950/20 dark:border-gray-800">
         <CardHeader className="pb-3">
           <div className="flex items-center space-x-3">
-            <ExternalLink className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+            <ExternalLink className="w-6 h-6 text-gray-600 dark:text-slate-400" />
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-slate-200">
                 Development Mode
               </h3>
-              <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+              <p className="text-sm text-gray-700 dark:text-slate-300 mt-1">
                 This dashboard is running in development mode with mock data.
               </p>
             </div>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="text-sm text-gray-700 dark:text-gray-300">
+          <div className="text-sm text-gray-700 dark:text-slate-300">
             <p className="mb-2">
               To connect to a real backend API, ensure:
             </p>

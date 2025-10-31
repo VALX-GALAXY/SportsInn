@@ -336,7 +336,7 @@ export default function Messages() {
 
   if (!selectedConversation) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/50">
         <div className="max-w-6xl mx-auto p-4">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -348,7 +348,7 @@ export default function Messages() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-2xl font-bold text-gray-900 dark:text-white mb-6"
+                className="text-2xl font-bold text-slate-900 dark:text-white mb-6"
               >
                 Messages
               </motion.h1>
@@ -391,20 +391,20 @@ export default function Messages() {
                             </AvatarFallback>
                           </Avatar>
                           {conversation.isOnline && (
-                            <div className="absolute bottom-0 right-0 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
+                            <div className="absolute bottom-0 right-0 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-white dark:border-slate-900"></div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
+                            <h3 className="text-xs sm:text-sm font-medium text-slate-900 dark:text-white truncate">
                               {conversation.name}
                             </h3>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="text-xs text-gray-500 dark:text-slate-400">
                               {conversation.timestamp}
                             </span>
                           </div>
                           <div className="flex items-center justify-between mt-1">
-                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 truncate">
                               {conversation.lastMessage}
                             </p>
                             {conversation.unreadCount > 0 && (
@@ -434,7 +434,7 @@ export default function Messages() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/50">
       <div className="max-w-6xl mx-auto p-2 sm:p-4">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
@@ -442,11 +442,11 @@ export default function Messages() {
           className="glass-card dark:glass-card-dark rounded-2xl shadow-xl h-[calc(100vh-1rem)] sm:h-[calc(100vh-2rem)] flex flex-col lg:flex-row overflow-hidden"
         >
           {/* Conversations Sidebar */}
-          <div className="w-full lg:w-1/3 border-r-0 lg:border-r border-gray-200 dark:border-gray-700 flex flex-col">
-            <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="w-full lg:w-1/3 border-r-0 lg:border-r border-gray-200 dark:border-slate-800 flex flex-col">
+            <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-slate-800">
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <div className="flex items-center space-x-2">
-                    <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+                    <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
                       Conversations
                     </h2>
                     {/* Mobile: Show back button when conversation is selected */}
@@ -488,17 +488,17 @@ export default function Messages() {
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                    <p className="text-gray-500 dark:text-gray-400">Loading conversations...</p>
+                    <p className="text-gray-500 dark:text-slate-400">Loading conversations...</p>
                   </div>
                 </div>
               ) : filteredConversations.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <MessageCircle className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    <MessageCircle className="w-16 h-16 text-gray-300 dark:text-slate-600 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
                       No conversations yet
                     </h3>
-                    <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    <p className="text-gray-500 dark:text-slate-400 mb-4">
                       You don't have any conversations yet. Start messaging with other users!
                     </p>
                     <div className="text-sm text-gray-400 dark:text-gray-500">
@@ -511,7 +511,7 @@ export default function Messages() {
                 filteredConversations.map((conversation) => (
                 <div
                   key={conversation.id}
-                  className={`p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 ${
+                  className={`p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-slate-800 ${
                     selectedConversation.id === conversation.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                   }`}
                   onClick={() => setSelectedConversation(conversation)}
@@ -525,19 +525,19 @@ export default function Messages() {
                         </AvatarFallback>
                       </Avatar>
                       {conversation?.isOnline && (
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
+                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-slate-900"></div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        <h3 className="text-sm font-medium text-slate-900 dark:text-white truncate">
                           {conversation.name}
                         </h3>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                        <span className="text-xs text-gray-500 dark:text-slate-400">
                           {new Date(conversation.lastMessage.timestamp).toLocaleDateString()}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                      <p className="text-sm text-gray-500 dark:text-slate-400 truncate">
                         {conversation.lastMessage.content}
                       </p>
                       {conversation.unreadCount > 0 && (
@@ -556,7 +556,7 @@ export default function Messages() {
           {/* Chat Area */}
           <div className="flex-1 flex flex-col hidden lg:flex">
             {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div className="p-4 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <Avatar className="w-10 h-10">
                   <AvatarImage src={selectedConversation.avatar} />
@@ -565,10 +565,10 @@ export default function Messages() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                  <h3 className="text-sm font-medium text-slate-900 dark:text-white">
                     {selectedConversation.name}
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
                     {selectedConversation.isOnline ? 'Online' : 'Offline'}
                   </p>
                 </div>
@@ -591,11 +591,11 @@ export default function Messages() {
               {messages.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <MessageCircle className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    <MessageCircle className="w-16 h-16 text-gray-300 dark:text-slate-600 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
                       No messages yet
                     </h3>
-                    <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    <p className="text-gray-500 dark:text-slate-400 mb-4">
                       Start the conversation by sending a message!
                     </p>
                     <div className="text-sm text-gray-400 dark:text-gray-500">
@@ -620,12 +620,12 @@ export default function Messages() {
                       className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow-sm ${
                         message.isOwn
                           ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
-                          : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600'
+                          : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-gray-200 dark:border-slate-700'
                       }`}
                     >
                       <p className="text-sm">{message.text}</p>
                       <div className="flex items-center justify-end space-x-2 mt-1">
-                        <p className={`text-xs ${message.isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                        <p className={`text-xs ${message.isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-slate-400'}`}>
                           {message.timestamp}
                         </p>
                         {message.isOwn && getMessageStatus(message)}
@@ -645,7 +645,7 @@ export default function Messages() {
                     exit={{ opacity: 0, y: -20 }}
                     className="flex justify-start"
                   >
-                    <div className="bg-white dark:bg-gray-700 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm">
+                    <div className="bg-white dark:bg-slate-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm">
                       <div className="flex items-center space-x-1">
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -665,9 +665,9 @@ export default function Messages() {
                     exit={{ opacity: 0, y: -20 }}
                     className="flex justify-start"
                   >
-                    <div className="bg-white dark:bg-gray-700 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm">
+                    <div className="bg-white dark:bg-slate-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm">
                       <div className="flex items-center space-x-1">
-                        <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">
+                        <span className="text-xs text-gray-500 dark:text-slate-400 mr-2">
                           {Array.from(typingUsers).join(', ')} typing...
                         </span>
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
@@ -683,9 +683,9 @@ export default function Messages() {
             </div>
 
             {/* Message Input */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="p-4 border-t border-gray-200 dark:border-slate-800">
               <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="sm" className="hover:bg-gray-100 dark:hover:bg-gray-700">
+                <Button variant="ghost" size="sm" className="hover:bg-slate-100 dark:hover:bg-gray-700">
                   <Paperclip className="w-4 h-4" />
                 </Button>
                 <div className="flex-1 flex items-center space-x-2">
@@ -701,7 +701,7 @@ export default function Messages() {
                     className="flex-1"
                     disabled={isSending}
                   />
-                  <Button variant="ghost" size="sm" className="hover:bg-gray-100 dark:hover:bg-gray-700">
+                  <Button variant="ghost" size="sm" className="hover:bg-slate-100 dark:hover:bg-gray-700">
                     <Smile className="w-4 h-4" />
                   </Button>
                 </div>
@@ -724,7 +724,7 @@ export default function Messages() {
           {selectedConversation && (
             <div className="flex-1 flex flex-col lg:hidden">
               {/* Mobile Chat Header */}
-              <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <div className="p-3 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="ghost"
@@ -741,10 +741,10 @@ export default function Messages() {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                    <h3 className="text-sm font-medium text-slate-900 dark:text-white">
                       {selectedConversation?.name || 'Unknown User'}
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-slate-400">
                       {selectedConversation?.isOnline ? 'Online' : 'Offline'}
                     </p>
                   </div>
@@ -774,7 +774,7 @@ export default function Messages() {
                     <div className={`max-w-xs sm:max-w-sm px-3 py-2 rounded-2xl ${
                       message.senderId === user.id
                         ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'
                     }`}>
                       <p className="text-sm">{message.text}</p>
                       <div className="flex items-center justify-end mt-1">
@@ -797,10 +797,10 @@ export default function Messages() {
               </div>
 
               {/* Mobile Message Input */}
-              <div className="p-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="p-2 border-t border-gray-200 dark:border-slate-800">
                 <div className="flex items-center space-x-2">
-                  <div className="flex-1 flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-2">
-                    <Button variant="ghost" size="sm" className="hover:bg-gray-200 dark:hover:bg-gray-600">
+                  <div className="flex-1 flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 rounded-full px-3 py-2">
+                    <Button variant="ghost" size="sm" className="hover:bg-slate-200 dark:hover:bg-gray-600">
                       <Paperclip className="w-4 h-4" />
                     </Button>
                     <Input
@@ -813,7 +813,7 @@ export default function Messages() {
                       className="flex-1 border-0 bg-transparent focus:ring-0"
                       disabled={isSending}
                     />
-                    <Button variant="ghost" size="sm" className="hover:bg-gray-200 dark:hover:bg-gray-600">
+                    <Button variant="ghost" size="sm" className="hover:bg-slate-200 dark:hover:bg-gray-600">
                       <Smile className="w-4 h-4" />
                     </Button>
                   </div>

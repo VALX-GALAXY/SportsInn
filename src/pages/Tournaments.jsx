@@ -316,7 +316,7 @@ export default function Tournaments() {
       case 'full':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+        return 'bg-slate-100 text-gray-800 dark:bg-slate-950 dark:text-slate-100'
     }
   }
 
@@ -466,14 +466,14 @@ export default function Tournaments() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
         <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
               Tournaments
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-slate-600 dark:text-slate-400">
               Discover and join exciting sports tournaments
             </p>
           </div>
@@ -484,7 +484,7 @@ export default function Tournaments() {
   }
 
   return (
-    <PageTransition className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <PageTransition className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         {/* Hero Section */}
         <div className="relative bg-gradient-to-r from-blue-500 via-green-500 to-blue-600 rounded-xl p-6 text-white overflow-hidden mb-6 shadow-lg">
@@ -516,7 +516,7 @@ export default function Tournaments() {
               <div className="p-3 bg-gradient-to-r from-blue-500 to-green-500 rounded-xl">
                 <Star className="w-6 h-6 text-white" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white font-sans">
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white font-sans">
                 Featured Tournaments
               </h2>
             </div>
@@ -552,7 +552,7 @@ export default function Tournaments() {
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-1 line-clamp-2">
+                    <h3 className="font-semibold text-slate-900 dark:text-white text-lg mb-1 line-clamp-2">
                       {tournament.title}
                     </h3>
                     <div className="flex items-center space-x-2 mb-2">
@@ -575,38 +575,38 @@ export default function Tournaments() {
               <CardContent className="p-4 pt-0">
                 <div className="space-y-3">
                   {/* Location */}
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
                     <MapPin className="w-4 h-4 flex-shrink-0" />
                     <span className="truncate">{tournament.location}</span>
                   </div>
 
                   {/* Date */}
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
                     <Calendar className="w-4 h-4 flex-shrink-0" />
                     <span>{formatDate(tournament.startDate)} - {formatDate(tournament.endDate)}</span>
                   </div>
 
                   {/* Team Size */}
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
                     <Users className="w-4 h-4 flex-shrink-0" />
                     <span>{tournament.teamSize} {tournament.teamSize === 1 ? 'player' : 'players'} per team</span>
                   </div>
 
                   {/* Entry Fee */}
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
                     <DollarSign className="w-4 h-4 flex-shrink-0" />
                     <span className="font-medium text-green-600 dark:text-green-400">{formatCurrency(tournament.entryFee)}</span>
                   </div>
 
                   {/* Prize Pool */}
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
                     <Trophy className="w-4 h-4 flex-shrink-0" />
                     <span className="font-medium text-yellow-600 dark:text-yellow-400">Prize: {formatCurrency(tournament.prizePool)}</span>
                   </div>
 
                   {/* Organizer */}
                   {tournament.organizer && (
-                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
                       <Star className="w-4 h-4 flex-shrink-0" />
                       <span>Organized by {tournament.organizer.name}</span>
                     </div>
@@ -614,10 +614,10 @@ export default function Tournaments() {
 
                   {/* Registration Status */}
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">
+                    <span className="text-slate-600 dark:text-slate-400">
                       {tournament.registeredTeams}/{tournament.maxTeams} teams registered
                     </span>
-                    <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div className="w-16 bg-slate-200 dark:bg-slate-800 rounded-full h-2">
                       <div 
                         className="bg-blue-600 h-2 rounded-full" 
                         style={{ width: `${(tournament.registeredTeams / tournament.maxTeams) * 100}%` }}
@@ -626,7 +626,7 @@ export default function Tournaments() {
                   </div>
 
                   {/* Description */}
-                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                  <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
                     {tournament.description}
                   </p>
 
@@ -644,13 +644,13 @@ export default function Tournaments() {
         {/* Empty State */}
         {tournaments.length === 0 && !isLoading && (
           <div className="text-center py-12">
-            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
               <Trophy className="w-12 h-12 text-gray-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
               No tournaments found
             </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-gray-500 dark:text-slate-400 mb-4">
               Try adjusting your filters or check back later for new tournaments
             </p>
             <Button
@@ -677,14 +677,14 @@ export default function Tournaments() {
         {/* Apply Modal */}
         {showApplyModal && selectedTournament && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="bg-white dark:bg-slate-900 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
                 Apply to {selectedTournament.title}
               </h2>
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-2">
                     Team Name *
                   </label>
                   <Input
@@ -699,7 +699,7 @@ export default function Tournaments() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-2">
                     Contact Email *
                   </label>
                   <Input
@@ -715,7 +715,7 @@ export default function Tournaments() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-2">
                     Contact Phone *
                   </label>
                   <Input
@@ -731,7 +731,7 @@ export default function Tournaments() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-2">
                     Additional Information
                   </label>
                   <textarea
@@ -739,14 +739,14 @@ export default function Tournaments() {
                     onChange={(e) => setApplicationData(prev => ({ ...prev, additionalInfo: e.target.value }))}
                     placeholder="Any additional information about your team..."
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:text-white"
                   />
                 </div>
 
                 {/* Tournament Details */}
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Tournament Details</h4>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-lg">
+                  <h4 className="font-medium text-slate-900 dark:text-white mb-2">Tournament Details</h4>
+                  <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
                     <div>Entry Fee: {formatCurrency(selectedTournament.entryFee)}</div>
                     <div>Team Size: {selectedTournament.teamSize} players</div>
                     <div>Prize Pool: {formatCurrency(selectedTournament.prizePool)}</div>

@@ -83,26 +83,26 @@ const Navbar = ({ onMenuClick }) => {
   const getRoleColor = (role) => {
     switch (role) {
       case 'Player':
-        return 'text-green-600 bg-green-50'
+        return 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20'
       case 'Academy':
-        return 'text-blue-600 bg-blue-50'
+        return 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20'
       case 'Club':
-        return 'text-purple-600 bg-purple-50'
+        return 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-900/20'
       case 'Scout':
-        return 'text-orange-600 bg-orange-50'
+        return 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-900/20'
       default:
-        return 'text-gray-600 bg-gray-50'
+        return 'text-slate-600 bg-slate-50 dark:text-slate-400 dark:bg-slate-900/20'
     }
   }
 
   if (!isAuthenticated) {
     return (
-      <nav className="glass-navbar dark:glass-navbar-dark border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm w-full h-16 flex items-center">
+      <nav className="glass-navbar border-b border-slate-200/50 dark:border-blue-500/30 shadow-sm w-full h-16 flex items-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link to="/" className="text-xl font-bold bg-gradient-to-r from-blue-500 to-emerald-500 dark:from-blue-400 dark:to-emerald-400 bg-clip-text text-transparent">
-                SportsInn
+                SportsIn
               </Link>
             </div>
             <div className="flex items-center space-x-4">
@@ -110,7 +110,7 @@ const Navbar = ({ onMenuClick }) => {
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
               >
                 {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
               </Button>
@@ -128,27 +128,27 @@ const Navbar = ({ onMenuClick }) => {
   }
 
   return (
-    <nav className="glass-navbar dark:glass-navbar-dark border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm w-full h-16 flex items-center fixed top-0 left-0 right-0 z-50">
+      <nav className="glass-navbar border-b border-slate-200/50 dark:border-blue-500/30 shadow-sm w-full h-16 flex items-center fixed top-0 left-0 right-0 z-50">
       <div className="w-full px-3 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Left side - Logo and Desktop Navigation */}
           <div className="flex items-center space-x-4">
             <Link to="/" className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-500 to-emerald-500 dark:from-blue-400 dark:to-emerald-400 bg-clip-text text-transparent flex-shrink-0">
-              SportsInn
+              SportsIn
             </Link>
             
             {/* Desktop Navigation Links */}
             <div className="hidden lg:flex items-center space-x-4">
-              <Link to="/dashboard" className="text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors px-2 py-1 text-sm">
+              <Link to="/dashboard" className="text-slate-600 hover:text-blue-500 dark:text-slate-300 dark:hover:text-blue-400 transition-colors px-2 py-1 text-sm">
                 Dashboard
               </Link>
-              <Link to="/profile" className="text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors px-2 py-1 text-sm">
+              <Link to="/profile" className="text-slate-600 hover:text-blue-500 dark:text-slate-300 dark:hover:text-blue-400 transition-colors px-2 py-1 text-sm">
                 Profile
               </Link>
-              <Link to="/feed" className="text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors px-2 py-1 text-sm">
+              <Link to="/feed" className="text-slate-600 hover:text-blue-500 dark:text-slate-300 dark:hover:text-blue-400 transition-colors px-2 py-1 text-sm">
                 Feed
               </Link>
-              <Link to="/tournaments" className="text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors px-2 py-1 text-sm">
+              <Link to="/tournaments" className="text-slate-600 hover:text-blue-500 dark:text-slate-300 dark:hover:text-blue-400 transition-colors px-2 py-1 text-sm">
                 Tournaments
               </Link>
             </div>
@@ -161,7 +161,7 @@ const Navbar = ({ onMenuClick }) => {
               {/* Search */}
               <button 
                 onClick={handleSearchClick}
-                className="p-2 text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
+                className="p-2 text-slate-600 hover:text-blue-500 dark:text-slate-300 dark:hover:text-blue-400 transition-colors"
                 title="Search"
               >
                 <Search className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -180,12 +180,12 @@ const Navbar = ({ onMenuClick }) => {
               <NotificationDropdown />
               
               {/* Messages */}
-              <Link to="/messages" className="p-2 text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors">
+              <Link to="/messages" className="p-2 text-slate-600 hover:text-blue-500 dark:text-slate-300 dark:hover:text-blue-400 transition-colors">
                 <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
               
               {/* Requests */}
-              <Link to="/requests" className="relative p-2 text-gray-600 hover:text-blue-500 dark:text-gray-300 dark:hover:text-blue-400 transition-colors">
+              <Link to="/requests" className="relative p-2 text-slate-600 hover:text-blue-500 dark:text-slate-300 dark:hover:text-blue-400 transition-colors">
                 <Inbox className="w-4 h-4 sm:w-5 sm:h-5" />
                 {requestsCount > 0 && (
                   <Badge variant="secondary" className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-xs">
@@ -197,10 +197,10 @@ const Navbar = ({ onMenuClick }) => {
             
             {/* Enhanced Search Bar */}
             {showSearch && (
-              <div className="absolute top-full left-0 right-0 glass-card-premium dark:glass-card-premium-dark border-b border-gray-200/50 dark:border-gray-700/50 shadow-lg z-50 backdrop-blur-xl">
+              <div className="absolute top-full left-0 right-0 glass-card-premium dark:glass-card-premium-dark border-b border-slate-200/50 dark:border-blue-500/30 shadow-lg z-50 backdrop-blur-xl">
                 <form onSubmit={handleSearch} className="p-4">
                   <div className="flex items-center space-x-2">
-                    <Search className="w-4 h-4 text-gray-400" />
+                    <Search className="w-4 h-4 text-slate-400 dark:text-slate-400" />
                     <Input
                       id="navbar-search"
                       type="text"
@@ -218,7 +218,7 @@ const Navbar = ({ onMenuClick }) => {
                       variant="ghost" 
                       size="sm"
                       onClick={() => setShowSearch(false)}
-                      className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                      className="hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -232,7 +232,7 @@ const Navbar = ({ onMenuClick }) => {
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </Button>
@@ -242,9 +242,9 @@ const Navbar = ({ onMenuClick }) => {
               variant="ghost"
               size="icon"
               onClick={onMenuClick}
-              className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
             >
-              <Menu className="w-4 h-4" />
+              <Menu className="w-4 h-4 text-slate-700 dark:text-slate-300" />
             </Button>
             
             {/* User Profile - Desktop Only */}
@@ -260,21 +260,21 @@ const Navbar = ({ onMenuClick }) => {
                 <img
                   src={user.profilePic}
                   alt={user.name}
-                  className="w-8 h-8 rounded-full object-cover border-2 border-white dark:border-gray-700 flex-shrink-0"
+                  className="w-8 h-8 rounded-full object-cover border-2 border-white dark:border-slate-800 flex-shrink-0"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center border-2 border-white dark:border-gray-700 flex-shrink-0">
-                  <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center border-2 border-white dark:border-slate-800 flex-shrink-0">
+                  <User className="w-4 h-4 text-slate-600 dark:text-slate-300" />
                 </div>
               )}
               
               {/* User Name */}
               <div className="flex flex-col min-w-0">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
                   {user?.name}
                 </span>
                 {user?.age && (
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     Age: {user.age}
                   </span>
                 )}
@@ -285,9 +285,9 @@ const Navbar = ({ onMenuClick }) => {
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
-                className="text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-4 h-4 text-slate-700 dark:text-slate-300" />
               </Button>
             </div>
           </div>

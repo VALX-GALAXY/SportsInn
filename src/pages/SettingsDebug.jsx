@@ -36,7 +36,7 @@ export default function SettingsDebug() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
           Settings Debug Page
@@ -44,7 +44,7 @@ export default function SettingsDebug() {
         
         <div className="bg-white p-6 rounded-lg shadow mb-4">
           <h2 className="text-xl font-semibold mb-4">Debug Information</h2>
-          <pre className="bg-gray-100 p-4 rounded text-sm overflow-auto">
+          <pre className="bg-slate-100 p-4 rounded text-sm overflow-auto">
             {JSON.stringify(debugInfo, null, 2)}
           </pre>
         </div>

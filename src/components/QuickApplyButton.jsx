@@ -142,15 +142,15 @@ const QuickApplyButton = ({ tournament, user, onApplicationSuccess }) => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="absolute bottom-full right-0 mb-4 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-4"
+            className="absolute bottom-full right-0 mb-4 w-80 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-200 dark:border-slate-800 p-4"
           >
             <div className="space-y-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
+                  <h4 className="font-semibold text-slate-900 dark:text-white text-sm mb-1">
                     {tournament.title}
                   </h4>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                  <p className="text-xs text-gray-600 dark:text-slate-400 line-clamp-2">
                     {tournament.description}
                   </p>
                 </div>

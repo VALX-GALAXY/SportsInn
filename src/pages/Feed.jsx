@@ -1048,4 +1048,3 @@ export default function FeedSimple() {
     </>
   )
 }
-

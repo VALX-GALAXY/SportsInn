@@ -75,10 +75,10 @@ export default function ReportConfirmationModal({
                     <Flag className="w-5 h-5 text-red-600 dark:text-red-400" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">
                       {!showConfirmation ? 'Report Post' : 'Confirm Report'}
                     </CardTitle>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-600 dark:text-slate-400">
                       {!showConfirmation 
                         ? `Report post by ${postAuthor?.name || 'Unknown User'}`
                         : 'Are you sure you want to submit this report?'
@@ -102,7 +102,7 @@ export default function ReportConfirmationModal({
                 <>
                   {/* Report Reason Selection */}
                   <div className="space-y-3">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
                       Reason for reporting
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -129,7 +129,7 @@ export default function ReportConfirmationModal({
 
                   {/* Additional Details */}
                   <div className="space-y-3">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
                       Additional details (optional)
                     </label>
                     <Input
@@ -142,7 +142,7 @@ export default function ReportConfirmationModal({
                       className="min-h-[80px] resize-none"
                       maxLength={500}
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-slate-400">
                       {finalDetails.length}/500 characters
                     </p>
                   </div>
@@ -167,24 +167,24 @@ export default function ReportConfirmationModal({
                     </div>
                     
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                         Confirm Report Submission
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-gray-600 dark:text-slate-400">
                         You are about to report this post for: <strong>{finalReason}</strong>
                       </p>
                     </div>
 
                     {finalDetails && (
-                      <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Your message:</p>
-                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">
+                      <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-lg">
+                        <p className="text-xs text-gray-500 dark:text-slate-400 mb-1">Your message:</p>
+                        <p className="text-sm text-gray-700 dark:text-slate-300 italic">
                           "{finalDetails}"
                         </p>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 dark:text-slate-400">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                       <span>This report will be reviewed by our moderation team</span>
                     </div>

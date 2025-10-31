@@ -75,14 +75,14 @@ export default function Dashboard() {
   // Show fallback dashboard if no specific role is found
   if (showFallback) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
         <div className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Welcome to SportsInn Dashboard
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+              Welcome to SportsIn Dashboard
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-slate-600 dark:text-slate-400">
               Choose your role to access your personalized dashboard
             </p>
           </div>
@@ -96,8 +96,8 @@ export default function Dashboard() {
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Player</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</p>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Player</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard</p>
                     <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                       Track your performance
                     </p>
@@ -116,8 +116,8 @@ export default function Dashboard() {
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Academy</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</p>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Academy</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard</p>
                     <p className="text-xs text-green-600 dark:text-green-400 mt-1">
                       Manage your academy
                     </p>
@@ -136,8 +136,8 @@ export default function Dashboard() {
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Club</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</p>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Club</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard</p>
                     <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
                       Club management
                     </p>
@@ -156,8 +156,8 @@ export default function Dashboard() {
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Scout</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</p>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Scout</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard</p>
                     <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
                       Scout talent
                     </p>
@@ -213,12 +213,12 @@ export default function Dashboard() {
 
   // Show loading state
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
+        <p className="text-slate-600 dark:text-slate-400">Loading dashboard...</p>
         {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded text-xs text-left max-w-md">
+          <div className="mt-4 p-4 bg-slate-100 dark:bg-slate-900 rounded text-xs text-left max-w-md">
             <strong>Debug Info:</strong><br />
             {debugInfo}
           </div>

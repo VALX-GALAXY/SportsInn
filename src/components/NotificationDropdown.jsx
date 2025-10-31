@@ -58,7 +58,7 @@ export default function NotificationDropdown() {
       case 'club':
         return <Handshake className="w-4 h-4 text-orange-500" />
       default:
-        return <Bell className="w-4 h-4 text-gray-500" />
+        return <Bell className="w-4 h-4 text-slate-500" />
     }
   }
 
@@ -113,7 +113,7 @@ export default function NotificationDropdown() {
           size="icon"
           onClick={handleBellClick}
           onContextMenu={handleBellRightClick}
-          className="relative hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="relative hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
           title="Click to view notifications, right-click to go to notifications page"
         >
           <motion.div
@@ -152,7 +152,7 @@ export default function NotificationDropdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed right-4 top-20 w-80 max-w-[calc(100vw-2rem)] bg-gradient-to-br from-white to-blue-50/30 dark:from-gray-800 dark:to-blue-900/20 rounded-xl shadow-2xl border border-blue-200/50 dark:border-blue-700/50 z-[9999] max-h-96 overflow-hidden backdrop-blur-sm"
+            className="fixed right-4 top-20 w-80 max-w-[calc(100vw-2rem)] bg-gradient-to-br from-white to-blue-50/30 dark:from-slate-900 dark:to-blue-950/50 rounded-xl shadow-2xl border border-blue-200/50 dark:border-blue-500/30 z-[9999] max-h-96 overflow-hidden backdrop-blur-sm"
           >
           {/* Header with Sporty Design */}
           <div className="p-4 border-b border-blue-200/30 dark:border-blue-700/30 bg-gradient-to-r from-blue-50/50 to-green-50/50 dark:from-blue-900/20 dark:to-green-900/20">
@@ -193,7 +193,7 @@ export default function NotificationDropdown() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsOpen(false)}
-                  className="p-1 flex-shrink-0"
+                  className="p-1 flex-shrink-0 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -209,11 +209,11 @@ export default function NotificationDropdown() {
                 animate={{ opacity: 1, y: 0 }}
                 className="p-8 text-center"
               >
-                <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">No notifications yet</p>
+                <Bell className="w-12 h-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+                <p className="text-slate-500 dark:text-slate-400">No notifications yet</p>
               </motion.div>
             ) : (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              <div className="divide-y divide-slate-200 dark:divide-slate-800">
                 <AnimatePresence>
                   {notifications.slice(0, 10).map((notification, index) => (
                     <motion.div
@@ -228,7 +228,7 @@ export default function NotificationDropdown() {
                         delay: index * 0.05 
                       }}
                       onClick={() => handleNotificationClick(notification)}
-                      className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-all duration-200 ${
+                      className={`p-4 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-all duration-200 ${
                         !notification.isRead ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                       }`}
                       whileHover={{ 
@@ -248,7 +248,7 @@ export default function NotificationDropdown() {
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <motion.p 
-                                className="text-sm font-medium text-gray-900 dark:text-white"
+                                className="text-sm font-medium text-slate-900 dark:text-white"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: index * 0.05 + 0.1 }}
@@ -256,7 +256,7 @@ export default function NotificationDropdown() {
                                 {notification.title}
                               </motion.p>
                               <motion.p 
-                                className="text-sm text-gray-600 dark:text-gray-400 mt-1"
+                                className="text-sm text-slate-600 dark:text-slate-400 mt-1"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: index * 0.05 + 0.15 }}
@@ -264,7 +264,7 @@ export default function NotificationDropdown() {
                                 {notification.message}
                               </motion.p>
                               <motion.p 
-                                className="text-xs text-gray-500 dark:text-gray-400 mt-1"
+                                className="text-xs text-slate-500 dark:text-slate-400 mt-1"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: index * 0.05 + 0.2 }}

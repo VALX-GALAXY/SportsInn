@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Select } from '@/components/ui/select'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
 import { User, Home, Users, Eye, Edit, Save, X, UserPlus, UserMinus, Loader2, Trophy, Target, BarChart3, Star, TrendingUp, Calendar, Award, MailPlus, Mail, Upload, Image, Trash2, Plus, CheckCircle, AlertCircle, Send, MessageSquare, ChevronLeft, ChevronRight, QrCode, Share2 } from 'lucide-react'
@@ -25,6 +26,8 @@ export default function Profile() {
     bio: user?.bio || '',
     profilePicture: null,
     // Role-specific fields
+    gender: user?.gender || '',
+    sports: user?.sports || '',
     age: user?.age || '',
     playerRole: user?.playerRole || '',
     location: user?.location || '',
@@ -141,6 +144,8 @@ export default function Profile() {
         username: user.name || '',
         bio: user.bio || '',
         profilePicture: null,
+        gender: user.gender || '',
+        sports: user.sports || '',
         age: user.age || '',
         playerRole: user.playerRole || '',
         location: user.location || '',
@@ -535,6 +540,8 @@ export default function Profile() {
           bio: formData.bio,
           ...(imagePreview && { profilePic: imagePreview }),
           // Role-specific updates
+          ...(formData.gender && { gender: formData.gender }),
+          ...(formData.sports && { sports: formData.sports }),
           ...(formData.age && { age: formData.age }),
           ...(formData.playerRole && { playerRole: formData.playerRole }),
           ...(formData.location && { location: formData.location }),
@@ -892,7 +899,7 @@ export default function Profile() {
       case 'Scout':
         return 'text-orange-600 bg-orange-50'
       default:
-        return 'text-gray-600 bg-gray-50'
+        return 'text-slate-600 bg-gray-50'
     }
   }
 
@@ -920,6 +927,65 @@ export default function Profile() {
             <CardContent>
               {editingSection === 'player' ? (
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Gender Field */}
+                  <div className="space-y-2">
+                    <Label className="text-slate-900 dark:text-slate-100">Gender</Label>
+                    <RadioGroup
+                      value={formData.gender}
+                      onValueChange={(value) => {
+                        setFormData(prev => ({ ...prev, gender: value }))
+                        if (errors.gender) {
+                          setErrors(prev => ({ ...prev, gender: '' }))
+                        }
+                      }}
+                      className={errors.gender ? 'border-red-500' : ''}
+                    >
+                      <RadioGroupItem value="Male">Male</RadioGroupItem>
+                      <RadioGroupItem value="Female">Female</RadioGroupItem>
+                      <RadioGroupItem value="Other">Other</RadioGroupItem>
+                      <RadioGroupItem value="Prefer not to say">Prefer not to say</RadioGroupItem>
+                    </RadioGroup>
+                    {errors.gender && (
+                      <p className="text-sm text-red-500 dark:text-red-400">{errors.gender}</p>
+                    )}
+                  </div>
+                  
+                  {/* Sports Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="sports">Sports</Label>
+                    <Select
+                      id="sports"
+                      name="sports"
+                      value={formData.sports}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        setFormData(prev => {
+                          const newData = { ...prev, sports: value }
+                          // Clear playerRole if sports changes from Cricket
+                          if (value !== 'Cricket') {
+                            newData.playerRole = ''
+                          }
+                          return newData
+                        })
+                        if (errors.sports) {
+                          setErrors(prev => ({ ...prev, sports: '' }))
+                        }
+                      }}
+                      className={errors.sports ? 'border-red-500' : ''}
+                    >
+                      <option value="">Select a sport</option>
+                      <option value="Cricket">Cricket</option>
+                      <option value="Football">Football</option>
+                      <option value="Tennis">Tennis</option>
+                      <option value="Badminton">Badminton</option>
+                      <option value="Table Tennis">Table Tennis</option>
+                      <option value="Basketball">Basketball</option>
+                    </Select>
+                    {errors.sports && (
+                      <p className="text-sm text-red-500 dark:text-red-400">{errors.sports}</p>
+                    )}
+                  </div>
+                  
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="age">Age</Label>
@@ -932,27 +998,31 @@ export default function Profile() {
                         className={errors.age ? 'border-red-500' : ''}
                       />
                       {errors.age && (
-                        <p className="text-sm text-red-500">{errors.age}</p>
+                        <p className="text-sm text-red-500 dark:text-red-400">{errors.age}</p>
                       )}
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="playerRole">Player Role</Label>
-                      <select
-                        id="playerRole"
-                        name="playerRole"
-                        value={formData.playerRole}
-                        onChange={handleChange}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                      >
-                        <option value="">Select role</option>
-                        <option value="Batsman">Batsman</option>
-                        <option value="Bowler">Bowler</option>
-                        <option value="All-rounder">All-rounder</option>
-                      </select>
-                      {errors.playerRole && (
-                        <p className="text-sm text-red-500">{errors.playerRole}</p>
-                      )}
-                    </div>
+                    {/* Conditional Player Role Field (only for Cricket) */}
+                    {formData.sports === 'Cricket' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="playerRole">Player Role</Label>
+                        <Select
+                          id="playerRole"
+                          name="playerRole"
+                          value={formData.playerRole}
+                          onChange={handleChange}
+                          className={errors.playerRole ? 'border-red-500' : ''}
+                        >
+                          <option value="">Select role</option>
+                          <option value="Batsman">Batsman</option>
+                          <option value="Bowler">Bowler</option>
+                          <option value="All-Rounder">All-Rounder</option>
+                          <option value="Wicket-Keeper">Wicket-Keeper</option>
+                        </Select>
+                        {errors.playerRole && (
+                          <p className="text-sm text-red-500 dark:text-red-400">{errors.playerRole}</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="flex space-x-2">
                     <Button type="submit" size="sm">
@@ -967,14 +1037,28 @@ export default function Profile() {
                 </form>
               ) : (
                 <div className="space-y-4">
+                  {user?.gender && (
+                    <div>
+                      <Label className="text-sm font-medium text-slate-500 dark:text-slate-400">Gender</Label>
+                      <p className="text-lg text-slate-900 dark:text-slate-100">{user.gender}</p>
+                    </div>
+                  )}
+                  {user?.sports && (
+                    <div>
+                      <Label className="text-sm font-medium text-slate-500 dark:text-slate-400">Sports</Label>
+                      <p className="text-lg text-slate-900 dark:text-slate-100">{user.sports}</p>
+                    </div>
+                  )}
                   <div>
-                    <Label className="text-sm font-medium text-gray-500">Age</Label>
-                    <p className="text-lg">{user?.age || 'Not specified'}</p>
+                    <Label className="text-sm font-medium text-slate-500 dark:text-slate-400">Age</Label>
+                    <p className="text-lg text-slate-900 dark:text-slate-100">{user?.age || 'Not specified'}</p>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-500">Player Role</Label>
-                    <p className="text-lg">{user?.playerRole || 'Not specified'}</p>
-                  </div>
+                  {user?.playerRole && (
+                    <div>
+                      <Label className="text-sm font-medium text-slate-500 dark:text-slate-400">Player Role</Label>
+                      <p className="text-lg text-slate-900 dark:text-slate-100">{user.playerRole}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -1142,17 +1226,17 @@ export default function Profile() {
   // Add safety check for user object
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading profile...</p>
+          <p className="text-slate-600 dark:text-slate-400">Loading profile...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="max-w-4xl mx-auto px-4 py-8">
         {isSubmitted && (
           <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-md shadow-sm">
@@ -1181,7 +1265,7 @@ export default function Profile() {
                     <img
                       src={user.profilePic}
                       alt={user.name}
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-lg"
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white dark:border-slate-800 shadow-lg"
                     />
                     {isUploading && (
                       <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
@@ -1190,18 +1274,18 @@ export default function Profile() {
                     )}
                   </div>
                 ) : (
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center border-4 border-white dark:border-gray-700 shadow-lg">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-lg">
                     {isUploading ? (
-                      <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-gray-500 dark:text-gray-400 animate-spin" />
+                      <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-slate-500 dark:text-slate-400 animate-spin" />
                     ) : (
-                      <User className="w-10 h-10 sm:w-12 sm:h-12 text-gray-500 dark:text-gray-400" />
+                      <User className="w-10 h-10 sm:w-12 sm:h-12 text-slate-500 dark:text-slate-400" />
                     )}
                   </div>
                 )}
               </div>
               <div className="flex-1 text-center sm:text-left min-w-0">
                 <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-2">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white truncate">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white truncate">
                     {user?.name || 'User Name'}
                   </h1>
                   <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getRoleColor(user?.role)} flex items-center justify-center sm:justify-start`}>
@@ -1209,33 +1293,33 @@ export default function Profile() {
                     <span className="ml-1">{user?.role}</span>
                   </span>
                 </div>
-                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-2 truncate">{user?.email}</p>
+                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mb-2 truncate">{user?.email}</p>
                 {user?.bio && (
-                  <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-2 italic break-words">
+                  <p className="text-sm sm:text-base text-slate-700 dark:text-slate-100 mb-2 italic break-words">
                     "{user.bio}"
                   </p>
                 )}
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                   Member since {new Date().toLocaleDateString()}
                 </p>
               </div>
             </div>
             
             {/* Follow/Unfollow Section */}
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-slate-800">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
                 <div className="flex items-center justify-center sm:justify-start space-x-6">
                   <div className="text-center">
-                    <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                    <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                       {followStats.followers}
                     </div>
-                    <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Followers</div>
+                    <div className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Followers</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                    <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                       {followStats.following}
                     </div>
-                    <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Following</div>
+                    <div className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Following</div>
                   </div>
                 </div>
                 
@@ -1311,7 +1395,7 @@ export default function Profile() {
                     <img
                       src={image?.url || image}
                       alt={`Gallery ${index + 1}`}
-                      className="w-20 h-20 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-lg hover:scale-105 transition-transform duration-200"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-white dark:border-slate-800 shadow-lg hover:scale-105 transition-transform duration-200"
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-full transition-all duration-200 flex items-center justify-center">
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -1341,7 +1425,7 @@ export default function Profile() {
 
         {/* Tabs */}
         <div className="mt-6">
-          <div className="flex space-x-1 sm:space-x-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full">
+          <div className="flex space-x-1 sm:space-x-2 bg-slate-100 dark:bg-slate-900 rounded-lg p-1 w-full">
             {['About', 'Performance'].map(tab => (
               <Button
                 key={tab}
@@ -1438,7 +1522,7 @@ export default function Profile() {
                           <Loader2 className="w-4 h-4 animate-spin" />
                           <span className="text-sm">Uploading...</span>
                           {uploadProgress > 0 && (
-                            <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
                               <motion.div
                                 className="h-full bg-blue-600 rounded-full"
                                 initial={{ width: 0 }}
@@ -1488,7 +1572,7 @@ export default function Profile() {
                         exit={{ opacity: 0, scale: 0.8 }}
                         className="mt-2"
                       >
-                        <p className="text-sm text-gray-600 mb-2">Preview:</p>
+                        <p className="text-sm text-slate-600 mb-2">Preview:</p>
                         <img
                           src={imagePreview}
                           alt="Profile preview"
@@ -1520,7 +1604,7 @@ export default function Profile() {
                 >
                 <div className="group">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Username</Label>
+                    <Label className="text-sm font-medium text-gray-500 dark:text-slate-400">Username</Label>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1572,12 +1656,12 @@ export default function Profile() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-lg text-gray-900 dark:text-white">{user?.name || 'Not specified'}</p>
+                    <p className="text-lg text-slate-900 dark:text-white">{user?.name || 'Not specified'}</p>
                   )}
                 </div>
                 <div className="group">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Bio</Label>
+                    <Label className="text-sm font-medium text-gray-500 dark:text-slate-400">Bio</Label>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1630,17 +1714,17 @@ export default function Profile() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-lg text-gray-900 dark:text-white">{user?.bio || 'No bio available'}</p>
+                    <p className="text-lg text-slate-900 dark:text-white">{user?.bio || 'No bio available'}</p>
                   )}
                 </div>
                 {user?.profilePic && (
                   <div>
-                    <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Profile Picture</Label>
+                    <Label className="text-sm font-medium text-gray-500 dark:text-slate-400">Profile Picture</Label>
                     <div className="mt-2">
                       <img
                         src={user.profilePic}
                         alt="Profile"
-                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-slate-800"
                       />
                     </div>
                   </div>
@@ -1694,7 +1778,7 @@ export default function Profile() {
                       >
                         <span className="text-sm">Uploading...</span>
                         {uploadProgress > 0 && (
-                          <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
                             <motion.div
                               className="h-full bg-blue-600 rounded-full"
                               initial={{ width: 0 }}
@@ -1743,9 +1827,9 @@ export default function Profile() {
             {console.log('Main gallery section - galleryImages:', galleryImages)}
             {console.log('Gallery images structure:', galleryImages.map(img => ({ id: img.id, url: img.url, type: typeof img })))}
             {galleryImages.length === 0 ? (
-              <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+              <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-lg">
                 <Image className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400 mb-2">No images in gallery yet</p>
+                <p className="text-gray-500 dark:text-slate-400 mb-2">No images in gallery yet</p>
                 <p className="text-sm text-gray-400">Click "Add Images" to upload photos</p>
               </div>
             ) : (
@@ -1763,7 +1847,7 @@ export default function Profile() {
                       <img
                         src={image.url || image}
                         alt="Gallery"
-                        className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg"
+                        className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-slate-800 shadow-lg"
                       />
                       <motion.div
                         initial={{ opacity: 0 }}
@@ -1793,7 +1877,7 @@ export default function Profile() {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3, delay: galleryImages.length * 0.1 }}
-                    className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center min-h-[192px] hover:border-blue-400 transition-colors duration-200 cursor-pointer"
+                    className="border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-lg flex items-center justify-center min-h-[192px] hover:border-blue-400 transition-colors duration-200 cursor-pointer"
                     onClick={() => document.getElementById('gallery-upload').click()}
                   >
                     <div className="text-center">
@@ -1803,7 +1887,7 @@ export default function Profile() {
                       >
                         <Plus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                       </motion.div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Add more images</p>
+                      <p className="text-sm text-gray-500 dark:text-slate-400">Add more images</p>
                     </div>
                   </motion.div>
                 )}
@@ -1821,68 +1905,12 @@ export default function Profile() {
                 <Trophy className="w-5 h-5 text-yellow-500" />
                 <span>Player Performance</span>
               </CardTitle>
-              <CardDescription>Season stats and trends (mock data)</CardDescription>
+              <CardDescription>Season stats and trends</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Matches Played</p>
-                      <p className="text-2xl font-bold">34</p>
-                    </div>
-                    <Calendar className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Runs Scored</p>
-                      <p className="text-2xl font-bold">1,120</p>
-                    </div>
-                    <TrendingUp className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Wickets Taken</p>
-                      <p className="text-2xl font-bold">27</p>
-                    </div>
-                    <BarChart3 className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Charts */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Runs by Match</h4>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={[{ m: 'M1', runs: 34 }, { m: 'M2', runs: 56 }, { m: 'M3', runs: 12 }, { m: 'M4', runs: 78 }, { m: 'M5', runs: 44 }] }>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
-                      <XAxis dataKey="m" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" />
-                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
-                      <Legend />
-                      <Line type="monotone" dataKey="runs" stroke="#3B82F6" strokeWidth={2} dot={{ r: 3 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Wickets by Match</h4>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[{ m: 'M1', wkts: 1 }, { m: 'M2', wkts: 2 }, { m: 'M3', wkts: 0 }, { m: 'M4', wkts: 4 }, { m: 'M5', wkts: 3 }] }>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
-                      <XAxis dataKey="m" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" />
-                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
-                      <Legend />
-                      <Bar dataKey="wkts" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Performance data will be available soon.</p>
               </div>
             </CardContent>
           </Card>
@@ -1898,65 +1926,9 @@ export default function Profile() {
               <CardDescription>Training program statistics and student progress</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Training Sessions</p>
-                      <p className="text-2xl font-bold">156</p>
-                    </div>
-                    <Calendar className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Success Rate</p>
-                      <p className="text-2xl font-bold">87%</p>
-                    </div>
-                    <TrendingUp className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Graduation Rate</p>
-                      <p className="text-2xl font-bold">92%</p>
-                    </div>
-                    <Trophy className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Charts */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Student Progress</h4>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={[{ month: 'Jan', progress: 65 }, { month: 'Feb', progress: 72 }, { month: 'Mar', progress: 78 }, { month: 'Apr', progress: 85 }, { month: 'May', progress: 87 }] }>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
-                      <XAxis dataKey="month" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" />
-                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
-                      <Legend />
-                      <Line type="monotone" dataKey="progress" stroke="#3B82F6" strokeWidth={2} dot={{ r: 3 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Training Hours</h4>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[{ month: 'Jan', hours: 120 }, { month: 'Feb', hours: 135 }, { month: 'Mar', hours: 142 }, { month: 'Apr', hours: 158 }, { month: 'May', hours: 165 }] }>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
-                      <XAxis dataKey="month" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" />
-                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
-                      <Legend />
-                      <Bar dataKey="hours" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Performance data will be available soon.</p>
               </div>
             </CardContent>
           </Card>
@@ -1972,65 +1944,9 @@ export default function Profile() {
               <CardDescription>Scouting activities and success metrics</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
-                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Players Scouted</p>
-                      <p className="text-2xl font-bold">89</p>
-                    </div>
-                    <Target className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Reports Written</p>
-                      <p className="text-2xl font-bold">67</p>
-                    </div>
-                    <BarChart3 className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Success Rate</p>
-                      <p className="text-2xl font-bold">78%</p>
-                    </div>
-                    <TrendingUp className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Charts */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Monthly Scouting Activity</h4>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={[{ month: 'Jan', players: 12 }, { month: 'Feb', players: 18 }, { month: 'Mar', players: 15 }, { month: 'Apr', players: 22 }, { month: 'May', players: 19 }] }>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
-                      <XAxis dataKey="month" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" />
-                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
-                      <Legend />
-                      <Line type="monotone" dataKey="players" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 3 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Player Ratings Distribution</h4>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[{ rating: '7-8', count: 15 }, { rating: '8-9', count: 25 }, { rating: '9-10', count: 8 }] }>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
-                      <XAxis dataKey="rating" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" />
-                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
-                      <Legend />
-                      <Bar dataKey="count" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Performance data will be available soon.</p>
               </div>
             </CardContent>
           </Card>
@@ -2046,65 +1962,9 @@ export default function Profile() {
               <CardDescription>Team performance and management metrics</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
-                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Matches Won</p>
-                      <p className="text-2xl font-bold">18</p>
-                    </div>
-                    <Trophy className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Goals Scored</p>
-                      <p className="text-2xl font-bold">45</p>
-                    </div>
-                    <Target className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Win Percentage</p>
-                      <p className="text-2xl font-bold">75%</p>
-                    </div>
-                    <TrendingUp className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Charts */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Season Performance</h4>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={[{ month: 'Jan', wins: 3 }, { month: 'Feb', wins: 4 }, { month: 'Mar', wins: 2 }, { month: 'Apr', wins: 5 }, { month: 'May', wins: 4 }] }>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
-                      <XAxis dataKey="month" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" />
-                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
-                      <Legend />
-                      <Line type="monotone" dataKey="wins" stroke="#10B981" strokeWidth={2} dot={{ r: 3 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Goals by Month</h4>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[{ month: 'Jan', goals: 8 }, { month: 'Feb', goals: 12 }, { month: 'Mar', goals: 6 }, { month: 'Apr', goals: 15 }, { month: 'May', goals: 4 }] }>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
-                      <XAxis dataKey="month" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" />
-                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
-                      <Legend />
-                      <Bar dataKey="goals" fill="#10B981" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Performance data will be available soon.</p>
               </div>
             </CardContent>
           </Card>
@@ -2121,65 +1981,9 @@ export default function Profile() {
               <CardDescription>Your performance metrics and statistics</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Total Activities</p>
-                      <p className="text-2xl font-bold">42</p>
-                    </div>
-                    <Calendar className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Success Rate</p>
-                      <p className="text-2xl font-bold">85%</p>
-                    </div>
-                    <TrendingUp className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-90">Achievements</p>
-                      <p className="text-2xl font-bold">12</p>
-                    </div>
-                    <Trophy className="w-8 h-8 opacity-80" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Charts */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Monthly Performance</h4>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={[{ month: 'Jan', score: 75 }, { month: 'Feb', score: 82 }, { month: 'Mar', score: 78 }, { month: 'Apr', score: 88 }, { month: 'May', score: 85 }] }>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
-                      <XAxis dataKey="month" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" />
-                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
-                      <Legend />
-                      <Line type="monotone" dataKey="score" stroke="#3B82F6" strokeWidth={2} dot={{ r: 3 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="h-64 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Activity Distribution</h4>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[{ category: 'Training', count: 15 }, { category: 'Matches', count: 8 }, { category: 'Events', count: 12 }, { category: 'Other', count: 7 }] }>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
-                      <XAxis dataKey="category" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" />
-                      <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', color: '#E5E7EB' }} />
-                      <Legend />
-                      <Bar dataKey="count" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Performance data will be available soon.</p>
               </div>
             </CardContent>
           </Card>
@@ -2234,14 +2038,14 @@ export default function Profile() {
                     <Award className="w-5 h-5 text-yellow-500" />
                     <div>
                       <p className="font-medium">Player of the Month</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">December 2024</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">December 2024</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                     <Star className="w-5 h-5 text-blue-500" />
                     <div>
                       <p className="font-medium">Top Scorer</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Last 3 games</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Last 3 games</p>
                     </div>
                   </div>
                 </div>
@@ -2285,34 +2089,34 @@ export default function Profile() {
               <div>
                 <h4 className="text-lg font-semibold mb-4">Top Performing Students</h4>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                         A
                       </div>
                       <div>
                         <p className="font-medium">jay kumar</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Forward • Age 16</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Forward • Age 16</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-green-600">Excellent</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">95% Progress</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">95% Progress</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                         S
                       </div>
                       <div>
                         <p className="font-medium"></p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Midfielder • Age 15</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Midfielder • Age 15</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-green-600">Very Good</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">88% Progress</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">88% Progress</p>
                     </div>
                   </div>
                 </div>
@@ -2365,34 +2169,34 @@ export default function Profile() {
               <div>
                 <h4 className="text-lg font-semibold mb-4">Key Players</h4>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                         M
                       </div>
                       <div>
                         <p className="font-medium">Mike Davis</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Captain • Midfielder</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Captain • Midfielder</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-green-600">Captain</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">8 Goals</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">8 Goals</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                         J
                       </div>
                       <div>
                         <p className="font-medium">John Smith</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Striker</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Striker</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-green-600">Top Scorer</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">15 Goals</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">15 Goals</p>
                     </div>
                   </div>
                 </div>
@@ -2445,34 +2249,34 @@ export default function Profile() {
               <div>
                 <h4 className="text-lg font-semibold mb-4">Top Prospects</h4>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                         R
                       </div>
                       <div>
                         <p className="font-medium">Ryan Martinez</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Forward • Age 19</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Forward • Age 19</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-yellow-600">High Priority</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Rating: 9.2/10</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Rating: 9.2/10</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                         L
                       </div>
                       <div>
                         <p className="font-medium">Liam Thompson</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Midfielder • Age 20</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Midfielder • Age 20</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-green-600">Medium Priority</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Rating: 8.5/10</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Rating: 8.5/10</p>
                     </div>
                   </div>
                 </div>
@@ -2495,18 +2299,18 @@ export default function Profile() {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6"
+                className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-md w-full p-6"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                     {user?.role === 'Player' || user?.role === 'player' ? 'Apply to Organization' : 'Invite Player'}
                   </h3>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleCloseInviteModal}
-                    className="text-gray-500 hover:text-gray-700"
+                    className="text-gray-500 hover:text-slate-700"
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -2577,7 +2381,7 @@ export default function Profile() {
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl max-h-[90vh] w-full overflow-hidden"
+                className="bg-white dark:bg-slate-900 rounded-lg max-w-4xl max-h-[90vh] w-full overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="relative">
@@ -2658,7 +2462,7 @@ export default function Profile() {
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6"
+                className="bg-white dark:bg-slate-900 rounded-lg max-w-md w-full p-6"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="text-center">
@@ -2666,12 +2470,12 @@ export default function Profile() {
                     <QrCode className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-xl font-semibold mb-2">Share Profile</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  <p className="text-slate-600 dark:text-slate-400 mb-6">
                     Share your profile with others using the QR code or link below
                   </p>
                   
                   {/* QR Code Display */}
-                  <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-8 mb-6 flex items-center justify-center">
+                  <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-8 mb-6 flex items-center justify-center">
                     {isGeneratingQR ? (
                       <div className="text-center">
                         <Loader2 className="w-8 h-8 text-gray-400 mx-auto mb-2 animate-spin" />
@@ -2696,8 +2500,8 @@ export default function Profile() {
                   </div>
                   
                   {/* Profile Link */}
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Profile Link:</p>
+                  <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 mb-6">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Profile Link:</p>
                     <div className="flex items-center space-x-2">
                       <Input
                         value={`${window.location.origin}/profile/${user?.id}`}

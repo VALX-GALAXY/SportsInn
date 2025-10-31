@@ -199,7 +199,7 @@ export default function TournamentDetails() {
       case 'full':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+        return 'bg-slate-100 text-gray-800 dark:bg-slate-950 dark:text-slate-100'
     }
   }
 
@@ -314,10 +314,10 @@ export default function TournamentDetails() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600 dark:text-gray-400">Loading tournament details...</p>
+          <p className="text-slate-600 dark:text-slate-400">Loading tournament details...</p>
         </div>
       </div>
     )
@@ -325,13 +325,13 @@ export default function TournamentDetails() {
 
   if (!tournament) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center">
           <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
             Tournament Not Found
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
             The tournament you're looking for doesn't exist or has been removed.
           </p>
           <Button onClick={() => navigate('/tournaments')}>
@@ -343,14 +343,14 @@ export default function TournamentDetails() {
   }
 
   return (
-    <PageTransition className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <PageTransition className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         {/* Header */}
         <div className="mb-6">
           <Button
             onClick={() => navigate('/tournaments')}
             variant="ghost"
-            className="mb-4 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+            className="mb-4 text-slate-600 hover:text-gray-900 dark:text-slate-100 dark:hover:text-white"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Tournaments
@@ -361,11 +361,11 @@ export default function TournamentDetails() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Tournament Header */}
-            <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+            <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
               <CardHeader className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
                       {tournament.title}
                     </h1>
                     <div className="flex items-center space-x-2 mb-4">
@@ -377,7 +377,7 @@ export default function TournamentDetails() {
                         {tournament.type}
                       </Badge>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-400 text-lg">
+                    <p className="text-slate-600 dark:text-slate-400 text-lg">
                       {tournament.description}
                     </p>
                   </div>
@@ -393,9 +393,9 @@ export default function TournamentDetails() {
             </Card>
 
             {/* Tournament Details */}
-            <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+            <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
               <CardHeader>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Tournament Details</h2>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Tournament Details</h2>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -451,21 +451,21 @@ export default function TournamentDetails() {
             </Card>
 
             {/* Registration Status */}
-            <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+            <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
               <CardHeader>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Registration Status</h2>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Registration Status</h2>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">
+                    <span className="text-slate-600 dark:text-slate-400">
                       Teams Registered: {tournament.registeredTeams}/{tournament.maxTeams}
                     </span>
                     <span className="text-sm text-gray-500">
                       {Math.round((tournament.registeredTeams / tournament.maxTeams) * 100)}% Full
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                  <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-3">
                     <div 
                       className="bg-blue-600 h-3 rounded-full transition-all duration-300" 
                       style={{ width: `${(tournament.registeredTeams / tournament.maxTeams) * 100}%` }}
@@ -477,16 +477,16 @@ export default function TournamentDetails() {
 
             {/* Requirements */}
             {tournament.requirements && tournament.requirements.length > 0 && (
-              <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+              <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
                 <CardHeader>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Requirements</h2>
+                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Requirements</h2>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
                     {tournament.requirements.map((requirement, index) => (
                       <li key={index} className="flex items-center space-x-2">
                         <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                        <span className="text-gray-700 dark:text-gray-300">{requirement}</span>
+                        <span className="text-slate-700 dark:text-slate-100">{requirement}</span>
                       </li>
                     ))}
                   </ul>
@@ -498,9 +498,9 @@ export default function TournamentDetails() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Apply Section */}
-            <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+            <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                   Apply to Tournament
                 </h3>
                 {getApplicationButton()}
@@ -508,9 +508,9 @@ export default function TournamentDetails() {
             </Card>
 
             {/* Quick Actions */}
-            <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+            <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
               <CardHeader>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Quick Actions</h3>
               </CardHeader>
               <CardContent className="space-y-2">
                 <Button variant="outline" className="w-full justify-start">
@@ -529,21 +529,21 @@ export default function TournamentDetails() {
             </Card>
 
             {/* Tournament Stats */}
-            <Card className="bg-white dark:bg-gray-800 shadow-sm border-0">
+            <Card className="border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg shadow-sm">
               <CardHeader>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Tournament Stats</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Tournament Stats</h3>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Age Group</span>
+                  <span className="text-slate-600 dark:text-slate-400">Age Group</span>
                   <span className="font-medium">{tournament.ageGroup || 'All Ages'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Skill Level</span>
+                  <span className="text-slate-600 dark:text-slate-400">Skill Level</span>
                   <span className="font-medium">{tournament.skillLevel || 'All Levels'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Duration</span>
+                  <span className="text-slate-600 dark:text-slate-400">Duration</span>
                   <span className="font-medium">
                     {Math.ceil((new Date(tournament.endDate) - new Date(tournament.startDate)) / (1000 * 60 * 60 * 24))} days
                   </span>
@@ -556,14 +556,14 @@ export default function TournamentDetails() {
         {/* Apply Modal */}
         {showApplyModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="bg-white dark:bg-slate-900 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
                 Apply to {tournament.title}
               </h2>
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-2">
                     Team Name *
                   </label>
                   <input
@@ -571,10 +571,10 @@ export default function TournamentDetails() {
                     value={applicationData.teamName}
                     onChange={(e) => handleInputChange('teamName', e.target.value)}
                     placeholder="Enter your team name"
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 dark:bg-gray-700 dark:text-white ${
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 dark:bg-slate-800 dark:text-white ${
                       validationErrors.teamName 
                         ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
+                        : 'border-gray-300 dark:border-slate-700 focus:ring-blue-500'
                     }`}
                   />
                   {validationErrors.teamName && (
@@ -583,7 +583,7 @@ export default function TournamentDetails() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-2">
                     Contact Email *
                   </label>
                   <input
@@ -591,10 +591,10 @@ export default function TournamentDetails() {
                     value={applicationData.contactEmail}
                     onChange={(e) => handleInputChange('contactEmail', e.target.value)}
                     placeholder="Enter contact email"
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 dark:bg-gray-700 dark:text-white ${
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 dark:bg-slate-800 dark:text-white ${
                       validationErrors.contactEmail 
                         ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
+                        : 'border-gray-300 dark:border-slate-700 focus:ring-blue-500'
                     }`}
                   />
                   {validationErrors.contactEmail && (
@@ -603,7 +603,7 @@ export default function TournamentDetails() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-2">
                     Contact Phone *
                   </label>
                   <input
@@ -611,10 +611,10 @@ export default function TournamentDetails() {
                     value={applicationData.contactPhone}
                     onChange={(e) => handlePhoneChange(e.target.value)}
                     placeholder="Enter contact phone (e.g., +91 98765 43210)"
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 dark:bg-gray-700 dark:text-white ${
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 dark:bg-slate-800 dark:text-white ${
                       validationErrors.contactPhone 
                         ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
+                        : 'border-gray-300 dark:border-slate-700 focus:ring-blue-500'
                     }`}
                   />
                   {validationErrors.contactPhone && (
@@ -623,7 +623,7 @@ export default function TournamentDetails() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-100 mb-2">
                     Additional Information
                   </label>
                   <textarea
@@ -631,14 +631,14 @@ export default function TournamentDetails() {
                     onChange={(e) => setApplicationData(prev => ({ ...prev, additionalInfo: e.target.value }))}
                     placeholder="Any additional information about your team..."
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:text-white"
                   />
                 </div>
 
                 {/* Tournament Details */}
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Tournament Details</h4>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-lg">
+                  <h4 className="font-medium text-slate-900 dark:text-white mb-2">Tournament Details</h4>
+                  <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
                     <div>Entry Fee: {formatCurrency(tournament.entryFee)}</div>
                     <div>Team Size: {tournament.teamSize} players</div>
                     <div>Prize Pool: {formatCurrency(tournament.prizePool)}</div>
