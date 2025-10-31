@@ -184,15 +184,21 @@ export default function FeedSimple() {
     try {
       setIsLiking(prev => new Set([...prev, postId]))
       
-      const updatedPost = await feedService.likePost(postId)
+      const result = await feedService.likePost(postId)
       
-      setPosts(prev => prev.map(post => 
-        post.id === postId ? updatedPost : post
-      ))
+      setPosts(prev => prev.map(post => {
+        if (post.id !== postId) return post
+        const nowLiked = !post.liked
+        return {
+          ...post,
+          liked: nowLiked,
+          stats: { ...post.stats, likes: typeof result.likesCount === 'number' ? result.likesCount : post.stats.likes }
+        }
+      }))
       
       setLikedPosts(prev => {
         const newSet = new Set(prev)
-        if (updatedPost.liked) {
+        if (!prev.has(postId)) {
           newSet.add(postId)
         } else {
           newSet.delete(postId)

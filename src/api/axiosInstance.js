@@ -1,8 +1,8 @@
 import axios from 'axios'
-import { clearAuthData, isTokenExpired, validateTokenFormat, cleanupInvalidTokens } from '../utils/tokenUtils'
+import { isTokenExpired, validateTokenFormat } from '../utils/tokenUtils'
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000' ||'https://sportsinn-backend.onrender.com',
+  baseURL: import.meta.env.VITE_API_URL ||'https://sportsinn-backend.onrender.com',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -28,27 +28,21 @@ const processQueue = (error, token = null) => {
 // Request interceptor to attach JWT token
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Clean up invalid tokens before making requests
-    cleanupInvalidTokens()
-    
     const token = localStorage.getItem('token')
     console.log('Axios request interceptor - Token:', token ? 'Present' : 'Missing')
     console.log('Axios request interceptor - URL:', config.url)
     console.log('Axios request interceptor - Is refreshing:', isRefreshing)
     
     if (token) {
-      // Validate token format before using
+      // Validate token format before using; if invalid, skip attaching but don't clear storage here
       if (!validateTokenFormat(token)) {
-        console.warn('Invalid token format, clearing auth data')
-        clearAuthData()
+        console.warn('Invalid token format detected; skipping Authorization header')
         return config
       }
       
-      // Check if token is expired
+      // Even if token is expired, attach it to trigger a 401 and let the response interceptor handle refresh
       if (isTokenExpired(token)) {
-        console.warn('Token is expired, clearing auth data')
-        clearAuthData()
-        return config
+        console.warn('Token appears expired; proceeding to let response interceptor refresh')
       }
       
       config.headers.Authorization = `Bearer ${token}`
@@ -98,7 +92,7 @@ axiosInstance.interceptors.response.use(
         
         if (refreshToken) {
           const response = await axios.post(
-            `${import.meta.env.VITE_API_URL || 'https://sportsinn-backend.onrender.com' || 'http://localhost:3000'}/api/auth/refresh`,
+            `${import.meta.env.VITE_API_URL || 'https://sportsinn-backend.onrender.com' }/api/auth/refresh`,
             { refreshToken }
           )
           
@@ -182,7 +176,7 @@ axiosInstance.interceptors.response.use(
         
         try {
           const response = await axios.post(
-            `${import.meta.env.VITE_API_URL || 'https://sportsinn-backend.onrender.com' || 'http://localhost:3000'}/api/auth/refresh`,
+            `${import.meta.env.VITE_API_URL || 'https://sportsinn-backend.onrender.com'}/api/auth/refresh`,
             { refreshToken }
           )
           

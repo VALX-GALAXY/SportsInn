@@ -10,163 +10,75 @@ class StatsService {
   async getPlayerStats(userId) {
     try {
       console.log('Fetching player stats for user:', userId)
-      
-      // Try to fetch from backend first
-      try {
-        console.log('Attempting backend API call to:', `/api/dashboard/${userId}`)
-        const response = await axiosInstance.get(`/api/dashboard/${userId}`)
-        
-        console.log('Backend response status:', response.status)
-        console.log('Backend response data:', response.data)
-        
-        if (response.data && response.data.success) {
-          const playerStats = this.transformPlayerStats(response.data.data)
-          console.log(' Player stats fetched from backend:', playerStats)
-          return playerStats
-        } else {
-          console.warn('Backend returned success: false')
-        }
-      } catch (error) {
-        console.warn('Backend API call failed:', error.message)
-        console.warn('Error details:', error.response?.data || error.message)
+      // Align with backend: GET /api/users/:id/stats returns { success, data }
+      const response = await axiosInstance.get(`/api/users/${userId}/stats`)
+      const payload = response.data?.data || {}
+      // Safe mapping; compute acceptance if fields present
+      const tournamentsApplied = Number(payload.tournamentsApplied ?? payload.appliedCount ?? 0)
+      const selectedCount = Number(payload.selectedCount ?? payload.acceptedCount ?? 0)
+      const connectionsCount = Number(payload.connectionCount ?? payload.connections ?? 0)
+      const acceptedPercentage = tournamentsApplied > 0 ? Math.round((selectedCount / tournamentsApplied) * 100) : 0
+      return {
+        tournamentsApplied,
+        acceptedPercentage,
+        connectionsCount,
       }
-      
-      // Fallback to mock data
-      console.log('Using mock data for player stats')
-      const storedStats = this.getStoredStats()
-      const playerStats = storedStats.players[userId] || this.generatePlayerStats(userId)
-      
-      // Update stored stats
-      storedStats.players[userId] = playerStats
-      this.saveStats(storedStats)
-      
-      return playerStats
     } catch (error) {
-      console.error('Error fetching player stats:', error)
-      throw new Error('Failed to fetch player statistics')
+      console.warn('Player stats API unavailable or failed:', error.message)
+      // Return minimal zeros; UI should not render charts/dummy data
+      return {
+        tournamentsApplied: 0,
+        acceptedPercentage: 0,
+        connectionsCount: 0,
+      }
     }
   }
 
   // Get academy statistics
   async getAcademyStats(userId) {
     try {
-      console.log('Fetching academy stats for user:', userId)
-      
-      // Try to fetch from backend first
-      try {
-        console.log('Attempting backend API call to:', `/api/dashboard/${userId}`)
-        const response = await axiosInstance.get(`/api/dashboard/${userId}`)
-        
-        console.log('Backend response status:', response.status)
-        console.log('Backend response data:', response.data)
-        
-        if (response.data && response.data.success) {
-          const academyStats = this.transformAcademyStats(response.data.data)
-          console.log(' Academy stats fetched from backend:', academyStats)
-          return academyStats
-        } else {
-          console.warn('Backend returned success: false')
-        }
-      } catch (error) {
-        console.warn('Backend API call failed:', error.message)
-        console.warn('Error details:', error.response?.data || error.message)
+      const response = await axiosInstance.get(`/api/dashboard/${userId}`)
+      const d = response.data?.data || {}
+      return {
+        playersScouted: Number(d.trainees ?? 0),
+        tournamentsHosted: Number(d.tournamentsHosted ?? 0),
+        selectionRate: Number(d.selectionRate ?? 0),
+        totalApplications: Number(d.totalApplications ?? 0),
       }
-      
-      // Fallback to mock data
-      console.log('Using mock data for academy stats')
-      const storedStats = this.getStoredStats()
-      const academyStats = storedStats.academies[userId] || this.generateAcademyStats(userId)
-      
-      // Update stored stats
-      storedStats.academies[userId] = academyStats
-      this.saveStats(storedStats)
-      
-      return academyStats
     } catch (error) {
-      console.error('Error fetching academy stats:', error)
-      throw new Error('Failed to fetch academy statistics')
+      console.warn('Academy stats API unavailable or failed:', error.message)
+      return { playersScouted: 0, tournamentsHosted: 0, selectionRate: 0, totalApplications: 0 }
     }
   }
 
   // Get scout statistics
   async getScoutStats(userId) {
     try {
-      console.log('Fetching scout stats for user:', userId)
-      
-      // Try to fetch from backend first
-      try {
-        console.log('Attempting backend API call to:', `/api/dashboard/${userId}`)
-        const response = await axiosInstance.get(`/api/dashboard/${userId}`)
-        
-        console.log('Backend response status:', response.status)
-        console.log('Backend response data:', response.data)
-        
-        if (response.data && response.data.success) {
-          const scoutStats = this.transformScoutStats(response.data.data)
-          console.log('Scout stats fetched from backend:', scoutStats)
-          return scoutStats
-        } else {
-          console.warn('Backend returned success: false')
-        }
-      } catch (error) {
-        console.warn('Backend API call failed:', error.message)
-        console.warn('Error details:', error.response?.data || error.message)
+      const response = await axiosInstance.get(`/api/dashboard/${userId}`)
+      const d = response.data?.data || {}
+      return {
+        applicationsReviewed: Number(d.applicationsReviewed ?? 0),
+        decisionsMade: Number(d.decisionsMade ?? 0),
+        playersScouted: Number(d.playersScouted ?? 0),
       }
-      
-      // Fallback to mock data
-      console.log('Using mock data for scout stats')
-      const storedStats = this.getStoredStats()
-      const scoutStats = storedStats.scouts[userId] || this.generateScoutStats(userId)
-      
-      // Update stored stats
-      storedStats.scouts[userId] = scoutStats
-      this.saveStats(storedStats)
-      
-      return scoutStats
     } catch (error) {
-      console.error('Error fetching scout stats:', error)
-      throw new Error('Failed to fetch scout statistics')
+      console.warn('Scout stats API unavailable or failed:', error.message)
+      return { applicationsReviewed: 0, decisionsMade: 0, playersScouted: 0 }
     }
   }
 
   // Get club statistics
   async getClubStats(userId) {
     try {
-      console.log('Fetching club stats for user:', userId)
-      
-      // Try to fetch from backend first
-      try {
-        console.log('Attempting backend API call to:', `/api/dashboard/${userId}`)
-        const response = await axiosInstance.get(`/api/dashboard/${userId}`)
-        
-        console.log('Backend response status:', response.status)
-        console.log('Backend response data:', response.data)
-        
-        if (response.data && response.data.success) {
-          const clubStats = this.transformClubStats(response.data.data)
-          console.log('Club stats fetched from backend:', clubStats)
-          return clubStats
-        } else {
-          console.warn('Backend returned success: false')
-        }
-      } catch (error) {
-        console.warn('Backend API call failed:', error.message)
-        console.warn('Error details:', error.response?.data || error.message)
+      const response = await axiosInstance.get(`/api/dashboard/${userId}`)
+      const d = response.data?.data || {}
+      return {
+        tournamentsHosted: Number(d.tournamentsHosted ?? 0),
+        playersRecruited: Number(d.playersRecruited ?? 0),
       }
-      
-      // Fallback to mock data
-      console.log('Using mock data for club stats')
-      const storedStats = this.getStoredStats()
-      const clubStats = storedStats.clubs[userId] || this.generateClubStats(userId)
-      
-      // Update stored stats
-      storedStats.clubs[userId] = clubStats
-      this.saveStats(storedStats)
-      
-      return clubStats
     } catch (error) {
-      console.error('Error fetching club stats:', error)
-      throw new Error('Failed to fetch club statistics')
+      console.warn('Club stats API unavailable or failed:', error.message)
+      return { tournamentsHosted: 0, playersRecruited: 0 }
     }
   }
 

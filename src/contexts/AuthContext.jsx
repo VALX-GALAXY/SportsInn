@@ -97,7 +97,9 @@ export const AuthProvider = ({ children }) => {
           if (timeUntilExpiry < 300) {
             console.log('AuthContext - Token expiring soon, refreshing...')
             
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/refresh`, {
+            // Use the same base URL as axiosInstance and handle both response shapes
+            const refreshUrl = `${import.meta.env.VITE_API_URL || 'https://sportsinn-backend.onrender.com'}/api/auth/refresh`
+            const response = await fetch(refreshUrl, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -106,13 +108,24 @@ export const AuthProvider = ({ children }) => {
             })
             
             if (response.ok) {
-              const data = await response.json()
-              const { accessToken, refreshToken: newRefreshToken } = data.data
-              
-              localStorage.setItem('token', accessToken)
-              localStorage.setItem('refreshToken', newRefreshToken)
-              
-              console.log('AuthContext - Token refreshed successfully')
+              const responseData = await response.json()
+              let newAccessToken, newRefreshToken
+              if (responseData.data) {
+                newAccessToken = responseData.data.accessToken || responseData.data.token
+                newRefreshToken = responseData.data.refreshToken
+              } else {
+                newAccessToken = responseData.accessToken || responseData.token
+                newRefreshToken = responseData.refreshToken
+              }
+              if (newAccessToken) {
+                localStorage.setItem('token', newAccessToken)
+                if (newRefreshToken) {
+                  localStorage.setItem('refreshToken', newRefreshToken)
+                }
+                console.log('AuthContext - Token refreshed successfully')
+              } else {
+                console.error('AuthContext - Token refresh response missing access token')
+              }
             } else {
               console.error('AuthContext - Token refresh failed')
               // Don't logout immediately, let the axios interceptor handle it

@@ -43,6 +43,11 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Ignore non-http(s) schemes like chrome-extension:// to prevent Cache.put errors
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
   // Skip non-GET requests
   if (request.method !== 'GET') {
     return;
@@ -78,7 +83,11 @@ async function cacheFirst(request, cacheName) {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
       const cache = await caches.open(cacheName);
-      cache.put(request, networkResponse.clone());
+      // Only cache http(s) requests
+      const reqUrl = new URL(request.url);
+      if (reqUrl.protocol.startsWith('http')) {
+        cache.put(request, networkResponse.clone());
+      }
     }
     return networkResponse;
   } catch (error) {
@@ -93,7 +102,10 @@ async function networkFirst(request) {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
       const cache = await caches.open(DYNAMIC_CACHE);
-      cache.put(request, networkResponse.clone());
+      const reqUrl = new URL(request.url);
+      if (reqUrl.protocol.startsWith('http')) {
+        cache.put(request, networkResponse.clone());
+      }
     }
     return networkResponse;
   } catch (error) {
@@ -119,7 +131,10 @@ async function staleWhileRevalidate(request) {
   
   const fetchPromise = fetch(request).then((networkResponse) => {
     if (networkResponse.ok) {
-      cache.put(request, networkResponse.clone());
+      const reqUrl = new URL(request.url);
+      if (reqUrl.protocol.startsWith('http')) {
+        cache.put(request, networkResponse.clone());
+      }
     }
     return networkResponse;
   }).catch(() => cachedResponse);

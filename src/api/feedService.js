@@ -499,13 +499,13 @@ class FeedService {
     try {
       console.log('FeedService.likePost called with:', postId)
       
-      const response = await axiosInstance.post(`/api/feed/${postId}/toggle-like`)
+      // Backend expects PUT on /:id/toggle-like
+      const response = await axiosInstance.put(`/api/feed/${postId}/toggle-like`)
       
       console.log('Backend likePost response:', response.data)
       
       return {
-        likesCount: response.data.data.likesCount,
-        liked: response.data.data.likesCount > 0 // This would need to be determined by checking if current user liked
+        likesCount: response.data?.data?.likesCount ?? 0
       }
     } catch (error) {
       console.error('FeedService.likePost error:', error)

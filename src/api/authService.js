@@ -6,12 +6,19 @@ class AuthService {
   async login(credentials) {
     try {
       const response = await axiosInstance.post('/api/auth/login', credentials)
-      const { data } = response.data  // Backend returns { success: true, data: { accessToken, refreshToken, user }, message: "..." }
-      const { accessToken, refreshToken, user } = data
+      // Support both { success, data: { accessToken, refreshToken, user } } and { accessToken, refreshToken, user }
+      const payload = response.data?.data ?? response.data
+      const accessToken = payload?.accessToken || payload?.token
+      const refreshToken = payload?.refreshToken
+      const user = payload?.user
+      
+      if (!accessToken || !user) {
+        throw new Error('Invalid login response: missing token or user')
+      }
       
       // Store auth data
       localStorage.setItem('token', accessToken)
-      localStorage.setItem('refreshToken', refreshToken)
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken)
       localStorage.setItem('user', JSON.stringify(user))
       
       return { user, token: accessToken, refreshToken }
@@ -34,18 +41,24 @@ class AuthService {
   async signup(userData) {
     try {
       const response = await axiosInstance.post('/api/auth/signup', userData)
-      const { data: user } = response.data  
+      const user = response.data?.data || response.data?.user || response.data
       
       // Backend signup doesn't return tokens, so we need to login to get them
       const loginResponse = await axiosInstance.post('/api/auth/login', {
         email: userData.email,
         password: userData.password
       })
-      const { accessToken, refreshToken } = loginResponse.data
+      const loginPayload = loginResponse.data?.data ?? loginResponse.data
+      const accessToken = loginPayload?.accessToken || loginPayload?.token
+      const refreshToken = loginPayload?.refreshToken
+      
+      if (!accessToken || !user) {
+        throw new Error('Invalid signup/login response: missing token or user')
+      }
       
       // Store auth data
       localStorage.setItem('token', accessToken)
-      localStorage.setItem('refreshToken', refreshToken)
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken)
       localStorage.setItem('user', JSON.stringify(user))
       
       return { user, token: accessToken, refreshToken }
@@ -76,11 +89,18 @@ class AuthService {
       })
       
       console.log('authService.googleLogin - Google OAuth successful')
-      const { user, accessToken, refreshToken } = response.data.data
+      const payload = response.data?.data ?? response.data
+      const user = payload?.user
+      const accessToken = payload?.accessToken || payload?.token
+      const refreshToken = payload?.refreshToken
+      
+      if (!accessToken || !user) {
+        throw new Error('Invalid Google login response: missing token or user')
+      }
       
       // Store auth data
       localStorage.setItem('token', accessToken)
-      localStorage.setItem('refreshToken', refreshToken)
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken)
       localStorage.setItem('user', JSON.stringify(user))
       
       return { user, token: accessToken, refreshToken }
@@ -112,10 +132,16 @@ class AuthService {
       }
       
       const response = await axiosInstance.post('/api/auth/refresh', { refreshToken })
-      const { token, refreshToken: newRefreshToken } = response.data
+      const payload = response.data?.data ?? response.data
+      const token = payload?.accessToken || payload?.token
+      const newRefreshToken = payload?.refreshToken
+      
+      if (!token) {
+        throw new Error('Invalid refresh response: missing access token')
+      }
       
       localStorage.setItem('token', token)
-      localStorage.setItem('refreshToken', newRefreshToken)
+      if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken)
       
       return { token, refreshToken: newRefreshToken }
     } catch (error) {
