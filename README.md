@@ -17,10 +17,13 @@ This backend is now live-ready with strict CORS + Helmet security, Cloudinary up
 * Tournament module
 * Applications / Invites
 * Reports & moderation (admin)
-* Profile picture upload endpoint **(New)**
-* Get profile posts endpoint **(New)**
-* Notification unread-count endpoint **(New)**
-* Mark-all-read endpoint **(New)**
+* Profile picture upload endpoint
+* Get profile posts endpoint
+* Notification unread-count endpoint
+* Mark-all-read endpoint
+* Enhanced User Model with gender and sport fields **(New)**
+* Sport-specific roles (e.g., Cricket roles) **(New)**
+* Improved validation for sport-specific fields **(New)**
 
 ---
 
@@ -171,12 +174,39 @@ After that you can log in via `/api/auth/login`.
 
 ### Authentication
 
-#### Regular Signup
+#### Regular Signup (Cricket Player)
 
 ```bash
 curl -X POST http://localhost:3000/api/auth/signup \
   -H "Content-Type: application/json" \
-  -d '{"name":"Ashu","email":"ashu@test.com","password":"123456","role":"player","age":21,"playingRole":"batsman"}'
+  -d '{
+    "name": "Ashu",
+    "email": "ashu@test.com",
+    "password": "123456",
+    "role": "player",
+    "age": 21,
+    "playingRole": "batsman",
+    "sport": "Cricket",
+    "gender": "Male",
+    "cricketRole": "Batsman"
+  }'
+```
+
+#### Regular Signup (Other Sports)
+
+```bash
+curl -X POST http://localhost:3000/api/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John",
+    "email": "john@test.com",
+    "password": "123456",
+    "role": "player",
+    "age": 23,
+    "playingRole": "Forward",
+    "sport": "Football",
+    "gender": "Male"
+  }'
 ```
 
 #### Admin Signup

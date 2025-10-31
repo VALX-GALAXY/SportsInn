@@ -1,7 +1,8 @@
 const roleFields = require("./roleFields");
 
 function validateSignup(body) {
-  const { role } = body;
+  const { role, sport, gender, cricketRole } = body;
+  
   if (!role || !roleFields[role]) {
     return "Invalid role provided";
   }
@@ -15,6 +16,26 @@ function validateSignup(body) {
   }
 
   if (!body.password) return "Password is required";
+
+  // Validate gender if provided
+  if (gender && !['Male', 'Female', 'Other', 'Prefer not to say'].includes(gender)) {
+    return "Invalid gender value";
+  }
+
+  // Validate sport (required)
+  if (!sport) {
+    return "Sport is required";
+  }
+
+  // Validate cricketRole if sport is Cricket
+  if (sport === 'Cricket') {
+    if (!cricketRole) {
+      return "Cricket role is required when sport is Cricket";
+    }
+    if (!['Batsman', 'Bowler', 'All-Rounder', 'Wicket-Keeper'].includes(cricketRole)) {
+      return "Invalid cricket role";
+    }
+  }
 
   return null;
 }

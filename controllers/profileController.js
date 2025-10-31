@@ -26,6 +26,44 @@ async function updateProfile(req, res, next) {
 
     // Handle uploaded image URL
     if (req.body.profilePic) updates.profilePic = req.body.profilePic;
+    
+    // Validate gender if provided
+    if (req.body.gender) {
+      if (!['Male', 'Female', 'Other', 'Prefer not to say'].includes(req.body.gender)) {
+        return res.status(400).json({ success: false, message: "Invalid gender value" });
+      }
+      updates.gender = req.body.gender;
+    }
+
+    // Validate sport and cricketRole if provided
+    if (req.body.sport) {
+      updates.sport = req.body.sport;
+      
+      // If sport is being changed to Cricket, validate cricketRole
+      if (req.body.sport === 'Cricket') {
+        const cricketRole = req.body.cricketRole;
+        if (!cricketRole) {
+          return res.status(400).json({ success: false, message: "Cricket role is required when sport is Cricket" });
+        }
+        if (!['Batsman', 'Bowler', 'All-Rounder', 'Wicket-Keeper'].includes(cricketRole)) {
+          return res.status(400).json({ success: false, message: "Invalid cricket role" });
+        }
+        updates.cricketRole = cricketRole;
+      } else {
+        // If sport is being changed to something else, remove cricketRole
+        updates.cricketRole = undefined;
+      }
+    } else if (req.body.cricketRole) {
+      // If trying to update cricketRole without sport context, need to check current sport
+      const currentUser = await User.findById(id);
+      if (currentUser.sport !== 'Cricket') {
+        return res.status(400).json({ success: false, message: "Cricket role can only be set when sport is Cricket" });
+      }
+      if (!['Batsman', 'Bowler', 'All-Rounder', 'Wicket-Keeper'].includes(req.body.cricketRole)) {
+        return res.status(400).json({ success: false, message: "Invalid cricket role" });
+      }
+      updates.cricketRole = req.body.cricketRole;
+    }
 
     // Allow clearing profilePic if explicitly sent as empty string
     if (req.body.profilePic === "") {

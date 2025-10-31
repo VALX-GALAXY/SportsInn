@@ -9,6 +9,17 @@ const userSchema = new mongoose.Schema({
   },
   googleId: { type: String, default: null },
   role: { type: String, enum: ["player", "academy", "scout", "admin"], required: true },
+  gender: { 
+    type: String, 
+    enum: ['Male', 'Female', 'Other', 'Prefer not to say'],
+    default: 'Prefer not to say'
+  },
+  sport: { type: String, required: true },
+  cricketRole: {
+    type: String,
+    enum: ['Batsman', 'Bowler', 'All-Rounder', 'Wicket-Keeper'],
+    required: function() { return this.sport === 'Cricket'; }
+  },
   isAdmin: { type: Boolean, default: false },
   gallery: { type: [String], default: [] },
   profilePic: { type: String, default: "" },

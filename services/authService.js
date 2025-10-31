@@ -25,8 +25,18 @@ async function signup(body) {
   const existing = await User.findOne({ email: body.email });
   if (existing) return { error: "Email already exists" };
 
+  const { gender = 'Prefer not to say', sport, cricketRole } = body;
   const passwordHash = await bcrypt.hash(body.password, 10);
-  const user = new User({ ...body, passwordHash });
+  
+  const userData = {
+    ...body,
+    passwordHash,
+    gender,
+    sport,
+    cricketRole: sport === 'Cricket' ? cricketRole : undefined
+  };
+  
+  const user = new User(userData);
   await user.save();
 
   return { user: { id: user._id, email: user.email, role: user.role, name: user.name } };
@@ -157,20 +167,25 @@ async function logout(refreshToken) {
 
 
 
-async function loginWithGoogle({ googleId, email, name, picture, role }) {
+async function loginWithGoogle({ googleId, email, name, picture, role, gender, sport, cricketRole }) {
   if (!email) return { error: "Email missing from Google profile" };
 
   // try find user by googleId or email
   let user = await User.findOne({ $or: [{ googleId }, { email }] });
 
   if (!user) {
+    if (!sport) return { error: "Sport is required for registration" };
+    
     // create new user
     const newUser = {
       name: name || (email.split('@')[0]),
       email,
       role: role || "player",
       profilePic: picture || "",
-      googleId
+      googleId,
+      gender: gender || 'Prefer not to say',
+      sport,
+      cricketRole: sport === 'Cricket' ? cricketRole : undefined
     };
     user = await User.create(newUser);
   } else {
