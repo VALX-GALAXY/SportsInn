@@ -141,7 +141,7 @@ export default function Login() {
         <Card className="shadow-2xl border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg">
           <CardHeader className="space-y-2 px-4 sm:px-6 pt-4 sm:pt-6">
             <CardTitle className="text-2xl sm:text-3xl font-extrabold text-center bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-600 dark:via-emerald-400 dark:to-blue-400 bg-clip-text text-transparent animate-pulse">
-              Welcome to SportsIn
+              Welcome to SportsInn
             </CardTitle>
             <CardDescription className="text-center text-slate-800 dark:text-slate-100 text-base font-medium">
               Enter your credentials to join the action
