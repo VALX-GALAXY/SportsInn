@@ -84,7 +84,35 @@ async function createPost(user, body) {
   await post.save();
   // invalidate cache after DB write
   invalidateFeedCache();
-  return post;
+  
+  // Populate authorId before returning to match frontend expectations
+  const populatedPost = await Post.findById(post._id)
+    .populate("authorId", "name role profilePic")
+    .lean();
+  
+  // Ensure we return a properly structured post with populated author
+  return {
+    _id: populatedPost._id,
+    authorId: populatedPost.authorId ? {
+      _id: populatedPost.authorId._id,
+      name: populatedPost.authorId.name || user.name || 'Unknown User',
+      role: populatedPost.authorId.role || user.role || '',
+      profilePic: populatedPost.authorId.profilePic || user.profilePic || null
+    } : {
+      _id: user._id,
+      name: user.name || 'Unknown User',
+      role: user.role || '',
+      profilePic: user.profilePic || null
+    },
+    role: populatedPost.role || user.role || '',
+    caption: populatedPost.caption || "",
+    mediaUrl: populatedPost.mediaUrl || null,
+    mediaType: populatedPost.mediaType || null,
+    likes: populatedPost.likes || [],
+    comments: populatedPost.comments || [],
+    createdAt: populatedPost.createdAt,
+    updatedAt: populatedPost.updatedAt
+  };
 }
 
 async function getFeed(filters = {}, page = 1, limit = 10) {
@@ -236,6 +264,41 @@ async function addComment(user, postId, text, io) {
   invalidateFeedCache();
   await post.save();
 
+  // Get the saved post with populated comment userId and convert to plain object
+  const populatedPost = await Post.findById(postId)
+    .populate("comments.userId", "name role profilePic")
+    .lean(); // Use lean() to get plain JavaScript objects instead of Mongoose documents
+  
+  const savedComment = populatedPost.comments[populatedPost.comments.length - 1];
+  
+  // Check if userId was properly populated (should be an object, not just an ObjectId)
+  let populatedUserId = null;
+  if (savedComment.userId && typeof savedComment.userId === 'object' && savedComment.userId._id) {
+    // userId is properly populated
+    populatedUserId = {
+      _id: savedComment.userId._id,
+      name: savedComment.userId.name || user.name || 'Unknown User',
+      role: savedComment.userId.role || user.role || '',
+      profilePic: savedComment.userId.profilePic || user.profilePic || null
+    };
+  } else {
+    // userId not populated, use user info directly
+    populatedUserId = {
+      _id: user._id,
+      name: user.name || 'Unknown User',
+      role: user.role || '',
+      profilePic: user.profilePic || null
+    };
+  }
+  
+  // Ensure we return a plain object with proper structure
+  const commentToReturn = {
+    _id: savedComment._id,
+    userId: populatedUserId,
+    text: savedComment.text,
+    createdAt: savedComment.createdAt
+  };
+
   // notification to author
   if (String(post.authorId) !== String(user._id)) {
     const note = await Notification.create({
@@ -248,11 +311,11 @@ async function addComment(user, postId, text, io) {
     if (io) io.to(String(post.authorId)).emit("notification:new", note);
   }
 
-  return comment;
+  return commentToReturn;
 }
 
 async function getComments(postId, page = 1, limit = 5) {
-  const post = await Post.findById(postId).populate("comments.userId", "name role");
+  const post = await Post.findById(postId).populate("comments.userId", "name role profilePic");
   if (!post) throw new Error("Post not found");
 
   const start = (page - 1) * limit;
