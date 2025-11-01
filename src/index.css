@@ -141,6 +141,38 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Select dropdown styling - Windows dark mode compatibility */
+  select {
+    color-scheme: light;
+  }
+  
+  /* Light mode select styling */
+  select option {
+    background-color: #ffffff;
+    color: #1f2937;
+  }
+  
+  /* Dark mode - set color-scheme to dark for OS-level dark mode support */
+  .dark select {
+    color-scheme: dark;
+    background-color: #1e293b !important;
+    background-image: none !important;
+    color: #f1f5f9 !important;
+  }
+  
+  /* Dark mode select options - critical for Windows visibility */
+  .dark select option {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+  }
+  
+  /* Better contrast for selected option in dark mode */
+  .dark select option:checked,
+  .dark select option[selected] {
+    background-color: #3b82f6 !important;
+    color: #ffffff !important;
+  }
 }
 
 @layer components {
@@ -709,4 +741,40 @@
   box-shadow: none;
   transform: none;
   cursor: not-allowed;
+}
+
+/* Additional Windows-specific select dropdown fixes */
+@supports (-ms-ime-align: auto) {
+  /* Internet Explorer / Edge Legacy */
+  .dark select {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+  }
+  
+  .dark select option {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+  }
+}
+
+/* Global select dropdown styling for dark mode - Windows compatible */
+.dark select,
+select.dark {
+  color-scheme: dark;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Force dark styling on all select elements in dark mode */
+.dark select *,
+.dark select option {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+/* Selected option styling */
+.dark select option[selected] {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
 }

@@ -575,7 +575,7 @@ export const AuthProvider = ({ children }) => {
           age: formData.age || '25', // Provide default if empty
           playingRole: formData.playerRole || 'All-rounder', // Provide default if empty
           gender: formData.gender || '',
-          sports: formData.sports || ''
+          sport: formData.sport || ''
         }),
         ...(mappedRole.toLowerCase() === 'academy' && {
           location: formData.location || 'Not specified',

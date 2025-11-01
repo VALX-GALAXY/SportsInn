@@ -7,7 +7,7 @@ const Select = React.forwardRef(({ className, children, ...props }, ref) => {
     <div className="relative">
       <select
         className={cn(
-          "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background dark:bg-white/10 dark:border-white/20 dark:backdrop-blur-sm px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-400 dark:text-slate-100 dark:placeholder:text-slate-400 appearance-none",
+          "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background dark:bg-slate-800 dark:border-white/20 dark:backdrop-blur-sm px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-400 dark:text-slate-100 dark:placeholder:text-slate-400 appearance-none",
           className
         )}
         ref={ref}
@@ -15,7 +15,7 @@ const Select = React.forwardRef(({ className, children, ...props }, ref) => {
       >
         {children}
       </select>
-      <ChevronDown className="absolute right-3 top-3 h-4 w-4 opacity-50 pointer-events-none" />
+      <ChevronDown className="absolute right-3 top-3 h-4 w-4 opacity-50 pointer-events-none dark:text-slate-100" />
     </div>
   )
 })

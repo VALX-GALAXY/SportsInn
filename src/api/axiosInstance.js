@@ -1,15 +1,9 @@
 import axios from 'axios'
-import { isTokenExpired, validateTokenFormat } from '../utils/tokenUtils'
-
-// Debug: Log the API URL being used
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-console.log('🔧 Axios Instance - API URL:', apiUrl)
-console.log('🔧 Axios Instance - VITE_API_URL from env:', import.meta.env.VITE_API_URL)
-console.log('🔧 Axios Instance - All env vars:', import.meta.env)
+import { clearAuthData, isTokenExpired, validateTokenFormat, cleanupInvalidTokens } from '../utils/tokenUtils'
 
 const axiosInstance = axios.create({
-  baseURL: apiUrl,
-  timeout: 10000,
+  baseURL: import.meta.env.VITE_API_URL ||'https://sportsinn-backend.onrender.com',
+  timeout: 1000000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -34,48 +28,30 @@ const processQueue = (error, token = null) => {
 // Request interceptor to attach JWT token
 axiosInstance.interceptors.request.use(
   (config) => {
+    // Clean up invalid tokens before making requests
+    cleanupInvalidTokens()
+    
     const token = localStorage.getItem('token')
     console.log('Axios request interceptor - Token:', token ? 'Present' : 'Missing')
     console.log('Axios request interceptor - URL:', config.url)
     console.log('Axios request interceptor - Is refreshing:', isRefreshing)
     
     if (token) {
-      // Trim token to remove any whitespace
-      const trimmedToken = token.trim()
-      
-      // Basic validation: ensure token has basic JWT structure (3 parts separated by dots)
-      // Be lenient - let backend validate the actual token signature
-      if (!trimmedToken || trimmedToken.length === 0) {
-        console.warn('Token is empty after trimming')
+      // Validate token format before using
+      if (!validateTokenFormat(token)) {
+        console.warn('Invalid token format, clearing auth data')
+        clearAuthData()
         return config
       }
       
-      // Quick check for JWT structure (should have 2 dots = 3 parts)
-      const dotCount = (trimmedToken.match(/\./g) || []).length
-      if (dotCount !== 2) {
-        console.warn(`Token does not have 2 dots (has ${dotCount}), likely invalid format`)
+      // Check if token is expired
+      if (isTokenExpired(token)) {
+        console.warn('Token is expired, clearing auth data')
+        clearAuthData()
         return config
       }
       
-      // Check if token parts are non-empty
-      const parts = trimmedToken.split('.')
-      if (parts.length !== 3 || parts.some(p => !p || p.trim().length === 0)) {
-        console.warn('Token has empty parts')
-        return config
-      }
-      
-      // Try stricter validation but don't block if it fails
-      if (!validateTokenFormat(trimmedToken)) {
-        console.warn('Token format validation failed, but attempting to use anyway - backend will validate')
-        // Continue anyway - backend will reject if truly invalid
-      }
-      
-      // Even if token is expired, attach it to trigger a 401 and let response interceptor handle refresh
-      if (isTokenExpired(trimmedToken)) {
-        console.warn('Token appears expired; proceeding to let response interceptor refresh')
-      }
-      
-      config.headers.Authorization = `Bearer ${trimmedToken}`
+      config.headers.Authorization = `Bearer ${token}`
       console.log('Axios request interceptor - Authorization header set')
     } else {
       console.warn('Axios request interceptor - No token found in localStorage')
@@ -122,7 +98,7 @@ axiosInstance.interceptors.response.use(
         
         if (refreshToken) {
           const response = await axios.post(
-            `${import.meta.env.VITE_API_URL || 'http://localhost:3000' }/api/auth/refresh`,
+            `${import.meta.env.VITE_API_URL || 'https://sportsinn-backend.onrender.com' }/api/auth/refresh`,
             { refreshToken }
           )
           
@@ -206,7 +182,7 @@ axiosInstance.interceptors.response.use(
         
         try {
           const response = await axios.post(
-            `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/refresh`,
+            `${import.meta.env.VITE_API_URL || 'https://sportsinn-backend.onrender.com'}/api/auth/refresh`,
             { refreshToken }
           )
           

@@ -24,80 +24,80 @@ import searchService from '../api/searchService'
 import { useAuth } from '../contexts/AuthContext'
 
 // Dummy search results data
-const dummySearchResults = {
-  players: [
-    {
-      id: 1,
-      name: 'Jay kumar',
-      role: 'Player',
-      avatar: 'https://i.pravatar.cc/150?img=32',
-      location: 'New York, NY',
-      age: 22,
-      position: 'Forward',
-      playerRole: 'Batsman',
-      experience: '5 years',
-      verified: true,
-      followers: 1250,
-      bio: 'Professional football player with 5 years of experience. Looking for opportunities to grow.'
-    },
-    {
-      id: 2,
-      name: 'Ankit kumar',
-      role: 'Player',
-      avatar: 'https://i.pravatar.cc/150?img=45',
-      location: 'Los Angeles, CA',
-      age: 19,
-      position: 'Midfielder',
-      playerRole: 'Bowler',
-      experience: '3 years',
-      verified: false,
-      followers: 890,
-      bio: 'Young talented midfielder with great potential.'
-    }
-  ],
-  academies: [
-    {
-      id: 3,
-      name: 'Elite Sports Academy',
-      role: 'Academy',
-      avatar: 'https://i.pravatar.cc/150?img=67',
-      location: 'Miami, FL',
-      established: '2015',
-      students: 150,
-      verified: true,
-      followers: 3200,
-      bio: 'Premier sports academy focused on developing young talent.'
-    }
-  ],
-  clubs: [
-    {
-      id: 4,
-      name: 'Csk',
-      role: 'Club',
-      avatar: 'https://i.pravatar.cc/150?img=78',
-      location: 'Chicago, IL',
-      founded: '2010',
-      players: 25,
-      verified: true,
-      followers: 4500,
-      bio: 'Professional football club competing in the national league.'
-    }
-  ],
-  scouts: [
-    {
-      id: 5,
-      name: 'Trisha',
-      role: 'Scout',
-      avatar: 'https://i.pravatar.cc/150?img=89',
-      location: 'Boston, MA',
-      experience: '10 years',
-      discoveries: 50,
-      verified: true,
-      followers: 2100,
-      bio: 'Experienced scout with a track record of discovering talented players.'
-    }
-  ]
-}
+// const dummySearchResults = {
+//   players: [
+//     {
+//       id: 1,
+//       name: 'Jay kumar',
+//       role: 'Player',
+//       avatar: 'https://i.pravatar.cc/150?img=32',
+//       location: 'New York, NY',
+//       age: 22,
+//       position: 'Forward',
+//       playerRole: 'Batsman',
+//       experience: '5 years',
+//       verified: true,
+//       followers: 1250,
+//       bio: 'Professional football player with 5 years of experience. Looking for opportunities to grow.'
+//     },
+//     {
+//       id: 2,
+//       name: 'Ankit kumar',
+//       role: 'Player',
+//       avatar: 'https://i.pravatar.cc/150?img=45',
+//       location: 'Los Angeles, CA',
+//       age: 19,
+//       position: 'Midfielder',
+//       playerRole: 'Bowler',
+//       experience: '3 years',
+//       verified: false,
+//       followers: 890,
+//       bio: 'Young talented midfielder with great potential.'
+//     }
+//   ],
+//   academies: [
+//     {
+//       id: 3,
+//       name: 'Elite Sports Academy',
+//       role: 'Academy',
+//       avatar: 'https://i.pravatar.cc/150?img=67',
+//       location: 'Miami, FL',
+//       established: '2015',
+//       students: 150,
+//       verified: true,
+//       followers: 3200,
+//       bio: 'Premier sports academy focused on developing young talent.'
+//     }
+//   ],
+//   clubs: [
+//     {
+//       id: 4,
+//       name: 'Csk',
+//       role: 'Club',
+//       avatar: 'https://i.pravatar.cc/150?img=78',
+//       location: 'Chicago, IL',
+//       founded: '2010',
+//       players: 25,
+//       verified: true,
+//       followers: 4500,
+//       bio: 'Professional football club competing in the national league.'
+//     }
+//   ],
+//   scouts: [
+//     {
+//       id: 5,
+//       name: 'Trisha',
+//       role: 'Scout',
+//       avatar: 'https://i.pravatar.cc/150?img=89',
+//       location: 'Boston, MA',
+//       experience: '10 years',
+//       discoveries: 50,
+//       verified: true,
+//       followers: 2100,
+//       bio: 'Experienced scout with a track record of discovering talented players.'
+//     }
+//   ]
+// }
 
 export default function Search() {
   const { user } = useAuth()
@@ -317,7 +317,7 @@ export default function Search() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 sm:text-3xl">
-            Search SportsIn
+            Search SportsInn
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400 sm:text-base">
             Find players, academies, clubs, and scouts

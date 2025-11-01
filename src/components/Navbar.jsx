@@ -134,7 +134,7 @@ const Navbar = ({ onMenuClick }) => {
           {/* Left side - Logo and Desktop Navigation */}
           <div className="flex items-center space-x-4">
             <Link to="/" className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-500 to-emerald-500 dark:from-blue-400 dark:to-emerald-400 bg-clip-text text-transparent flex-shrink-0">
-              SportsIn
+              SportsInn
             </Link>
             
             {/* Desktop Navigation Links */}
@@ -159,13 +159,13 @@ const Navbar = ({ onMenuClick }) => {
             {/* Mobile Navigation Icons - Always visible */}
             <div className="flex items-center space-x-1">
               {/* Search */}
-              <button 
+              {/* <button 
                 onClick={handleSearchClick}
                 className="p-2 text-slate-600 hover:text-blue-500 dark:text-slate-300 dark:hover:text-blue-400 transition-colors"
                 title="Search"
               >
                 <Search className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
+              </button> */}
               
               {/* Create Post Button - Only for Player, Academy, Club roles */}
               {(user?.role === 'Player' || user?.role === 'player' || 
@@ -213,7 +213,7 @@ const Navbar = ({ onMenuClick }) => {
                     <Button type="submit" size="sm" className="sportsin-gradient-button">
                       Search
                     </Button>
-                    <Button 
+                    <Button ˀ
                       type="button" 
                       variant="ghost" 
                       size="sm"

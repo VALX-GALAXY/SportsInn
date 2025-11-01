@@ -468,7 +468,7 @@ export default function FeedSimple() {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 space-y-4 lg:space-y-0">
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:text-3xl lg:text-4xl">Sports Feed</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:text-3xl lg:text-4xl">SportsInn Feed</h1>
             <p className="text-sm text-gray-600 dark:text-gray-400 sm:text-base lg:text-lg">Stay updated with the latest from the sports community</p>
           </div>
           

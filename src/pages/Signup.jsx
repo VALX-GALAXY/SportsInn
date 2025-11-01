@@ -24,7 +24,7 @@ export default function Signup() {
     role: '',
     // Player-specific fields
     gender: '',
-    sports: '',
+    sport: '',
     age: '',
     playerRole: '',
     // Other role-specific fields
@@ -81,8 +81,8 @@ export default function Signup() {
       if (!formData.gender) {
         newErrors.gender = 'Gender is required for players'
       }
-      if (!formData.sports) {
-        newErrors.sports = 'Sports selection is required for players'
+      if (!formData.sport) {
+        newErrors.sport = 'Sport selection is required for players'
       }
       if (!formData.age) {
         newErrors.age = 'Age is required for players'
@@ -90,7 +90,7 @@ export default function Signup() {
         newErrors.age = 'Age must be between 10 and 50'
       }
       // Player role is only required if Cricket is selected
-      if (formData.sports === 'Cricket') {
+      if (formData.sport === 'Cricket') {
         if (!formData.playerRole) {
           newErrors.playerRole = 'Player role is required for Cricket'
         }
@@ -152,8 +152,8 @@ export default function Signup() {
         ...prev,
         [name]: value
       }
-      // Clear playerRole if sports changes from Cricket to something else
-      if (name === 'sports' && value !== 'Cricket') {
+      // Clear playerRole if sport changes from Cricket to something else
+      if (name === 'sport' && value !== 'Cricket') {
         newData.playerRole = ''
       }
       return newData
@@ -237,7 +237,7 @@ export default function Signup() {
         <Card className="shadow-2xl border border-white/20 bg-white/10 dark:bg-slate-950/10 backdrop-blur-lg max-h-[90vh] flex flex-col">
           <CardHeader className="space-y-2 px-4 sm:px-6 pt-4 sm:pt-6 flex-shrink-0">
             <CardTitle className="text-2xl sm:text-3xl font-extrabold text-center bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 dark:from-blue-400 dark:via-emerald-400 dark:to-blue-400 bg-clip-text text-transparent animate-pulse">
-              Join SportsIn
+              Join SportsInn
             </CardTitle>
             <CardDescription className="text-center text-slate-800 dark:text-slate-100 text-base font-medium">
               Start your sports journey today
@@ -306,17 +306,17 @@ export default function Signup() {
                     )}
                   </div>
                   
-                  {/* Sports and Age in 2 column grid */}
+                  {/* Sport and Age in 2 column grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Sports Selection */}
+                    {/* Sport Selection */}
                     <div className="space-y-2">
-                      <Label htmlFor="sports">Sports *</Label>
+                      <Label htmlFor="sport">Sport *</Label>
                       <Select
-                        id="sports"
-                        name="sports"
-                        value={formData.sports}
+                        id="sport"
+                        name="sport"
+                        value={formData.sport}
                         onChange={handleChange}
-                        className={errors.sports ? 'border-red-500' : ''}
+                        className={errors.sport ? 'border-red-500' : ''}
                       >
                         <option value="">Select a sport</option>
                         <option value="Cricket">Cricket</option>
@@ -326,8 +326,8 @@ export default function Signup() {
                         <option value="Table Tennis">Table Tennis</option>
                         <option value="Basketball">Basketball</option>
                       </Select>
-                      {errors.sports && (
-                        <p className="text-sm text-red-500 dark:text-red-400">{errors.sports}</p>
+                      {errors.sport && (
+                        <p className="text-sm text-red-500 dark:text-red-400">{errors.sport}</p>
                       )}
                     </div>
                     
@@ -350,7 +350,7 @@ export default function Signup() {
                   </div>
                   
                   {/* Conditional Player Role Field (only for Cricket) */}
-                  {formData.sports === 'Cricket' && (
+                  {formData.sport === 'Cricket' && (
                     <div className="space-y-2">
                       <Label htmlFor="playerRole">Player Role *</Label>
                       <Select

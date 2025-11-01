@@ -36,7 +36,7 @@ export default function PlayerDashboard() {
           <div className="absolute inset-0 bg-black/10"></div>
           <div className="relative z-10">
             <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-            <p className="text-blue-100">Only real API-backed metrics are shown.</p>
+            <p className="text-blue-100">Track Your Record</p>
           </div>
         </div>
 
