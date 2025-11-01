@@ -1,7 +1,8 @@
-import { createContext, useContext, useReducer, useEffect } from 'react'
+import { createContext, useContext, useReducer, useEffect, useState } from 'react'
 import authService from '../api/authService'
 import profileService from '../api/profileService'
 import { useToast } from '../components/ui/simple-toast'
+import GoogleSignupModal from '../components/GoogleSignupModal'
 
 const AuthContext = createContext()
 
@@ -50,6 +51,8 @@ const initialState = {
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState)
   const { toast } = useToast()
+  const [showGoogleSignupModal, setShowGoogleSignupModal] = useState(false)
+  const [pendingGoogleUser, setPendingGoogleUser] = useState(null)
 
   // Load user from localStorage on mount
   useEffect(() => {
@@ -346,7 +349,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   // Real Google OAuth login using Google Identity Services
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (additionalData = {}) => {
     // Prevent multiple simultaneous calls
     if (window.googleLoginInProgress) {
       console.warn('Google login already in progress')
@@ -407,7 +410,11 @@ export const AuthProvider = ({ children }) => {
                 email: payload.email,
                 name: payload.name,
                 picture: payload.picture,
-                googleId: payload.sub
+                googleId: payload.sub,
+                role: additionalData.role || 'player',
+                sport: additionalData.sport,
+                gender: additionalData.gender,
+                cricketRole: additionalData.cricketRole
               })
               
               // Fetch complete profile data including profile picture
@@ -465,6 +472,26 @@ export const AuthProvider = ({ children }) => {
               resolve(result.user)
             } catch (error) {
               console.error('Google authentication error:', error)
+              
+              // Check if this is a registration required error
+              if (error.isRegistrationRequired || error.message?.includes('Sport is required')) {
+                dispatch({ type: 'SET_LOADING', payload: false })
+                window.googleLoginInProgress = false
+                // Store Google user info for the modal
+                const googleUserInfo = {
+                  idToken: response.credential,
+                  email: payload.email,
+                  name: payload.name,
+                  picture: payload.picture,
+                  googleId: payload.sub
+                }
+                window.pendingGoogleUser = googleUserInfo
+                setPendingGoogleUser(googleUserInfo)
+                setShowGoogleSignupModal(true)
+                // Don't reject, just return - the modal will handle the retry
+                return
+              }
+              
               toast({
                 title: "Google authentication failed",
                 description: error.message || "Failed to authenticate with Google",
@@ -649,6 +676,97 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // Handle Google signup modal submission
+  const handleGoogleSignupSubmit = async (signupData) => {
+    try {
+      setShowGoogleSignupModal(false)
+      dispatch({ type: 'SET_LOADING', payload: true })
+      
+      // Retry Google login with the additional data
+      // The idToken is stored in window.pendingGoogleUser
+      if (!window.pendingGoogleUser || !window.pendingGoogleUser.idToken) {
+        throw new Error('Google user information not found. Please try signing in again.')
+      }
+      
+      // Call authService.googleLogin directly with all the data
+      const result = await authService.googleLogin({
+        idToken: window.pendingGoogleUser.idToken,
+        email: window.pendingGoogleUser.email,
+        name: window.pendingGoogleUser.name,
+        picture: window.pendingGoogleUser.picture,
+        googleId: window.pendingGoogleUser.googleId,
+        role: signupData.role || 'player',
+        sport: signupData.sport,
+        gender: signupData.gender,
+        cricketRole: signupData.cricketRole
+      })
+      
+      // Fetch complete profile data
+      try {
+        const userId = result.user._id || result.user.id
+        if (userId) {
+          const profileData = await profileService.getProfile(userId)
+          const completeUserData = {
+            ...result.user,
+            ...profileData,
+            profilePic: profileData.profilePic || profileData.profilePicture || result.user.profilePic
+          }
+          localStorage.setItem('user', JSON.stringify(completeUserData))
+          dispatch({
+            type: 'LOGIN',
+            payload: {
+              user: completeUserData,
+              token: result.token
+            }
+          })
+        } else {
+          dispatch({
+            type: 'LOGIN',
+            payload: {
+              user: result.user,
+              token: result.token
+            }
+          })
+        }
+      } catch (profileError) {
+        console.warn('Could not fetch complete profile data:', profileError)
+        dispatch({
+          type: 'LOGIN',
+          payload: {
+            user: result.user,
+            token: result.token
+          }
+        })
+      }
+      
+      // Clear pending user data
+      window.pendingGoogleUser = null
+      setPendingGoogleUser(null)
+      
+      toast({
+        title: "Account created successfully",
+        description: `Welcome to SportsIn, ${result.user?.name || 'User'}!`,
+        variant: "success"
+      })
+      
+      return result.user
+    } catch (error) {
+      console.error('Google signup error:', error)
+      toast({
+        title: "Signup failed",
+        description: error.message || "Failed to create account. Please try again.",
+        variant: "destructive"
+      })
+      // Re-show modal if it's still a registration error
+      if (error.message?.includes('Sport is required')) {
+        setShowGoogleSignupModal(true)
+      }
+      throw error
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
+    }
+  }
+
   const value = {
     ...state,
     login,
@@ -664,6 +782,16 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={value}>
       {children}
+      <GoogleSignupModal
+        isOpen={showGoogleSignupModal}
+        onClose={() => {
+          setShowGoogleSignupModal(false)
+          setPendingGoogleUser(null)
+          window.pendingGoogleUser = null
+        }}
+        onSubmit={handleGoogleSignupSubmit}
+        userInfo={pendingGoogleUser || window.pendingGoogleUser}
+      />
     </AuthContext.Provider>
   )
 }

@@ -468,30 +468,65 @@ class FeedService {
       
       console.log('Backend create post response:', response.data)
       
+      // Get current user info as fallback in case backend doesn't populate authorId
+      const currentUser = JSON.parse(localStorage.getItem('user') || 'null')
+      
       // Transform backend response to match frontend structure
       const post = response.data.data
       console.log('Raw post data from backend:', post)
       console.log('Media type:', post.mediaType)
       console.log('Media URL:', post.mediaUrl)
       
-      // Check if authorId is populated (should always be for new posts, but safety first)
-      if (!post.authorId) {
-        console.error('Post created but authorId is null!', post)
-        throw new Error('Post created but author information is missing')
+      // Handle authorId - it might be populated (object) or not (ObjectId string)
+      let authorInfo = {
+        id: 'unknown',
+        name: 'Unknown User',
+        avatar: null,
+        role: 'Unknown'
+      }
+      
+      if (post.authorId) {
+        // Check if authorId is populated (object) or just an ObjectId (string)
+        if (typeof post.authorId === 'object' && post.authorId !== null && post.authorId._id) {
+          // authorId is populated
+          authorInfo = {
+            id: post.authorId._id || 'unknown',
+            name: post.authorId.name || 'Unknown User',
+            avatar: post.authorId.profilePic || null,
+            role: post.authorId.role || 'Unknown'
+          }
+        } else if (typeof post.authorId === 'string') {
+          // authorId is not populated, use current user as fallback
+          console.warn('Post authorId not populated, using current user info')
+          if (currentUser) {
+            authorInfo = {
+              id: currentUser.id || currentUser._id || 'unknown',
+              name: currentUser.name || 'Unknown User',
+              avatar: currentUser.profilePic || currentUser.avatar || null,
+              role: currentUser.role || 'Unknown'
+            }
+          }
+        }
+      } else {
+        // No authorId at all, use current user as fallback
+        console.warn('Post has no authorId, using current user info')
+        if (currentUser) {
+          authorInfo = {
+            id: currentUser.id || currentUser._id || 'unknown',
+            name: currentUser.name || 'Unknown User',
+            avatar: currentUser.profilePic || currentUser.avatar || null,
+            role: currentUser.role || 'Unknown'
+          }
+        }
       }
       
       const transformedPost = {
-        id: post._id,
-        author: {
-          id: post.authorId._id || 'unknown',
-          name: post.authorId.name || 'Unknown User',
-          avatar: post.authorId.profilePic || null,
-          role: post.authorId.role || 'Unknown'
-        },
+        id: post._id || post.id,
+        author: authorInfo,
         caption: post.caption || '',
         image: post.mediaType === 'image' ? post.mediaUrl : null,
         video: post.mediaType === 'video' ? post.mediaUrl : null,
-        timestamp: post.createdAt,
+        timestamp: post.createdAt || new Date().toISOString(),
         stats: {
           likes: post.likes?.length || 0,
           comments: post.comments?.length || 0,
@@ -584,6 +619,9 @@ class FeedService {
     try {
       console.log('FeedService.addComment called with:', { postId, commentData })
       
+      // Get current user info as fallback in case backend doesn't populate userId
+      const currentUser = JSON.parse(localStorage.getItem('user') || 'null')
+      
       const response = await axiosInstance.post(`/api/feed/${postId}/comment`, commentData)
       
       console.log('Backend addComment response:', response.data)
@@ -591,22 +629,51 @@ class FeedService {
       // Transform backend comment to match frontend structure
       const comment = response.data.data
       
-      // Check if userId is populated (should always be for new comments, but safety first)
-      if (!comment.userId) {
-        console.error('Comment created but userId is null!', comment)
-        throw new Error('Comment created but user information is missing')
+      // Handle userId - it might be populated (object) or not (ObjectId string)
+      let authorInfo = {
+        id: 'unknown',
+        name: 'Unknown User',
+        avatar: null
+      }
+      
+      if (comment.userId) {
+        // Check if userId is populated (object) or just an ObjectId (string)
+        if (typeof comment.userId === 'object' && comment.userId !== null) {
+          // userId is populated
+          authorInfo = {
+            id: comment.userId._id || comment.userId.id || 'unknown',
+            name: comment.userId.name || 'Unknown User',
+            avatar: comment.userId.profilePic || comment.userId.avatar || null
+          }
+        } else if (typeof comment.userId === 'string') {
+          // userId is not populated, use current user as fallback
+          console.warn('Comment userId not populated, using current user info')
+          if (currentUser) {
+            authorInfo = {
+              id: currentUser.id || currentUser._id || 'unknown',
+              name: currentUser.name || 'Unknown User',
+              avatar: currentUser.profilePic || currentUser.avatar || null
+            }
+          }
+        }
+      } else {
+        // No userId at all, use current user as fallback
+        console.warn('Comment has no userId, using current user info')
+        if (currentUser) {
+          authorInfo = {
+            id: currentUser.id || currentUser._id || 'unknown',
+            name: currentUser.name || 'Unknown User',
+            avatar: currentUser.profilePic || currentUser.avatar || null
+          }
+        }
       }
       
       return {
-        id: comment._id,
+        id: comment._id || comment.id,
         postId: postId,
-        author: {
-          id: comment.userId._id || 'unknown',
-          name: comment.userId.name || 'Unknown User',
-          avatar: comment.userId.profilePic || null
-        },
+        author: authorInfo,
         text: comment.text || '',
-        timestamp: comment.createdAt
+        timestamp: comment.createdAt || new Date().toISOString()
       }
     } catch (error) {
       console.error('FeedService.addComment error:', error)

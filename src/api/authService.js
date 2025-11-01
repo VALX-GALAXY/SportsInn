@@ -83,10 +83,19 @@ class AuthService {
       console.log('authService.googleLogin - Starting Google login with data:', googleData)
       
       // Use the proper Google OAuth endpoint with idToken
-      const response = await axiosInstance.post('/api/auth/google', {
+      
+      
+      const requestBody = {
         idToken: googleData.idToken,
-        role: 'player' // Default role for Google users
-      })
+        role: googleData.role || 'player', // Default role for Google users
+        // Send additional fields even though backend doesn't use them yet
+        // This allows the request to work once backend is updated
+        ...(googleData.sport && { sport: googleData.sport }),
+        ...(googleData.gender && { gender: googleData.gender }),
+        ...(googleData.cricketRole && { cricketRole: googleData.cricketRole })
+      }
+      
+      const response = await axiosInstance.post('/api/auth/google', requestBody)
       
       console.log('authService.googleLogin - Google OAuth successful')
       const payload = response.data?.data ?? response.data
@@ -111,7 +120,10 @@ class AuthService {
       // Handle specific error cases
       if (error.response?.status === 400) {
         const errorMessage = error.response.data.message || 'Google authentication failed'
-        throw new Error(errorMessage)
+        // Preserve the error object for the caller to handle
+        const customError = new Error(errorMessage)
+        customError.isRegistrationRequired = errorMessage.includes('Sport is required')
+        throw customError
       }
       
       // If backend is not running, throw a clear error
