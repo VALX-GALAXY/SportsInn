@@ -102,7 +102,7 @@ const Navbar = ({ onMenuClick }) => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link to="/" className="text-xl font-bold bg-gradient-to-r from-blue-500 to-emerald-500 dark:from-blue-400 dark:to-emerald-400 bg-clip-text text-transparent">
-                SportsIn
+                SportsInn
               </Link>
             </div>
             <div className="flex items-center space-x-4">
