@@ -96,15 +96,105 @@ async function validateToken(req, res) {
 // Google OAuth2 authentication
 async function googleAuth(req, res) {
   try {
-    const { idToken, role } = req.body;
-    if (!idToken) return res.status(400).json({ success: false, message: "idToken required" });
+    console.log("Starting Google OAuth process with body:", {
+      ...req.body,
+      idToken: req.body.idToken ? '[REDACTED]' : undefined
+    });
 
-    const payload = await verifyIdToken(idToken);
-    if (!payload) return res.status(400).json({ success: false, message: "Invalid Google token" });
+    const { 
+      idToken, 
+      role,
+      sport,
+      gender = 'Prefer not to say',
+      cricketRole
+    } = req.body;
 
+    // Validate required fields
+    if (!idToken) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "idToken required" 
+      });
+    }
+
+    // Verify Google token format first
+    if (!idToken.includes('.') || idToken.split('.').length !== 3) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Google ID token format. A valid token should be a JWT containing three segments separated by dots.",
+        details: process.env.NODE_ENV === 'development' ? {
+          expected: "header.payload.signature",
+          received: idToken,
+          help: "This error usually occurs when testing with a placeholder token. You need to use a real Google ID token obtained from Google Sign-In."
+        } : undefined
+      });
+    }
+
+    // Verify Google token
+    let payload;
+    try {
+      payload = await verifyIdToken(idToken);
+      console.log("Google token verified successfully for email:", payload.email);
+    } catch (verifyError) {
+      console.error("Google token verification failed:", verifyError);
+      return res.status(401).json({ 
+        success: false, 
+        message: verifyError.message,
+        details: process.env.NODE_ENV === 'development' ? {
+          error: verifyError.message,
+          stack: verifyError.stack,
+          help: "Make sure you're using a fresh token from Google Sign-In and that your GOOGLE_CLIENT_ID matches the one used to obtain the token."
+        } : undefined
+      });
+    }
+
+    if (!payload) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid Google token" 
+      });
+    }
+
+    // Verify email is validated by Google
     if (!payload.email_verified) {
-      // you can relax this if necessary, but recommended to require verified email
-      return res.status(400).json({ success: false, message: "Google email not verified" });
+      return res.status(400).json({ 
+        success: false, 
+        message: "Google email not verified" 
+      });
+    }
+
+    // Validate sport field if this is a new registration
+    if (!sport) {
+      return res.status(400).json({
+        success: false,
+        message: "Sport is required for registration"
+      });
+    }
+
+    // Validate cricket role if sport is Cricket
+    if (sport === 'Cricket' && !cricketRole) {
+      return res.status(400).json({
+        success: false,
+        message: "Cricket role is required when sport is Cricket"
+      });
+    }
+
+    if (sport === 'Cricket' && cricketRole) {
+      const validCricketRoles = ['Batsman', 'Bowler', 'All-Rounder', 'Wicket-Keeper'];
+      if (!validCricketRoles.includes(cricketRole)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid cricket role. Must be one of: Batsman, Bowler, All-Rounder, Wicket-Keeper"
+        });
+      }
+    }
+
+    // Validate gender if provided
+    if (gender && !['Male', 'Female', 'Other', 'Prefer not to say'].includes(gender)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid gender value. Must be one of: Male, Female, Other, Prefer not to say"
+      });
     }
 
     const result = await authService.loginWithGoogle({
@@ -112,15 +202,56 @@ async function googleAuth(req, res) {
       email: payload.email,
       name: payload.name,
       picture: payload.picture,
-      role // optional: front can suggest a role
+      role,
+      sport,
+      gender,
+      cricketRole: sport === 'Cricket' ? cricketRole : undefined
     });
 
-    if (result.error) return res.status(400).json({ success: false, message: result.error });
+    if (result.error) {
+      return res.status(400).json({ 
+        success: false, 
+        message: result.error 
+      });
+    }
 
-    return res.json({ success: true, data: result, message: "Google login successful" });
+    // Enhanced success response
+    return res.json({ 
+      success: true, 
+      data: {
+        ...result,
+        user: {
+          ...result.user,
+          sport,
+          gender,
+          cricketRole: sport === 'Cricket' ? cricketRole : undefined
+        }
+      }, 
+      message: "Google login successful" 
+    });
+
   } catch (err) {
-    console.error("googleAuth error:", err);
-    return res.status(500).json({ success: false, message: err.message });
+    console.error("Google Auth Error:", {
+      message: err.message,
+      stack: err.stack,
+      code: err.code,
+      name: err.name
+    });
+    
+    // Determine if it's a validation error or system error
+    const isValidationError = err.message.includes('required') || 
+                            err.message.includes('invalid') ||
+                            err.message.includes('Cricket role');
+    
+    return res.status(isValidationError ? 400 : 500).json({ 
+      success: false, 
+      message: isValidationError ? err.message : "An error occurred during Google authentication",
+      error: process.env.NODE_ENV === 'development' ? {
+        message: err.message,
+        stack: err.stack,
+        code: err.code
+      } : undefined
+    });
   }
 }
 

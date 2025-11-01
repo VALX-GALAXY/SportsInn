@@ -170,13 +170,28 @@ async function logout(refreshToken) {
 async function loginWithGoogle({ googleId, email, name, picture, role, gender, sport, cricketRole }) {
   if (!email) return { error: "Email missing from Google profile" };
 
-  // try find user by googleId or email
+  // Try find user by googleId or email
   let user = await User.findOne({ $or: [{ googleId }, { email }] });
 
   if (!user) {
+    // New user registration
     if (!sport) return { error: "Sport is required for registration" };
     
-    // create new user
+    if (sport === 'Cricket' && !cricketRole) {
+      return { error: "Cricket role is required when sport is Cricket" };
+    }
+
+    if (cricketRole && !['Batsman', 'Bowler', 'All-Rounder', 'Wicket-Keeper'].includes(cricketRole)) {
+      return { error: "Invalid cricket role" };
+    }
+
+    // For players, we need age and playingRole
+    const defaultUserData = {
+      age: 18, // Default age
+      playingRole: sport === 'Cricket' ? cricketRole : 'Player' // Use cricketRole as playingRole for cricket players
+    };
+    
+    // Create new user with all required fields
     const newUser = {
       name: name || (email.split('@')[0]),
       email,
@@ -185,25 +200,50 @@ async function loginWithGoogle({ googleId, email, name, picture, role, gender, s
       googleId,
       gender: gender || 'Prefer not to say',
       sport,
-      cricketRole: sport === 'Cricket' ? cricketRole : undefined
+      cricketRole: sport === 'Cricket' ? cricketRole : undefined,
+      ...defaultUserData
     };
-    user = await User.create(newUser);
+
+    try {
+      user = await User.create(newUser);
+    } catch (error) {
+      console.error('User creation error:', error);
+      return { error: "Failed to create user. Please try again." };
+    }
   } else {
-    // if found by email but no googleId, link accounts
+    // Existing user login or account linking
     if (!user.googleId) {
+      // Link Google account to existing email account
       user.googleId = googleId;
       if (!user.profilePic && picture) user.profilePic = picture;
-      await user.save();
+      
+      // Update optional fields if provided
+      if (gender) user.gender = gender;
+      if (sport && user.sport !== sport) {
+        user.sport = sport;
+        user.cricketRole = sport === 'Cricket' ? cricketRole : undefined;
+      } else if (sport === 'Cricket' && cricketRole) {
+        user.cricketRole = cricketRole;
+      }
+      
+      try {
+        await user.save();
+      } catch (error) {
+        console.error('User update error:', error);
+        return { error: "Failed to update user information" };
+      }
     }
   }
 
-  // Generate access + refresh tokens using your existing function
+  // Generate access + refresh tokens
   const { accessToken, refreshToken } = generateTokens(user);
 
+  // Update refresh tokens
   user.refreshTokens = user.refreshTokens || [];
   user.refreshTokens.push(refreshToken);
   await user.save();
 
+  // Return enhanced user object with all relevant fields
   return {
     accessToken,
     refreshToken,
@@ -212,7 +252,18 @@ async function loginWithGoogle({ googleId, email, name, picture, role, gender, s
       email: user.email,
       name: user.name,
       role: user.role,
-      profilePic: user.profilePic
+      profilePic: user.profilePic,
+      gender: user.gender,
+      sport: user.sport,
+      cricketRole: user.cricketRole,
+      age: user.age,
+      playingRole: user.playingRole,
+      bio: user.bio || "",
+      stats: user.stats || {
+        matches: 0,
+        runs: 0,
+        wickets: 0
+      }
     }
   };
 }
